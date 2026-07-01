@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tab.id === 'tab-users')     _initUsersSection();
     if (tab.id === 'tab-requests')  _initRequestsSection();
     if (tab.id === 'tab-calendar')  _initCalendarSection();
-    if (tab.id === 'tab-notif')     _renderNotifLog();
+    if (tab.id === 'tab-notif') { _initSmtpDiagnostics(); _renderNotifLog(); }
     if (tab.id === 'tab-backup')    _initBackupSection();
   }
 
@@ -478,8 +478,96 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* ════════════════════════════════════════════════════════
-     SECTION: NOTIFICATIONS LOG (HU-23-25)
+     SECTION: NOTIFICATIONS LOG (HU-23-25) & SMTP
   ════════════════════════════════════════════════════════ */
+
+  async function _initSmtpDiagnostics() {
+    const body = document.getElementById('smtp-config-body');
+    if (!body) return;
+
+    if (!isSuperAdmin) {
+      body.innerHTML = '<div class="notif-empty">Esta sección es solo para Super Administradores.</div>';
+      return;
+    }
+
+    try {
+      const data = await API.getSmtpConfig();
+      
+      let html = '';
+      if (data.enabled) {
+        html = `
+          <div style="display:flex;align-items:center;margin-bottom:var(--space-3);">
+            <div style="width:12px;height:12px;border-radius:50%;background:var(--color-success);margin-right:8px;box-shadow:0 0 0 4px rgba(46, 204, 113, 0.2);"></div>
+            <strong style="color:var(--text-main);">Servicio de correo configurado</strong>
+          </div>
+          <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-4);">
+            La aplicación está lista para enviar correos de notificación.
+          </p>
+          <button class="btn btn-primary" id="btn-test-smtp">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:6px;">
+              <path d="M22 2L11 13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Enviar correo de prueba
+          </button>
+        `;
+      } else {
+        html = `
+          <div style="display:flex;align-items:center;margin-bottom:var(--space-3);">
+            <div style="width:12px;height:12px;border-radius:50%;background:var(--color-danger);margin-right:8px;box-shadow:0 0 0 4px rgba(231, 76, 60, 0.2);"></div>
+            <strong style="color:var(--text-main);">Servicio de correo no configurado</strong>
+          </div>
+          <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:0;">
+            Las notificaciones por correo están deshabilitadas porque el servicio no ha sido configurado en el servidor.
+          </p>
+        `;
+      }
+      
+      body.innerHTML = html;
+
+      const btnTest = document.getElementById('btn-test-smtp');
+      if (btnTest) {
+        btnTest.addEventListener('click', () => {
+          const recipient = prompt('Ingresa el correo destinatario para la prueba:', Store.getUser()?.email || '');
+          if (!recipient) return;
+
+          btnTest.disabled = true;
+          const origContent = btnTest.innerHTML;
+          btnTest.innerHTML = 'Enviando...';
+
+          API.testSmtp(recipient).then(res => {
+            btnTest.disabled = false;
+            btnTest.innerHTML = origContent;
+            
+            if (res.success) {
+              Modal.confirm({
+                title: 'Prueba Exitosa',
+                message: `El correo fue aceptado por el servidor SMTP y enviado a <strong>${Utils.escapeHTML(recipient)}</strong>.<br><br>Revisa la bandeja de entrada o spam.`,
+                confirmText: 'Aceptar',
+                danger: false
+              }, () => {});
+            } else {
+              Modal.confirm({
+                title: 'Error de Envío',
+                message: `<strong style="color:var(--color-danger);">${Utils.escapeHTML(res.message)}</strong><br><br><span style="font-size:12px;color:var(--color-secondary-mid);">${Utils.escapeHTML(res.rawError || '')}</span>`,
+                confirmText: 'Cerrar',
+                danger: true
+              }, () => {});
+            }
+          }).catch(err => {
+            btnTest.disabled = false;
+            btnTest.innerHTML = origContent;
+            Toast.show('Error interno al probar SMTP.', 'error');
+            console.error(err);
+          });
+        });
+      }
+
+    } catch (err) {
+      console.error('Error fetching SMTP config:', err);
+      body.innerHTML = '<div class="notif-empty">Error cargando la configuración.</div>';
+    }
+  }
 
   function _renderNotifLog() {
     const body = document.getElementById('notif-log-body');

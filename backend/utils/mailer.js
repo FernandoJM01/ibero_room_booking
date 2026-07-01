@@ -235,6 +235,37 @@ function modificationRequestRejectedEmail(requesterName, reservation, reason) {
   };
 }
 
+function testDiagnosticEmail() {
+  return {
+    subject: `Confirmación de configuración de correo — Sala de Juntas Ibero`,
+    html: `
+      <div style="font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;max-width:540px;margin:auto;background-color:#ffffff;border:1px solid #eaeaea;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+        <div style="background-color:#ef3e42;padding:30px 40px;text-align:center;">
+          <h2 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;letter-spacing:-0.5px;">Notificaciones Activas</h2>
+        </div>
+        <div style="padding:40px;">
+          <p style="color:#333333;font-size:16px;line-height:1.6;margin-top:0;">
+            El sistema de reservaciones se ha conectado exitosamente al servicio de correo institucional.
+          </p>
+          <div style="background-color:#fef2f2;border-left:4px solid #ef3e42;padding:16px 20px;border-radius:4px;margin:24px 0;">
+            <p style="color:#b91c1c;margin:0;font-size:14px;font-weight:500;">
+              El envío de notificaciones y alertas se encuentra en funcionamiento.
+            </p>
+          </div>
+          <p style="color:#666666;font-size:14px;line-height:1.6;margin-bottom:0;">
+            Este mensaje fue generado de manera automática como una prueba de diagnóstico por el administrador del sistema. Si recibió este mensaje en su bandeja de entrada, la plataforma está lista para operar con normalidad.
+          </p>
+        </div>
+        <div style="background-color:#fafafa;padding:20px 40px;border-top:1px solid #eaeaea;text-align:center;">
+          <p style="margin:0;font-size:12px;color:#999999;">
+            Universidad Iberoamericana<br>Sistema de Reservación de Sala de Juntas
+          </p>
+        </div>
+      </div>
+    `,
+  };
+}
+
 module.exports = {
   sendEmail,
   reservationCreatedEmail,
@@ -249,4 +280,5 @@ module.exports = {
   welcomeEmail,
   passwordChangedEmail,
   accountDeactivatedEmail,
+  testDiagnosticEmail,
 };

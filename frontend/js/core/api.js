@@ -205,6 +205,13 @@ const API = (() => {
   const rejectModificationRequest = (id, reason) =>
     _request('PATCH', `/modification-requests/${id}/reject`, { reason });
 
+  // Diagnostics
+  const getSmtpConfig = () =>
+    _request('GET', '/diagnostics/smtp');
+
+  const testSmtp = (recipient) =>
+    _request('POST', '/diagnostics/smtp', { recipient });
+
   return {
     login,
     logout,
@@ -233,5 +240,7 @@ const API = (() => {
     getModificationRequests,
     approveModificationRequest,
     rejectModificationRequest,
+    getSmtpConfig,
+    testSmtp,
   };
 })();

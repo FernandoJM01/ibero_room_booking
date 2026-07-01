@@ -9,6 +9,7 @@ const usersRoutes = require('./routes/users');
 const statsRoutes = require('./routes/stats');
 const aiRoutes = require('./routes/ai');
 const modificationRequestsRoutes = require('./routes/modification-requests');
+const diagnosticsRoutes = require('./routes/diagnostics');
 const { runMigrations } = require('./db/migrate');
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/modification-requests', modificationRequestsRoutes);
+app.use('/api/diagnostics', diagnosticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
