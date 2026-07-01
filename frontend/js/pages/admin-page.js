@@ -495,14 +495,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       let html = '';
       if (data.enabled) {
-        html = `
-          <div style="display:flex;align-items:center;margin-bottom:var(--space-3);">
-            <div style="width:12px;height:12px;border-radius:50%;background:var(--color-success);margin-right:8px;box-shadow:0 0 0 4px rgba(46, 204, 113, 0.2);"></div>
-            <strong style="color:var(--text-main);">Servicio de correo configurado</strong>
-          </div>
-          <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-4);">
-            La aplicación está lista para enviar correos de notificación.
-          </p>
+        if (data.verified) {
+          html = `
+            <div style="display:flex;align-items:center;margin-bottom:var(--space-3);">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--color-success);margin-right:8px;box-shadow:0 0 0 4px rgba(46, 204, 113, 0.2);"></div>
+              <strong style="color:var(--text-main);">Servicio de correo en funcionamiento</strong>
+            </div>
+            <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-4);">
+              La conexión SMTP ha sido verificada con éxito. El sistema está listo para enviar notificaciones.
+            </p>
+          `;
+        } else {
+          html = `
+            <div style="display:flex;align-items:center;margin-bottom:var(--space-3);">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--color-warning);margin-right:8px;box-shadow:0 0 0 4px rgba(241, 196, 15, 0.2);"></div>
+              <strong style="color:var(--text-main);">Credenciales o conexión inválida</strong>
+            </div>
+            <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-4);">
+              Se detectaron ajustes de correo, pero la conexión falló. Verifique su contraseña, puerto o firewall.
+            </p>
+          `;
+        }
+
+        html += `
           <button class="btn btn-primary" id="btn-test-smtp">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:6px;">
               <path d="M22 2L11 13"/>

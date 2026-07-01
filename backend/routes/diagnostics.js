@@ -25,15 +25,37 @@ function requireSuperAdmin(req, res, next) {
 }
 
 // GET /api/diagnostics/smtp
-// Return current SMTP configuration status (no sensitive info)
-router.get('/smtp', auth, requireSuperAdmin, (req, res) => {
+// Return current SMTP configuration status and connection verification
+router.get('/smtp', auth, requireSuperAdmin, async (req, res) => {
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
+  const port = process.env.SMTP_PORT || '587';
   
   const enabled = !!(host && user && pass);
+  if (!enabled) {
+    return res.json({ enabled: false, verified: false });
+  }
 
-  res.json({ enabled });
+  // Create transporter with short timeout for quick check
+  const transporter = nodemailer.createTransport({
+    host,
+    port: parseInt(port, 10),
+    secure: port === '465',
+    auth: {
+      user,
+      pass,
+    },
+    connectionTimeout: 3000,
+    greetingTimeout: 2000,
+  });
+
+  try {
+    await transporter.verify();
+    res.json({ enabled: true, verified: true });
+  } catch (err) {
+    res.json({ enabled: true, verified: false });
+  }
 });
 
 // POST /api/diagnostics/smtp

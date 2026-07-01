@@ -27,35 +27,52 @@ If you need to switch from Microsoft 365 to Google Workspace (or another provide
 4. Restart the Docker containers.
 
 ## Verification Checklist
-Currently, the application **does not** provide an interface to verify SMTP settings. 
-*   **Startup Verification:** Missing. The system does not verify credentials when turning on.
-*   **Connection Testing:** Missing from the UI.
-*   **Test Emails:** Missing from the UI.
+The application provides an built-in **Email Diagnostics** panel in the Administration section to verify SMTP settings.
 
-To verify that your configuration works, you must manually trigger an email event in the application:
-1. Log into the application.
-2. Create a test reservation.
-3. Check your inbox to see if the confirmation email arrived.
-If it did not arrive, you must ask the system administrator to check the backend server logs for errors.
+### Diagnostics Interface
+1. Log in as a **Super Administrator**.
+2. Navigate to the **Notificaciones** (Notifications) tab in the admin panel.
+3. Check the status indicator:
+   - **🟢 Servicio de correo en funcionamiento**: SMTP credentials are present and connection/authentication succeeded. The system is ready to send notifications.
+   - **🟡 Credenciales o conexión inválida**: The system found configuration settings, but the verification test failed (e.g. wrong password, server unreachable, or expired credentials).
+   - **🔴 Servicio de correo no configurado**: The server is missing one or more required SMTP environment variables.
+4. Click **Enviar correo de prueba** (Send Test Email) to test delivery manually.
+5. Enter a recipient email address to verify delivery and view detailed errors.
+
+> [!NOTE]
+> The test email utilizes the official institutional layout with the university logo and signature. This ensures that stricter email servers (like Gmail) do not flag the diagnostic email as spam or phishing.
+
+## Environment Reloading (Docker Setup)
+Because this application runs inside Docker containers, editing the `.env` file on your host machine will **not** dynamically update the running Node.js process. The variables are read when the container is built/booted.
+
+To apply changes made to your `.env` file:
+1. Open the `.env` file in the root directory and update the SMTP fields.
+2. Run the following command in the terminal from the project's root folder:
+   ```bash
+   docker compose up -d --force-recreate backend
+   ```
+   *Note: Using a standard `docker compose restart backend` does not re-read or update changed environment variables inside running containers. You must force container recreation.*
+3. Once the backend container is running again, refresh the browser admin page to see the updated status.
 
 ## Troubleshooting
 
 ### Authentication failed / Incorrect Password
-*   **Symptoms:** Emails are not arriving. Server logs show `535 5.7.8 Username and Password not accepted`.
+*   **Symptoms:** Emails are not arriving. The UI error modal shows `authentication_failed` or SMTP logs show `535 5.7.8 Username and Password not accepted`.
 *   **Causes:** The password is wrong, or the account requires an "App Password" because MFA is enabled.
-*   **Action:** Generate an App Password in your Microsoft/Google account settings and update `SMTP_PASSWORD`.
+*   **Action:** Generate an App Password in your Microsoft/Google account settings, update `SMTP_PASSWORD` in `.env`, and restart the Docker container.
 
 ### Connection timeout / TLS error
-*   **Symptoms:** Server logs show `ETIMEDOUT` or SSL handshake errors.
+*   **Symptoms:** UI shows `timeout` or `tls_error`.
 *   **Causes:** The port is incorrect, or a corporate firewall is blocking outbound traffic on port 587/465.
 *   **Action:** Ensure your server's firewall allows outbound traffic on the specified `SMTP_PORT`.
 
-### Incorrect Sender Address
-*   **Symptoms:** Server logs show `554 5.2.0 STOREDRV.Submission.Exception:SendAsDeniedException`.
-*   **Causes:** `SMTP_FROM` does not match `SMTP_USER`. Many corporate providers block sending emails "on behalf of" another address for security.
+### Incorrect Sender Address / Recipient Rejected
+*   **Symptoms:** UI shows `recipient_or_sender_rejected` (error code `554` or `550`).
+*   **Causes:** `SMTP_FROM` does not match the authenticated `SMTP_USER` mailbox. Strict corporate providers (especially Microsoft 365 / Office 365) prohibit sending emails "on behalf of" another address without specific delegate permissions.
 *   **Action:** Ensure `SMTP_FROM` and `SMTP_USER` are identical.
 
 ## Operational Recommendations
 *   **App Passwords:** Always use App Passwords rather than standard user passwords to prevent security breaches if the server is compromised.
-*   **Rotation:** If a credential is changed, remember to restart the server containers, as environment variables are not hot-reloaded.
-*   **Logging:** Regularly monitor the backend Docker logs to catch silent email failures.
+*   **Container Restarting:** Remember that if you modify the SMTP settings, you must restart the Docker container for the changes to apply.
+*   **Gmail Delivery:** The test email does not display the server host or port in its HTML body to prevent automated security filters (like Gmail's) from blocking the message as potential port-scanning activity.
+
