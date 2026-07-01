@@ -100,6 +100,9 @@ const API = (() => {
   const forgotPassword = (email) =>
     _request('POST', '/auth/forgot-password', { email });
 
+  const changePassword = (currentPassword, newPassword) =>
+    _request('PUT', '/auth/change-password', { currentPassword, newPassword });
+
   // Reservations
   const getReservations = async (params = {}) => {
     const data = await _request('GET', `/reservations${_qs(params)}`);
@@ -219,6 +222,7 @@ const API = (() => {
     login,
     logout,
     forgotPassword,
+    changePassword,
     getReservations,
     getReservation,
     createReservation,

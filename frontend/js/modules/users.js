@@ -55,6 +55,9 @@ const Users = (() => {
       return { success: true, user: createdUser };
     } catch (err) {
       console.error('Error creating user:', err);
+      if (err?.data?.error === 'password_too_weak') {
+        return { success: false, error: 'weak_password' };
+      }
       return { success: false, error: 'api_error' };
     }
   }
@@ -101,6 +104,9 @@ const Users = (() => {
       return { success: true };
     } catch (err) {
       console.error('Error updating user:', err);
+      if (err?.data?.error === 'password_too_weak') {
+        return { success: false, error: 'weak_password' };
+      }
       return { success: false, error: 'api_error' };
     }
   }
@@ -147,7 +153,7 @@ const Users = (() => {
   const ERROR_MSGS = {
     missing_fields: 'Todos los campos requeridos deben completarse.',
     invalid_email:  'El correo electrónico no tiene un formato válido.',
-    weak_password:  'La contraseña debe tener al menos 8 caracteres.',
+    weak_password:  'La contraseña debe tener al menos 8 caracteres y contener al menos una mayúscula, una minúscula, un número y un carácter especial.',
     email_taken:    'Ya existe un usuario con ese correo electrónico.',
     not_found:      'Usuario no encontrado.',
     api_error:      'Error al comunicarse con el servidor. Verifica tu conexión.',

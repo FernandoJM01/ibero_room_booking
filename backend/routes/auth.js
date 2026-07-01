@@ -24,6 +24,11 @@ function _hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+function isValidPassword(password) {
+  return PASSWORD_REGEX.test(password);
+}
+
 const router = express.Router();
 
 // POST /api/auth/login
@@ -177,8 +182,8 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   if (!token || !password) {
     return res.status(400).json({ error: 'token and password required' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'password must be at least 8 characters' });
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character' });
   }
 
   try {
@@ -268,6 +273,66 @@ router.post('/test-email', auth, async (req, res) => {
       error: 'SMTP send failed — check backend logs for details',
       config: smtpConfig,
     });
+  }
+});
+
+// PUT /api/auth/change-password
+router.put('/change-password', auth, authLimiter, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+  }
+
+  if (!isValidPassword(newPassword)) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character' });
+  }
+
+  try {
+    const userId = req.user.id;
+
+    // Fetch user details and current password hash
+    const userResult = await pool.query(
+      'SELECT id, name, email, password_hash FROM users WHERE id = $1 AND active = true',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ error: 'User not found or inactive' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Incorrect current password' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [newPasswordHash, userId]
+    );
+
+    // Audit log
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity, entity_id) VALUES ($1, $2, $3, $4)',
+      [userId, 'password_changed', 'user', userId]
+    );
+
+    // Send notification email (non-blocking)
+    const { passwordChangedEmail } = require('../utils/mailer');
+    const { subject, html } = passwordChangedEmail(user);
+    sendEmail(user.email, subject, html);
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 

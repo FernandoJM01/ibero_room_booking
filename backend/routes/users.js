@@ -13,6 +13,11 @@ const {
 
 const router = express.Router();
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+function isValidPassword(password) {
+  return PASSWORD_REGEX.test(password);
+}
+
 // All user routes require authentication
 router.use(auth);
 
@@ -42,8 +47,8 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     return res.status(400).json({ error: 'role must be "secretaria" or "academico"' });
   }
 
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'password must be at least 8 characters' });
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ error: 'password_too_weak' });
   }
 
   try {
@@ -105,8 +110,8 @@ router.put('/:id', requireSuperAdmin, async (req, res) => {
 
     let passwordHash = existing.rows[0].password_hash;
     if (password) {
-      if (password.length < 8) {
-        return res.status(400).json({ error: 'password must be at least 8 characters' });
+      if (!isValidPassword(password)) {
+        return res.status(400).json({ error: 'password_too_weak' });
       }
       passwordHash = await bcrypt.hash(password, 10);
     }

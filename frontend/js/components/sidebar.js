@@ -103,19 +103,28 @@ const Sidebar = (() => {
       </nav>
 
       <div class="sidebar__user">
-        <div class="sidebar__user-avatar" aria-hidden="true">${initials}</div>
-        <div class="sidebar__user-info">
-          <p class="sidebar__user-name">${Utils.escapeHTML(user?.name || '—')}</p>
-          <p class="sidebar__user-role">${roleLabel}</p>
+        <div class="sidebar__user-profile" id="profile-dropdown-btn" role="button" aria-expanded="false" tabindex="0">
+          <div class="sidebar__user-avatar" aria-hidden="true">${initials}</div>
+          <div class="sidebar__user-info">
+            <p class="sidebar__user-name">${Utils.escapeHTML(user?.name || '—')}</p>
+            <p class="sidebar__user-role">${roleLabel}</p>
+          </div>
         </div>
-        <button class="sidebar__logout" id="logout-btn"
-                title="Cerrar sesión" aria-label="Cerrar sesión">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            ${ICONS['log-out']}
-          </svg>
-        </button>
+        <div class="sidebar__user-menu" id="profile-dropdown-menu">
+          <button id="change-pwd-btn" class="sidebar__user-menu-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Cambiar Contraseña
+          </button>
+          <button id="logout-btn" class="sidebar__user-menu-item sidebar__user-menu-item--danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              ${ICONS['log-out']}
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
       </div>`;
   };
 
@@ -130,6 +139,32 @@ const Sidebar = (() => {
     if (!mountEl) return;
 
     mountEl.innerHTML = _buildHTML(user, activeId);
+
+    // Profile dropdown
+    const profileBtn = document.getElementById('profile-dropdown-btn');
+    const profileMenu = document.getElementById('profile-dropdown-menu');
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isExpanded = profileBtn.getAttribute('aria-expanded') === 'true';
+        profileBtn.setAttribute('aria-expanded', !isExpanded);
+        profileMenu.style.display = isExpanded ? 'none' : 'block';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileBtn.setAttribute('aria-expanded', 'false');
+          profileMenu.style.display = 'none';
+        }
+      });
+    }
+
+    // Change Password
+    document.getElementById('change-pwd-btn')?.addEventListener('click', () => {
+      if (typeof ChangePasswordModal !== 'undefined') {
+        ChangePasswordModal.show();
+      }
+    });
 
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', Auth.logout);

@@ -148,6 +148,89 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  position: relative;
+}
+
+.sidebar__user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  flex: 1;
+  padding: var(--space-2);
+  margin: calc(-1 * var(--space-2));
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.sidebar__user-profile:hover,
+.sidebar__user-profile:focus-visible {
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+.sidebar__user-profile[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__user-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: var(--space-5);
+  right: var(--space-5);
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
+  padding: var(--space-1) 0;
+  z-index: 100;
+  transform-origin: bottom center;
+  animation: dropdownSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sidebar__user-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebar__user-menu-item:hover,
+.sidebar__user-menu-item:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  outline: none;
+}
+
+.sidebar__user-menu-item--danger {
+  color: var(--color-primary-light);
+}
+
+.sidebar__user-menu-item--danger:hover,
+.sidebar__user-menu-item--danger:focus-visible {
+  background: rgba(239, 62, 66, 0.12);
+  color: var(--color-primary-light);
 }
 
 .sidebar__user-avatar {

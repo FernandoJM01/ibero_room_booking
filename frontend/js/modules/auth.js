@@ -112,6 +112,17 @@ const Auth = (() => {
     }
   };
 
+  /* ── CAMBIAR CONTRASEÑA ── */
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await API.changePassword(currentPassword, newPassword);
+      return { success: true };
+    } catch (err) {
+      console.error('Change password error:', err);
+      return { success: false, error: err.message || 'Error al cambiar la contraseña' };
+    }
+  };
+
   /* ── TIMEOUT AUTOMÁTICO ── */
   let _inactivityTimer = null;
 
@@ -140,6 +151,7 @@ const Auth = (() => {
     requireAuth,
     requireSuperAdmin,
     requestPasswordReset,
+    changePassword,
     startInactivityWatcher
   };
 })();

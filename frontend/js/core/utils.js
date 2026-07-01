@@ -89,8 +89,8 @@ const Utils = (() => {
   /** Valida correo electrónico */
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  /** Valida contraseña (mín. 8 chars) */
-  const isValidPassword = (pwd) => pwd.length >= 8;
+  /** Valida contraseña (mín. 8 chars con mayúscula, minúscula, número y especial) */
+  const isValidPassword = (pwd) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(pwd);
 
   /* ── STRINGS ── */
 
