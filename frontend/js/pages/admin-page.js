@@ -584,51 +584,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function _renderNotifLog() {
+  async function _renderNotifLog() {
     const body = document.getElementById('notif-log-body');
     if (!body) return;
+    
+    body.innerHTML = '<div class="notif-empty">Cargando log de notificaciones...</div>';
 
-    const log = Notifications.getLog();
+    const log = await Notifications.getLog();
 
-    if (!log.length) {
+    if (!log || !log.length) {
       body.innerHTML = '<div class="notif-empty">No hay notificaciones registradas aún.<br>Se registran automáticamente al crear o cancelar reservaciones.</div>';
       return;
     }
 
-    body.innerHTML = log.slice(0, 50).map(entry => {
-      const time = new Date(entry.sentAt).toLocaleString('es-MX', {
+    body.innerHTML = log.map(entry => {
+      const time = new Date(entry.sent_at).toLocaleString('es-MX', {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
       });
+      
+      let statusIcon = '';
+      let statusClass = '';
+      let statusText = '';
+      
+      if (entry.status === 'sent') {
+        statusIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        statusClass = 'notif-status-sent';
+        statusText = 'Enviado';
+      } else if (entry.status === 'failed') {
+        statusIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        statusClass = 'notif-status-failed';
+        statusText = `Falló: ${entry.error_message || 'Error desconocido'}`;
+      } else {
+        statusIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+        statusClass = 'notif-status-skipped';
+        statusText = 'Omitido (SMTP inactivo)';
+      }
 
       return `
-        <div class="notif-entry">
-          <div class="notif-entry__icon" aria-hidden="true">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+        <div class="notif-entry" style="display: flex; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); align-items: flex-start;">
+          <div class="notif-entry__icon" aria-hidden="true" style="margin-top: 2px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
           </div>
-          <div class="notif-entry__body">
-            <div class="notif-entry__subject">${Utils.escapeHTML(entry.subject)}</div>
-            <div class="notif-entry__to">Para: ${Utils.escapeHTML(entry.to)}</div>
+          <div class="notif-entry__body" style="flex: 1;">
+            <div class="notif-entry__subject" style="font-weight: 500; font-size: 0.9rem;">${Utils.escapeHTML(entry.subject)}</div>
+            <div class="notif-entry__to" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Para: ${Utils.escapeHTML(entry.recipient_email)}</div>
+            <div class="notif-entry__status" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; margin-top: 6px; color: var(--text-muted);">
+              ${statusIcon} <span class="${statusClass}">${statusText}</span>
+            </div>
           </div>
-          <span class="notif-entry__time">${time}</span>
+          <span class="notif-entry__time" style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">${time}</span>
         </div>`;
     }).join('');
   }
 
-  document.getElementById('btn-clear-notif')?.addEventListener('click', () => {
-    Modal.confirm(
-      { title: 'Limpiar log', message: '¿Eliminar todo el historial de notificaciones?', confirmText: 'Limpiar', danger: true },
-      () => {
-        Store.setState({ notificationLog: [] });
-        Store.persist();
-        _renderNotifLog();
-        Toast.show('Log de notificaciones limpiado.', 'success');
-      }
-    );
-  });
+  // Remove the clear button event listener as we shouldn't clear DB audit logs from UI easily
+  const clearBtn = document.getElementById('btn-clear-notif');
+  if (clearBtn) clearBtn.style.display = 'none';
 
   /* ════════════════════════════════════════════════════════
      SECTION: RESPALDOS (HU-18, HU-19)

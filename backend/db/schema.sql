@@ -61,6 +61,16 @@ CREATE TABLE audit_log (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Notification logs (Audit trail for emails)
+CREATE TABLE notification_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_email VARCHAR(255) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL CHECK (status IN ('sent', 'failed', 'skipped')),
+  error_message TEXT,
+  sent_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Backups
 CREATE TABLE backups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

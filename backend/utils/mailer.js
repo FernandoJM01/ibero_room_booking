@@ -67,9 +67,12 @@ function _reservationTable(reservation, includeObservations = true) {
     </table>`;
 }
 
+const pool = require('../db/pool');
+
 async function sendEmail(to, subject, html) {
   if (!_enabled) {
     console.log(`[Mailer] SMTP not configured — skipping email to ${to}: ${subject}`);
+    await logNotification(to, subject, 'skipped', 'SMTP not configured');
     return false;
   }
   try {
@@ -80,10 +83,24 @@ async function sendEmail(to, subject, html) {
       html,
     });
     console.log(`[Mailer] Sent "${subject}" to ${to}`);
+    await logNotification(to, subject, 'sent', null);
     return true;
   } catch (err) {
     console.error(`[Mailer] Failed to send "${subject}" to ${to}:`, err.message);
+    await logNotification(to, subject, 'failed', err.message);
     return false;
+  }
+}
+
+async function logNotification(recipient_email, subject, status, error_message) {
+  try {
+    await pool.query(
+      `INSERT INTO notification_logs (recipient_email, subject, status, error_message) 
+       VALUES ($1, $2, $3, $4)`,
+      [recipient_email, subject, status, error_message]
+    );
+  } catch (err) {
+    console.error('[Mailer] Failed to save notification log to database:', err.message);
   }
 }
 

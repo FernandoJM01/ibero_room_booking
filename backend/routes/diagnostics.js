@@ -110,19 +110,34 @@ router.post('/smtp', auth, requireSuperAdmin, async (req, res) => {
       html
     });
 
+    const pool = require('../db/pool');
+    await pool.query(
+      `INSERT INTO notification_logs (recipient_email, subject, status, error_message) VALUES ($1, $2, $3, $4)`,
+      [recipient, subject, 'sent', null]
+    ).catch(e => console.error(e));
+
     // Case 6: Success
-    return res.json({
+    res.json({
       success: true,
-      message: 'Correo enviado correctamente.',
-      details: {
+      message: 'Correo de prueba enviado exitosamente.',
+      info: {
         messageId: info.messageId,
-        recipient,
-        timestamp: new Date().toISOString()
+        response: info.response,
       }
     });
 
   } catch (err) {
-    let errorType = 'unknown';
+    console.error('SMTP Diagnostic Error:', err);
+    
+    // Log failed diagnostic email if it failed during send
+    if (err.command !== 'CONN') {
+      const { testDiagnosticEmail } = require('../utils/mailer');
+      const pool = require('../db/pool');
+      pool.query(
+        `INSERT INTO notification_logs (recipient_email, subject, status, error_message) VALUES ($1, $2, $3, $4)`,
+        [recipient, testDiagnosticEmail().subject, 'failed', err.message]
+      ).catch(e => console.error(e));
+    }
     let userFriendlyMessage = 'Ocurrió un error inesperado al intentar conectar con el servidor SMTP.';
 
     // Classify errors based on nodemailer/Node.js error codes

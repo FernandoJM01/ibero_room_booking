@@ -212,6 +212,9 @@ const API = (() => {
   const testSmtp = (recipient) =>
     _request('POST', '/diagnostics/smtp', { recipient });
 
+  const getNotificationLog = () =>
+    _request('GET', '/notifications/log');
+
   return {
     login,
     logout,
@@ -242,5 +245,6 @@ const API = (() => {
     rejectModificationRequest,
     getSmtpConfig,
     testSmtp,
+    getNotificationLog,
   };
 })();
