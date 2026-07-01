@@ -1,0 +1,177 @@
+/* ============================================================
+   CALENDAR-VIEW.CSS — Layout de la página calendario completa
+   Plataforma Reservación Sala de Juntas · Ibero CDMX
+   ============================================================ */
+
+/* ── TOOLBAR ── */
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cal-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cal-toolbar__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary);
+  min-width: 200px;
+}
+
+.cal-toolbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cal-toolbar__nav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-secondary-mid);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.cal-toolbar__nav-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-secondary);
+}
+
+.cal-toolbar__today {
+  padding: 0 var(--space-4);
+  height: 34px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.cal-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* View toggle (mes / semana) */
+.cal-view-toggle {
+  display: flex;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.cal-view-btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary-mid);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: all var(--transition-fast);
+}
+.cal-view-btn.active {
+  background: var(--color-bg);
+  color: var(--color-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── WRAPPER (toolbar + grid en una tarjeta) ── */
+.cal-card {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── GRID CONTAINER ── */
+.cal-grid-container {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Force the grid to always show full rows */
+#cal-body .cal-grid__days {
+  min-height: 480px;
+}
+
+/* ── LEGEND ── */
+.cal-legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.cal-legend-bar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-mid);
+}
+
+.cal-legend-bar__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* ── READ-ONLY BANNER (académico) ── */
+.cal-readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-info-bg);
+  border-bottom: 1px solid #bee5eb;
+  font-size: var(--font-size-sm);
+  color: #0e7a8a;
+}
+
+.cal-readonly-banner svg {
+  flex-shrink: 0;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .cal-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .cal-toolbar__title {
+    font-size: var(--font-size-lg);
+    min-width: unset;
+  }
+
+  .cal-toolbar__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

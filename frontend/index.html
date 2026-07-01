@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Plataforma de Gestión y Reservación de Sala de Juntas — Universidad Iberoamericana" />
+  <title>Acceso — Sala de Juntas Ibero</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/pages/login.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<main class="login-page" role="main">
+
+  <!-- ════════════════════════════════════════
+       TARJETA DE LOGIN
+       ════════════════════════════════════════ -->
+  <div class="login-card">
+
+    <!-- Header con color primario Ibero -->
+    <div class="login-card__header">
+      <div class="login-logo">
+        <img src="assets/img/logo-ibero-white.png"
+             alt="Universidad Iberoamericana"
+             class="login-logo__img" />
+      </div>
+      <h1 class="login-card__title">Sala de Juntas</h1>
+      <p class="login-card__subtitle">Sistema de Gestión y Reservaciones</p>
+    </div>
+
+    <!-- ── SECCIÓN LOGIN ── -->
+    <div id="login-section">
+      <div class="login-card__body">
+
+        <!-- Mensaje de error global -->
+        <div id="login-error" class="login-error hidden" role="alert" aria-live="polite">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span></span>
+        </div>
+
+        <!-- Formulario de login -->
+        <form id="login-form" novalidate autocomplete="off">
+
+          <!-- Campo correo -->
+          <div class="login-form__group">
+            <label class="login-form__label" for="login-email">Correo institucional</label>
+            <div class="login-form__input-wrapper">
+              <span class="login-form__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </span>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                class="login-form__input"
+                placeholder="nombre@ibero.mx"
+                autocomplete="email"
+                required
+                aria-required="true"
+                aria-describedby="login-error"
+              />
+            </div>
+          </div>
+
+          <!-- Campo contraseña -->
+          <div class="login-form__group">
+            <label class="login-form__label" for="login-password">Contraseña</label>
+            <div class="login-form__input-wrapper">
+              <span class="login-form__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                class="login-form__input"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                required
+                aria-required="true"
+              />
+              <button
+                type="button"
+                id="pw-toggle"
+                class="login-form__pw-toggle"
+                aria-label="Mostrar contraseña"
+                title="Mostrar/ocultar contraseña"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="login-form__actions">
+            <button
+              type="submit"
+              id="login-btn"
+              class="btn btn-primary btn-full login-form__btn"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+
+          <p class="login-form__forgot">
+            <a href="#" id="forgot-link" aria-label="Recuperar contraseña olvidada">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </p>
+        </form>
+
+      </div><!-- /.login-card__body -->
+    </div><!-- /#login-section -->
+
+
+    <!-- ── SECCIÓN OLVIDÉ CONTRASEÑA ── -->
+    <div id="forgot-section" class="hidden">
+      <div class="login-card__body">
+
+        <!-- Volver atrás -->
+        <button class="forgot-section__back" id="forgot-back" type="button" aria-label="Volver al inicio de sesión">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Volver al inicio de sesión
+        </button>
+
+        <h2 class="forgot-section__title">Recuperar contraseña</h2>
+        <p class="forgot-section__desc">
+          Ingresa tu correo institucional y te enviaremos instrucciones para restablecer tu contraseña.
+        </p>
+
+        <!-- Formulario de recuperación -->
+        <form id="forgot-form" novalidate>
+          <div class="login-form__group">
+            <label class="login-form__label" for="forgot-email">Correo institucional</label>
+            <div class="login-form__input-wrapper">
+              <span class="login-form__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </span>
+              <input
+                id="forgot-email"
+                name="email"
+                type="email"
+                class="login-form__input"
+                placeholder="nombre@ibero.mx"
+                autocomplete="email"
+                required
+                aria-required="true"
+              />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full login-form__btn">
+            Enviar instrucciones
+          </button>
+        </form>
+
+        <!-- Mensaje de éxito -->
+        <div id="forgot-success" class="forgot-success hidden" role="status" aria-live="polite">
+          <div class="forgot-success__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <h3 class="forgot-success__title">Revisa tu correo</h3>
+          <p class="forgot-success__text">
+            Si el correo ingresado existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña en los próximos minutos.
+          </p>
+          <button class="btn btn-secondary" id="forgot-back-2" type="button">
+            Volver al inicio de sesión
+          </button>
+        </div>
+
+      </div>
+    </div><!-- /#forgot-section -->
+
+    <!-- Footer -->
+    <footer class="login-card__footer">
+      Universidad Iberoamericana Ciudad de México · 2026<br />
+      Plataforma de Gestión de Sala de Juntas
+    </footer>
+
+  </div><!-- /.login-card -->
+
+</main><!-- /.login-page -->
+
+<!-- Toast container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Scripts (orden de dependencias) -->
+<script src="js/core/utils.js"></script>
+<script src="js/core/api.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/components/toast.js"></script>
+<script src="js/modules/notifications.js"></script>
+<script src="js/modules/auth.js"></script>
+<script src="js/pages/login.js"></script>
+
+<script>
+  // Segundo botón "Volver" (en pantalla de éxito)
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('forgot-back-2');
+    const forgotSection = document.getElementById('forgot-section');
+    const loginSection  = document.getElementById('login-section');
+    const forgotForm    = document.getElementById('forgot-form');
+    const forgotSuccess = document.getElementById('forgot-success');
+
+    btn && btn.addEventListener('click', () => {
+      forgotSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+      forgotForm.style.display = '';
+      forgotSuccess.classList.add('hidden');
+      document.getElementById('forgot-email').value = '';
+    });
+  });
+</script>
+
+</body>
+</html>

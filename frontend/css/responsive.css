@@ -1,0 +1,201 @@
+/* ============================================================
+   RESPONSIVE.CSS — Media queries globales
+   Breakpoints: 1200px (desktop), 768px (tablet), 320px (mobile)
+   Plataforma Reservación Sala de Juntas · Ibero CDMX
+   ============================================================ */
+
+/* ── BASE: prevenir overflow horizontal en cualquier ancho ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* ════════════════════════════════
+   DESKTOP AMPLIO (1200px+)
+   ════════════════════════════════ */
+@media (min-width: 1200px) {
+  .page-content {
+    padding: var(--space-8);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ════════════════════════════════
+   TABLET (769px – 1199px)
+   ════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-content {
+    padding: var(--space-6);
+  }
+}
+
+/* ════════════════════════════════
+   SINGLE-COLUMN LAYOUT (≤ 1199px)
+   Dashboard grid collapses to one column here; switch the shell to
+   natural-height / page-scroll so the calendar can expand fully.
+   ════════════════════════════════ */
+@media (max-width: 1199px) {
+  .main-content {
+    height: auto;
+    overflow: visible;
+  }
+  .page-content {
+    overflow-y: visible;
+  }
+}
+
+/* ════════════════════════════════
+   MOBILE / TABLET (≤ 768px)
+   ════════════════════════════════ */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  .sidebar.is-open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-xl);
+  }
+  .sidebar-overlay.is-visible {
+    display: block;
+  }
+  .main-content {
+    margin-left: 0;
+    height: auto;
+    overflow: visible;
+  }
+  .page-content {
+    overflow-y: visible;
+  }
+  .topbar__toggle {
+    display: flex;
+  }
+  .topbar {
+    padding: 0 var(--space-4);
+    gap: var(--space-3);
+  }
+  .topbar__title {
+    font-size: var(--font-size-base);
+  }
+  .page-content {
+    padding: var(--space-4);
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+  .cal-day {
+    min-height: 70px;
+    padding: var(--space-1);
+  }
+  .topbar__breadcrumb {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════
+   MOBILE PEQUEÑO (≤ 480px)
+   ════════════════════════════════ */
+@media (max-width: 480px) {
+  .page-content {
+    padding: var(--space-3);
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .topbar {
+    padding: 0 var(--space-3);
+  }
+  .topbar__badge-role {
+    display: none;
+  }
+  .cal-day {
+    min-height: 52px;
+    padding: 2px;
+  }
+  .cal-day__number {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+  .cal-reservation {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+  /* Popup ancho completo en móvil */
+  .cal-popup {
+    width: calc(100vw - var(--space-6)) !important;
+    left: var(--space-3) !important;
+  }
+  .login-card {
+    border-radius: var(--radius-lg);
+  }
+  .login-card__body,
+  .forgot-section {
+    padding: var(--space-5);
+  }
+  .login-card__header {
+    padding: var(--space-6) var(--space-5) var(--space-5);
+  }
+}
+
+/* ════════════════════════════════
+   MOBILE MUY PEQUEÑO (≤ 360px)
+   cubre el mínimo de 320px
+   ════════════════════════════════ */
+@media (max-width: 360px) {
+  :root {
+    --font-size-base: 15px;
+    --sidebar-width:  240px;
+  }
+  .login-page {
+    padding: var(--space-2);
+  }
+  .login-card__header {
+    padding: var(--space-5) var(--space-4) var(--space-4);
+  }
+  .login-card__body,
+  .forgot-section {
+    padding: var(--space-4);
+  }
+  .topbar__title {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* ════════════════════════════════
+   PRINT
+   ════════════════════════════════ */
+@media print {
+  .sidebar,
+  .topbar,
+  .sidebar-overlay,
+  .fab,
+  #toast-container,
+  .cal-popup {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .page-content {
+    padding: 0 !important;
+  }
+  .cal-day {
+    break-inside: avoid;
+  }
+}

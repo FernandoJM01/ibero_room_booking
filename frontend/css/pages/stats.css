@@ -1,0 +1,279 @@
+/* ============================================================
+   STATS.CSS — Dashboard de estadísticas
+   HU-29 (dashboard de uso), HU-30 (reporte ocupación por período)
+   Plataforma Reservación Sala de Juntas · Ibero CDMX
+   ============================================================ */
+
+/* ── FILTROS DE PERÍODO ─────────────────────────────────── */
+
+.stats-period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.stats-period-bar .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stats-period-bar label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary-mid);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.stats-period-bar .filter-input {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+  background: var(--color-bg);
+  outline: none;
+  transition: border-color .15s;
+}
+.stats-period-bar .filter-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+/* ── KPI CARDS ──────────────────────────────────────────── */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.kpi-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); }
+
+.kpi-card__value {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary);
+  line-height: 1;
+}
+
+.kpi-card__label {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.kpi-card__sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+}
+
+/* accent borders */
+.kpi-card--primary { border-top: 3px solid var(--color-primary); }
+.kpi-card--success { border-top: 3px solid var(--color-success); }
+.kpi-card--warning { border-top: 3px solid var(--color-warning); }
+.kpi-card--info    { border-top: 3px solid var(--color-info); }
+
+/* ── CHARTS GRID ────────────────────────────────────────── */
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.chart-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.chart-card--wide {
+  grid-column: 1 / -1;
+}
+
+.chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.chart-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary);
+}
+
+.chart-card__body {
+  position: relative;
+  width: 100%;
+}
+
+/* Fixed height containers for Chart.js */
+.chart-container {
+  position: relative;
+  height: 240px;
+}
+
+.chart-container--donut {
+  height: 220px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ── TOP AREAS TABLE ────────────────────────────────────── */
+
+.top-areas-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.top-area-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.top-area-item__rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.top-area-item__bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.top-area-item__name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.top-area-item__bar-bg {
+  height: 6px;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.top-area-item__bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width .4s ease;
+}
+
+.top-area-item__count {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary-mid);
+  white-space: nowrap;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── EXPORT BAR (bottom) ────────────────────────────────── */
+
+.stats-export-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-4);
+}
+
+.stats-export-bar__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary-light);
+  margin-right: auto;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────── */
+
+.stats-empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--color-secondary-light);
+  font-size: var(--font-size-sm);
+}
+
+.stats-empty svg {
+  display: block;
+  margin: 0 auto var(--space-4);
+  opacity: .4;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .chart-card--wide {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats-period-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .stats-period-bar .filter-group {
+    width: 100%;
+  }
+}

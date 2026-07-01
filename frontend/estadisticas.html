@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estadísticas — Sala de Juntas Ibero</title>
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages/stats.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal"></nav>
+
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar" role="banner">
+      <button class="topbar__toggle" id="sidebar-toggle"
+              aria-label="Abrir menú" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <h1 class="topbar__title">Estadísticas</h1>
+      <nav class="topbar__breadcrumb" aria-label="Ruta de navegación">
+        <a href="dashboard.html">Inicio</a>
+        <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+        <span aria-current="page">Estadísticas</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
+      </div>
+    </header>
+
+    <!-- Page body -->
+    <main class="page-content" role="main">
+
+      <!-- ── Filtros de período ── -->
+      <div class="stats-period-bar" role="search" aria-label="Filtrar estadísticas por período">
+        <div class="filter-group">
+          <label for="stats-date-from">Desde</label>
+          <input type="date" id="stats-date-from" class="filter-input"
+                 aria-label="Fecha desde" />
+        </div>
+        <div class="filter-group">
+          <label for="stats-date-to">Hasta</label>
+          <input type="date" id="stats-date-to" class="filter-input"
+                 aria-label="Fecha hasta" />
+        </div>
+        <div class="filter-group" style="flex-direction:row;gap:var(--space-2);align-items:flex-end;">
+          <button class="btn btn-primary btn-sm" id="btn-stats-apply">Aplicar</button>
+          <button class="btn btn-ghost btn-sm"   id="btn-stats-reset">Este año</button>
+        </div>
+      </div>
+
+      <!-- ── KPI cards ── -->
+      <div class="kpi-grid" id="kpi-grid" aria-label="Indicadores clave">
+        <div class="kpi-card kpi-card--primary">
+          <div class="kpi-card__value" id="kpi-total">—</div>
+          <div class="kpi-card__label">Total reservaciones</div>
+          <div class="kpi-card__sub" id="kpi-total-sub">en el período</div>
+        </div>
+        <div class="kpi-card kpi-card--success">
+          <div class="kpi-card__value" id="kpi-active">—</div>
+          <div class="kpi-card__label">Activas</div>
+          <div class="kpi-card__sub" id="kpi-active-pct">—% del total</div>
+        </div>
+        <div class="kpi-card kpi-card--warning">
+          <div class="kpi-card__value" id="kpi-cancelled">—</div>
+          <div class="kpi-card__label">Canceladas</div>
+          <div class="kpi-card__sub" id="kpi-cancelled-pct">—% del total</div>
+        </div>
+        <div class="kpi-card kpi-card--info">
+          <div class="kpi-card__value" id="kpi-recurring">—</div>
+          <div class="kpi-card__label">Recurrentes</div>
+          <div class="kpi-card__sub">reservaciones en serie</div>
+        </div>
+      </div>
+
+      <!-- ── Charts ── -->
+      <div class="charts-grid">
+
+        <!-- Ocupación mensual (barras) — ancho completo -->
+        <div class="chart-card chart-card--wide">
+          <div class="chart-card__header">
+            <span class="chart-card__title">Ocupación mensual</span>
+            <span style="font-size:var(--font-size-xs);color:var(--color-secondary-light);"
+                  id="chart-bar-subtitle">Reservaciones activas por mes</span>
+          </div>
+          <div class="chart-card__body">
+            <div class="chart-container">
+              <canvas id="chart-monthly" aria-label="Gráfica de ocupación mensual" role="img"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top 5 áreas (dona) -->
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <span class="chart-card__title">Top 5 áreas / departamentos</span>
+          </div>
+          <div class="chart-card__body">
+            <div class="chart-container--donut">
+              <canvas id="chart-areas-donut" aria-label="Gráfica de top 5 áreas" role="img"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activas vs canceladas (barras apiladas) -->
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <span class="chart-card__title">Activas vs. Canceladas</span>
+          </div>
+          <div class="chart-card__body">
+            <div class="chart-container">
+              <canvas id="chart-status" aria-label="Gráfica de activas vs canceladas" role="img"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.charts-grid -->
+
+      <!-- ── Top áreas (lista) ── -->
+      <div class="chart-card" style="margin-bottom:var(--space-5);">
+        <div class="chart-card__header">
+          <span class="chart-card__title">Ranking de áreas</span>
+        </div>
+        <ul class="top-areas-list" id="top-areas-list" aria-label="Ranking de áreas por número de reservaciones">
+          <!-- JS renderiza aquí -->
+        </ul>
+      </div>
+
+      <!-- ── Barra de exportación ── -->
+      <div class="stats-export-bar">
+        <span class="stats-export-bar__label">Exportar reporte del período</span>
+        <button class="btn btn-secondary btn-sm" id="btn-stats-excel">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          Excel
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-stats-pdf">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          PDF
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-stats-csv">CSV</button>
+      </div>
+
+    </main>
+  </div><!-- /.main-content -->
+</div><!-- /.app -->
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+<div id="modal-container"></div>
+
+<!-- CDN: Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- CDN: jsPDF + autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- CDN: SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Scripts -->
+<script src="js/core/utils.js"></script>
+<script src="js/core/api.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/components/toast.js"></script>
+<script src="js/components/sidebar.js"></script>
+<script src="js/modules/notifications.js"></script>
+<script src="js/modules/auth.js"></script>
+<script src="js/modules/reservations.js"></script>
+<script src="js/modules/search.js"></script>
+<script src="js/modules/stats.js"></script>
+<script src="js/modules/export.js"></script>
+<script src="js/pages/stats-page.js"></script>
+
+</body>
+</html>

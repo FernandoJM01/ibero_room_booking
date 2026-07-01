@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Sala de Juntas Ibero</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components/calendar.css" />
+  <link rel="stylesheet" href="css/components/forms.css" />
+  <link rel="stylesheet" href="css/components/modals.css" />
+  <link rel="stylesheet" href="css/components/tutorial.css" />
+  <link rel="stylesheet" href="css/pages/dashboard.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<!-- Overlay sidebar (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="app">
+
+  <!-- Sidebar (inyectado por Sidebar.init) -->
+  <nav class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal"></nav>
+
+
+  <!-- ══════════════════════════════
+       CONTENIDO PRINCIPAL
+       ══════════════════════════════ -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar" role="banner">
+      <button class="topbar__toggle" id="sidebar-toggle"
+              aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <h1 class="topbar__title">Dashboard</h1>
+      <nav class="topbar__breadcrumb" aria-label="Ruta de navegación">
+        <span>Inicio</span>
+        <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+        <span aria-current="page">Dashboard</span>
+      </nav>
+
+      <div class="topbar__actions">
+        <button class="topbar__help-btn" id="btn-tutorial"
+                aria-label="Tutorial interactivo" title="Ver tutorial">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
+        <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
+      </div>
+    </header>
+
+    <!-- Página -->
+    <main class="page-content" role="main">
+
+      <!-- Tarjetas resumen -->
+      <section class="stats-grid" aria-label="Resumen de reservaciones">
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--primary" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8"  y1="2" x2="8"  y2="6"/>
+              <line x1="3"  y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value" id="stat-total">—</div>
+            <div class="stat-card__label">Reservaciones este mes</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--success" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value" id="stat-active">—</div>
+            <div class="stat-card__label">Activas próximos 7 días</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--warning" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value" id="stat-today">—</div>
+            <div class="stat-card__label">Reservaciones hoy</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--info" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value" id="stat-recurring">—</div>
+            <div class="stat-card__label">Recurrentes activas</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid principal: Calendario + Panel lateral -->
+      <div class="dashboard-grid">
+
+        <!-- Calendario -->
+        <section class="calendar-widget" aria-label="Calendario de reservaciones">
+          <div class="calendar-widget__header">
+            <h2 class="calendar-widget__title" id="cal-month-title">Abril 2026</h2>
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+              <!-- Selector rápido mes/año (solo vista mensual) -->
+              <div class="cal-quick-nav" id="cal-quick-nav" aria-label="Selección rápida de mes y año">
+                <select id="cal-quick-month" class="cal-quick-select" aria-label="Mes">
+                  <option value="0">Enero</option>
+                  <option value="1">Febrero</option>
+                  <option value="2">Marzo</option>
+                  <option value="3">Abril</option>
+                  <option value="4">Mayo</option>
+                  <option value="5">Junio</option>
+                  <option value="6">Julio</option>
+                  <option value="7">Agosto</option>
+                  <option value="8">Septiembre</option>
+                  <option value="9">Octubre</option>
+                  <option value="10">Noviembre</option>
+                  <option value="11">Diciembre</option>
+                </select>
+                <input type="number" id="cal-quick-year" class="cal-quick-select cal-quick-year"
+                       min="2000" max="2100" aria-label="Año" />
+              </div>
+              <!-- Toggle vista -->
+              <div class="calendar-widget__view-toggle" role="group" aria-label="Vista del calendario">
+                <button class="view-toggle-btn active" id="view-month" aria-pressed="true">Mes</button>
+                <button class="view-toggle-btn" id="view-week" aria-pressed="false">Semana</button>
+              </div>
+              <!-- Navegación -->
+              <div class="calendar-widget__nav" role="group" aria-label="Navegar entre meses">
+                <button class="cal-nav-btn" id="cal-prev" aria-label="Mes anterior" title="Mes anterior">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+                <button class="cal-nav-btn" id="cal-today" title="Ir a hoy">Hoy</button>
+                <button class="cal-nav-btn" id="cal-next" aria-label="Mes siguiente" title="Mes siguiente">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra de selección semanal (visible sólo cuando hay selección) -->
+          <div class="cal-selection-bar hidden" id="cal-selection-bar" role="region" aria-live="polite">
+            <span class="cal-selection-bar__count" id="cal-selection-count">0 horas seleccionadas</span>
+            <span class="cal-selection-bar__hint">Arrastra, Shift+Click o Ctrl+Click para seleccionar varias horas</span>
+            <div class="cal-selection-bar__actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="cal-selection-clear">Limpiar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="cal-selection-book">
+                Reservar selección
+              </button>
+            </div>
+          </div>
+
+          <!-- Cuerpo del calendario (renderizado por JS) -->
+          <div id="calendar-body">
+            <!-- CalendarGrid.render() escribe aquí -->
+          </div>
+
+          <!-- Leyenda -->
+          <div class="cal-legend" role="list" aria-label="Leyenda del calendario">
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-occupied);" aria-hidden="true"></span>
+              Reservada
+            </div>
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-today);" aria-hidden="true"></span>
+              Hoy
+            </div>
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-holiday);" aria-hidden="true"></span>
+              Festivo
+            </div>
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-closed);" aria-hidden="true"></span>
+              Cierre inst.
+            </div>
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-recurring);" aria-hidden="true"></span>
+              Recurrente
+            </div>
+            <div class="cal-legend__item" role="listitem">
+              <span class="cal-legend__dot" style="background:var(--cal-evento);" aria-hidden="true"></span>
+              Evento
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel de próximas reservaciones -->
+        <aside class="upcoming-panel" aria-label="Próximas reservaciones">
+          <!-- Mini-calendario selector de fecha -->
+          <div id="mini-cal" class="mini-cal"></div>
+
+          <div class="upcoming-panel__header">
+            <h2 class="upcoming-panel__title">Próximas reservaciones</h2>
+            <a href="historial.html" class="text-sm" style="color:var(--color-primary);">Ver todas</a>
+          </div>
+          <div class="upcoming-panel__body" id="upcoming-list" aria-live="polite">
+            <!-- JS renderiza aquí -->
+            <div class="upcoming-empty">Cargando…</div>
+          </div>
+        </aside>
+
+      </div><!-- /.dashboard-grid -->
+
+    </main><!-- /.page-content -->
+  </div><!-- /.main-content -->
+</div><!-- /.app -->
+
+
+<!-- Toast container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Modal container (reservación) -->
+<div id="modal-container"></div>
+
+<!-- Scripts -->
+<script src="js/core/utils.js"></script>
+<script src="js/core/api.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/components/toast.js"></script>
+<script src="js/components/sidebar.js"></script>
+<script src="js/components/calendar-grid.js"></script>
+<script src="js/components/calendar-week.js"></script>
+<script src="js/components/mini-calendar.js"></script>
+<script src="js/components/modal.js"></script>
+<script src="js/components/tutorial.js"></script>
+<script src="js/components/reservation-modal.js"></script>
+<script src="js/components/modification-request-modal.js"></script>
+<script src="js/modules/calendar.js"></script>
+<script src="js/modules/ai.js"></script>
+<script src="js/modules/notifications.js"></script>
+<script src="js/modules/auth.js"></script>
+<script src="js/modules/reservations.js"></script>
+<script src="js/modules/holidays.js"></script>
+<script src="js/modules/recurring.js"></script>
+<script src="js/pages/dashboard.js"></script>
+
+</body>
+</html>

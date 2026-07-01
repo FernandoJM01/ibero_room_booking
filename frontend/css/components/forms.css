@@ -1,0 +1,358 @@
+/* ============================================================
+   FORMS.CSS — Estilos de formularios
+   Plataforma Reservación Sala de Juntas · Ibero CDMX
+   ============================================================ */
+
+/* ── CARD DE FORMULARIO ── */
+.form-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.form-card__header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.form-card__icon {
+  color: var(--color-primary);
+}
+
+.form-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary);
+}
+
+.form-card__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary-light);
+  margin-top: 1px;
+}
+
+.form-card__body {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── SECCIÓN ── */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-section__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── GRUPO CAMPO ── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: relative;
+}
+
+.form-group--row {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── LABEL ── */
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary-mid);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.form-label .required {
+  color: var(--color-error);
+  font-size: 11px;
+}
+
+.form-label svg {
+  color: var(--color-secondary-light);
+  flex-shrink: 0;
+}
+
+/* ── INPUTS / SELECT / TEXTAREA ── */
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-secondary);
+  background: var(--color-bg);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--color-secondary-light);
+}
+
+.form-input[readonly] {
+  background: var(--color-bg-alt);
+  color: var(--color-secondary-mid);
+  cursor: default;
+}
+
+.form-input[readonly]:focus {
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+/* Select custom arrow */
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-8);
+  cursor: pointer;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+  line-height: var(--line-height-normal);
+}
+
+/* ── ESTADOS DE VALIDACIÓN ── */
+.form-input.is-error,
+.form-select.is-error,
+.form-textarea.is-error {
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.form-input.is-error:focus,
+.form-select.is-error:focus,
+.form-textarea.is-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.form-input.is-valid,
+.form-select.is-valid {
+  border-color: var(--color-success);
+}
+
+.form-input.is-valid:focus,
+.form-select.is-valid:focus {
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
+
+.form-error-msg {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.form-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+}
+
+/* ── GRUPO DE DOS TIEMPOS ── */
+.time-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* ── INDICADOR DE TRASLAPE ── */
+.overlap-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background var(--transition-fast);
+}
+
+.overlap-status.is-checking {
+  background: var(--color-bg-alt);
+  color: var(--color-secondary-light);
+}
+
+.overlap-status.is-available {
+  background: var(--color-success-bg);
+  color: #1a7a33;
+  border: 1px solid #b2dfdb;
+}
+
+.overlap-status.is-conflict {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid #f5c6cb;
+}
+
+.overlap-status svg {
+  flex-shrink: 0;
+}
+
+/* ── TOGGLE DE RECURRENCIA ── */
+.recurrence-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  user-select: none;
+}
+
+.recurrence-toggle:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-bg);
+}
+
+.recurrence-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.recurrence-toggle__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary-mid);
+  flex: 1;
+}
+
+.recurrence-toggle__label strong {
+  color: var(--color-secondary);
+}
+
+/* Sección de recurrencia (expandible) */
+.recurrence-section {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--color-bg-alt);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── ACCIONES DEL FORMULARIO ── */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+/* ── AUTOCOMPLETE DROPDOWN ── */
+.ac-dropdown {
+  position: absolute;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  padding: var(--space-1) 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.ac-item {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-item:hover,
+.ac-item.is-active {
+  background: var(--color-primary-bg);
+  color: var(--color-primary-dark);
+}
+
+/* ── CAMPO CON ICONO ── */
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper .form-input {
+  padding-left: var(--space-8);
+}
+
+.input-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-secondary-light);
+  pointer-events: none;
+}
+
+/* ── CHAR COUNTER ── */
+.char-counter {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+  text-align: right;
+}
+
+.char-counter.is-near-limit { color: var(--color-warning); }
+.char-counter.is-at-limit   { color: var(--color-error); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .form-card__body    { padding: var(--space-4); }
+  .form-actions       { padding: var(--space-3) var(--space-4); }
+  .form-card__header  { padding: var(--space-4); }
+  .time-group         { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: sala-juntas-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: sala-juntas-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sala-juntas-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: sala-juntas-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: sala-juntas-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sala-juntas-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: PORT
+        value: 3000
+
+  - type: web
+    name: sala-juntas-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    envVars:
+      - key: BACKEND_URL
+        value: https://sala-juntas-backend.onrender.com
+
+databases:
+  - name: sala-juntas-db
+    plan: free
+    databaseName: sala_juntas
+    user: ibero

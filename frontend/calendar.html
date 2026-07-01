@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendario — Sala de Juntas Ibero</title>
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components/calendar.css" />
+  <link rel="stylesheet" href="css/components/modals.css" />
+  <link rel="stylesheet" href="css/pages/calendar-view.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app">
+
+  <!-- Sidebar (inyectado por Sidebar.init) -->
+  <nav class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal"></nav>
+
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar" role="banner">
+      <button class="topbar__toggle" id="sidebar-toggle"
+              aria-label="Abrir menú" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <h1 class="topbar__title">Calendario</h1>
+      <nav class="topbar__breadcrumb" aria-label="Ruta de navegación">
+        <a href="dashboard.html">Inicio</a>
+        <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+        <span aria-current="page">Calendario</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
+      </div>
+    </header>
+
+    <!-- Page body -->
+    <main class="page-content" role="main">
+
+      <!-- Read-only banner (académico) — hidden by default -->
+      <div id="readonly-banner" class="cal-readonly-banner hidden" role="note">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8"  x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Estás en <strong>modo consulta</strong>. Solo puedes ver las reservaciones existentes.</span>
+      </div>
+
+      <!-- Calendar card -->
+      <div class="cal-card">
+
+        <!-- Toolbar -->
+        <div class="cal-toolbar" role="toolbar" aria-label="Controles del calendario">
+          <div class="cal-toolbar__left">
+            <!-- Title -->
+            <h2 class="cal-toolbar__title" id="cal-title" aria-live="polite" aria-atomic="true">
+              Cargando…
+            </h2>
+            <!-- Prev / Today / Next -->
+            <div class="cal-toolbar__nav" role="group" aria-label="Navegar entre meses">
+              <button class="cal-toolbar__nav-btn" id="cal-prev"
+                      aria-label="Mes anterior" title="Mes anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <button class="cal-toolbar__nav-btn cal-toolbar__today" id="cal-today"
+                      aria-label="Ir al mes actual">Hoy</button>
+              <button class="cal-toolbar__nav-btn" id="cal-next"
+                      aria-label="Mes siguiente" title="Mes siguiente">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="cal-toolbar__right">
+            <!-- View toggle -->
+            <div class="cal-view-toggle" role="group" aria-label="Vista del calendario">
+              <button class="cal-view-btn active" id="view-month" aria-pressed="true">Mes</button>
+              <button class="cal-view-btn"         id="view-week"  aria-pressed="false">Semana</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid (filled by CalendarGrid.render via Calendar.init) -->
+        <div class="cal-grid-container">
+          <div id="cal-body">
+            <!-- JS renders here -->
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="cal-legend-bar" role="list" aria-label="Leyenda">
+          <div class="cal-legend-bar__item" role="listitem">
+            <span class="cal-legend-bar__dot" style="background:var(--cal-occupied);" aria-hidden="true"></span>
+            Reservada
+          </div>
+          <div class="cal-legend-bar__item" role="listitem">
+            <span class="cal-legend-bar__dot" style="background:var(--cal-today);" aria-hidden="true"></span>
+            Hoy
+          </div>
+          <div class="cal-legend-bar__item" role="listitem">
+            <span class="cal-legend-bar__dot" style="background:var(--cal-holiday);" aria-hidden="true"></span>
+            Día festivo
+          </div>
+          <div class="cal-legend-bar__item" role="listitem">
+            <span class="cal-legend-bar__dot" style="background:var(--cal-closed);" aria-hidden="true"></span>
+            Cierre inst.
+          </div>
+          <div class="cal-legend-bar__item" role="listitem">
+            <span class="cal-legend-bar__dot" style="background:var(--cal-recurring);" aria-hidden="true"></span>
+            Recurrente
+          </div>
+        </div>
+
+      </div><!-- /.cal-card -->
+
+    </main>
+  </div><!-- /.main-content -->
+</div><!-- /.app -->
+
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+<div id="modal-container"></div>
+
+<!-- Scripts -->
+<script src="js/core/utils.js"></script>
+<script src="js/core/api.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/components/toast.js"></script>
+<script src="js/components/sidebar.js"></script>
+<script src="js/components/calendar-grid.js"></script>
+<script src="js/components/calendar-week.js"></script>
+<script src="js/components/modal.js"></script>
+<script src="js/components/reservation-modal.js"></script>
+<script src="js/modules/notifications.js"></script>
+<script src="js/modules/auth.js"></script>
+<script src="js/modules/reservations.js"></script>
+<script src="js/modules/recurring.js"></script>
+<script src="js/modules/calendar.js"></script>
+<script src="js/pages/calendar-page.js"></script>
+
+</body>
+</html>
