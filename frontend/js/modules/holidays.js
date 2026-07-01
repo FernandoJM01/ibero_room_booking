@@ -111,7 +111,7 @@ const Holidays = (() => {
           </div>
           <span class="badge ${typeCls} holiday-item__badge">${typeLabel}</span>
           <button class="btn btn-ghost btn-sm holiday-item__del icon-btn"
-                  data-date="${h.date}" data-type="${h.type}"
+                  data-id="${h.id}" data-date="${h.date}" data-type="${h.type}"
                   aria-label="Eliminar ${Utils.escapeHTML(h.name)}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2"

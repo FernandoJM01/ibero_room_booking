@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       _renderMiniCal();
     });
 
-    document.getElementById('add-holiday-form')?.addEventListener('submit', (e) => {
+    document.getElementById('add-holiday-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!_selectedDate) {
         Toast.show('Selecciona una fecha en el calendario primero.', 'warning');
@@ -400,11 +400,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('holiday-name')?.focus();
         return;
       }
-      Holidays.add({ date: _selectedDate, name, type });
-      Toast.show(`${type === 'holiday' ? 'Día festivo' : 'Cierre'} marcado: ${Utils.formatDateLong(_selectedDate)}`, 'success');
-      _resetCalForm();
-      _renderMiniCal();
-      _renderHolidayList();
+      const result = await Holidays.add({ date: _selectedDate, name, type });
+      if (result.success) {
+        Toast.show(`${type === 'holiday' ? 'Día festivo' : 'Cierre'} marcado: ${Utils.formatDateLong(_selectedDate)}`, 'success');
+        _resetCalForm();
+        _renderMiniCal();
+        _renderHolidayList();
+      } else {
+        Toast.show(result.error || 'Error al marcar la fecha.', 'error');
+      }
     });
 
     _renderHolidayList();
@@ -460,7 +464,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function _renderHolidayList() {
-    Holidays.renderList('holiday-list', _renderHolidayList);
+    Holidays.renderList('holiday-list', () => {
+      _renderHolidayList();
+      _renderMiniCal();
+    });
     const count  = Holidays.getAll().length;
     const countEl = document.getElementById('holiday-count');
     if (countEl) {
