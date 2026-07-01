@@ -201,6 +201,11 @@ router.patch('/:id/activate', requireSuperAdmin, async (req, res) => {
       [req.user.id, 'activate_user', 'users', id]
     );
 
+    // Notify the activated user (non-blocking)
+    const { accountActivatedEmail } = require('../utils/mailer');
+    const { subject, html } = accountActivatedEmail(result.rows[0]);
+    sendEmail(result.rows[0].email, subject, html);
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Error activating user:', err);

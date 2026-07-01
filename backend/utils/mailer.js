@@ -184,6 +184,16 @@ function accountDeactivatedEmail(user) {
   };
 }
 
+function accountActivatedEmail(user) {
+  return {
+    subject: `Tu cuenta fue reactivada — Sala de Juntas Ibero`,
+    html: _layout('#2e7d32', 'Cuenta reactivada',
+      `<p>Hola <strong>${_esc(user.name)}</strong>,</p>
+       <p>Tu cuenta (<strong>${_esc(user.email)}</strong>) ha sido reactivada. Ya puedes volver a iniciar sesión en el sistema.</p>
+       <p style="font-size:13px;color:#555;">Si tienes alguna duda, contacta a la administración del sistema.</p>`),
+  };
+}
+
 function reservationAdminModifiedEmail(reservation, adminName, changes = []) {
   const changesHtml = changes.length
     ? `<p style="font-size:13px;color:#555;">Campos modificados: <strong>${_esc(changes.join(', '))}</strong>.</p>`
@@ -297,5 +307,6 @@ module.exports = {
   welcomeEmail,
   passwordChangedEmail,
   accountDeactivatedEmail,
+  accountActivatedEmail,
   testDiagnosticEmail,
 };
