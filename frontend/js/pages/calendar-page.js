@@ -233,8 +233,8 @@ function _cancelReservation(r) {
         option1Text: 'Solo esta instancia',
         option2Text: 'Toda la serie',
       },
-      () => {
-        Reservations.cancel(r.id);
+      async () => {
+        await Reservations.cancel(r.id);
         Toast.show('Instancia cancelada.', 'success');
         _refresh();
       },
@@ -253,8 +253,8 @@ function _cancelReservation(r) {
         confirmText: 'Cancelar reservación',
         danger:      true,
       },
-      () => {
-        Reservations.cancel(r.id);
+      async () => {
+        await Reservations.cancel(r.id);
         Toast.show('Reservación cancelada.', 'success');
         _refresh();
       }

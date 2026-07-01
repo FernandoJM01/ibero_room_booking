@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       'Cancelar reservación',
       `¿Cancelar la reservación de <strong>${Utils.escapeHTML(r.responsible)}</strong><br>
        el ${Utils.formatDateLong(r.date)}, ${r.startTime}–${r.endTime}?`,
-      () => {
-        Reservations.cancel(id);
+      async () => {
+        await Reservations.cancel(id);
         _selected.delete(id);
         Toast.show('Reservación cancelada.', 'success');
         _applyFilters();

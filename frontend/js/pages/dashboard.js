@@ -272,9 +272,10 @@ function _onReservationClick(id, event) {
     ReservationModal.open({
       editReservation: r,
       onSaved: () => {
+        const updated = Store.getState().reservations.find(res => res.id === r.id) || r;
         _renderStats();
         if (Calendar.getCurrentView() === 'week') {
-          Calendar.renderWeek(new Date(`${r.date}T00:00:00`));
+          Calendar.renderWeek(new Date(`${updated.date}T00:00:00`));
         } else {
           Calendar.renderMonth(Calendar.getCurrentYear(), Calendar.getCurrentMonth());
         }
@@ -331,7 +332,11 @@ function _cancelReservation(id) {
 
   const _refresh = () => {
     _renderStats();
-    Calendar.renderMonth(Calendar.getCurrentYear(), Calendar.getCurrentMonth());
+    if (Calendar.getCurrentView() === 'week') {
+      Calendar.renderWeek(Calendar.getCurrentWeekStart());
+    } else {
+      Calendar.renderMonth(Calendar.getCurrentYear(), Calendar.getCurrentMonth());
+    }
     _renderUpcoming();
   };
 
@@ -344,8 +349,8 @@ function _cancelReservation(id) {
         option1Text: 'Solo esta instancia',
         option2Text: 'Toda la serie',
       },
-      () => {
-        Reservations.cancel(id);
+      async () => {
+        await Reservations.cancel(id);
         Toast.show('Instancia cancelada.', 'success');
         _refresh();
       },
@@ -364,8 +369,8 @@ function _cancelReservation(id) {
         confirmText: 'Cancelar reservación',
         danger:      true,
       },
-      () => {
-        Reservations.cancel(id);
+      async () => {
+        await Reservations.cancel(id);
         Toast.show('Reservación cancelada.', 'success');
         _refresh();
       }
