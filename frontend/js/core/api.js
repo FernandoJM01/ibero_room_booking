@@ -174,6 +174,9 @@ const API = (() => {
   const deactivateUser = (id) =>
     _request('PATCH', `/users/${id}/deactivate`);
 
+  const activateUser = (id) =>
+    _request('PATCH', `/users/${id}/activate`);
+
   // Stats
   const getDashboardStats = () =>
     _request('GET', '/stats/dashboard');
@@ -221,6 +224,7 @@ const API = (() => {
     createUser,
     updateUser,
     deactivateUser,
+    activateUser,
     getDashboardStats,
     createRecurringGroup,
     aiStatus,

@@ -125,13 +125,14 @@ const Users = (() => {
     if (idx === -1) return false;
 
     try {
+      let response;
       if (active) {
-        await API.updateUser(id, { active: true });
+        response = await API.activateUser(id);
       } else {
-        await API.deactivateUser(id);
+        response = await API.deactivateUser(id);
       }
       const newUsers = [...users];
-      newUsers[idx]  = { ...newUsers[idx], active, updatedAt: new Date().toISOString() };
+      newUsers[idx]  = { ...newUsers[idx], ...response, updatedAt: new Date().toISOString() };
       Store.setState({ users: newUsers });
       console.log(`User ${active ? 'activated' : 'deactivated'}: ${id}`);
       return true;

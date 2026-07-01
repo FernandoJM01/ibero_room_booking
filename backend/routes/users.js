@@ -180,4 +180,32 @@ router.patch('/:id/deactivate', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// PATCH /api/users/:id/activate - Activate user (super-admin only)
+router.patch('/:id/activate', requireSuperAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `UPDATE users SET active = true WHERE id = $1 RETURNING id, name, email, active`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Log to audit
+    await pool.query(
+      `INSERT INTO audit_log (user_id, action, entity, entity_id)
+       VALUES ($1, $2, $3, $4)`,
+      [req.user.id, 'activate_user', 'users', id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error activating user:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

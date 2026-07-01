@@ -1,0 +1,16 @@
+# This file is used for local development to avoid rebuilding Docker images on every change.
+# Docker Compose automatically loads this file and merges it with docker-compose.yml.
+services:
+
+  backend:
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    # Installs development dependencies (including nodemon) and starts the dev script
+    command: sh -c "NODE_ENV=development npm install && npm run dev"
+    ports:
+      - "3000:3000"
+
+  frontend:
+    volumes:
+      - ./frontend:/usr/share/nginx/html
