@@ -32,6 +32,9 @@
   letter-spacing: 0.04em;
   white-space: nowrap;
   user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 /* Columnas ordenables */
