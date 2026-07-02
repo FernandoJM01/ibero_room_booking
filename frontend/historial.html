@@ -72,11 +72,20 @@
       <div class="history-toolbar" role="search" aria-label="Filtros de búsqueda">
         <div class="history-filters">
 
-          <div class="filter-group" style="flex:1;min-width:180px;">
-            <label for="filter-search">Buscar</label>
-            <input type="search" id="filter-search" class="filter-input filter-input--search"
-                   placeholder="Responsable, área u observaciones…"
-                   aria-label="Buscar por responsable, área u observaciones" />
+          <div class="filter-group" style="flex:1;min-width:280px;">
+            <label for="filter-search">Buscar por</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="filter-field" class="filter-select" aria-label="Seleccionar campo de búsqueda" style="width: auto;">
+                <option value="all">Todos los campos</option>
+                <option value="responsible">Responsable</option>
+                <option value="area">Área / Depto</option>
+                <option value="creator">Creado por</option>
+                <option value="observations">Observaciones</option>
+              </select>
+              <input type="search" id="filter-search" class="filter-input filter-input--search"
+                     placeholder="Escribe para buscar..."
+                     aria-label="Término de búsqueda" style="flex: 1;" />
+            </div>
           </div>
 
           <div class="filter-group">
@@ -141,6 +150,7 @@
               </th>
               <th class="sortable" data-sort="date" scope="col">Fecha</th>
               <th class="sortable" data-sort="responsible" scope="col">Responsable</th>
+              <th scope="col" class="hide-on-mobile">Creado por</th>
               <th scope="col">Área / Departamento</th>
               <th scope="col">Horario</th>
               <th scope="col">Estado</th>

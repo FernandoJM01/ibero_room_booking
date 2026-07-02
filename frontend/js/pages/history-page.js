@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let _sortDir   = 'desc';
 
   /* ── REFERENCIAS ── */
+  const filterField    = document.getElementById('filter-field');
   const filterSearch   = document.getElementById('filter-search');
   const filterDateFrom = document.getElementById('filter-date-from');
   const filterDateTo   = document.getElementById('filter-date-to');
@@ -61,12 +62,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tableFooter    = document.getElementById('table-footer');
 
   /* ── FILTROS ── */
+  filterField?.addEventListener('change', _applyFilters);
   filterSearch?.addEventListener('input',  _applyFilters);
   filterStatus?.addEventListener('change', _applyFilters);
   filterDateFrom?.addEventListener('change', _applyFilters);
   filterDateTo?.addEventListener('change',   _applyFilters);
 
   btnClear?.addEventListener('click', () => {
+    if (filterField)    filterField.value    = 'all';
     if (filterSearch)   filterSearch.value   = '';
     if (filterDateFrom) filterDateFrom.value = '';
     if (filterDateTo)   filterDateTo.value   = '';
@@ -129,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      FILTRADO
      ════════════════════════════════════════ */
   function _applyFilters() {
+    const field    = filterField?.value ?? 'all';
     const search   = Utils.normalize(filterSearch?.value  ?? '');
     const dateFrom = filterDateFrom?.value ?? '';
     const dateTo   = filterDateTo?.value   ?? '';
@@ -141,9 +145,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (dateFrom && r.date < dateFrom)           return false;
       if (dateTo   && r.date > dateTo)             return false;
       if (search) {
-        const hay = Utils.normalize(
-          `${r.responsible} ${r.area} ${r.observations ?? ''}`
-        );
+        let hay = '';
+        if (field === 'responsible') {
+          hay = Utils.normalize(r.responsible ?? '');
+        } else if (field === 'area') {
+          hay = Utils.normalize(r.area ?? '');
+        } else if (field === 'creator') {
+          hay = Utils.normalize(r.creatorName ?? '');
+        } else if (field === 'observations') {
+          hay = Utils.normalize(r.observations ?? '');
+        } else {
+          hay = Utils.normalize(`${r.responsible} ${r.area} ${r.observations ?? ''} ${r.creatorName ?? ''}`);
+        }
         if (!hay.includes(search)) return false;
       }
       return true;
@@ -286,6 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${checkCell}
         <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
         <td><span class="row-name">${Utils.escapeHTML(r.responsible)}</span></td>
+        <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>
         <td style="white-space:nowrap;">${r.startTime}–${r.endTime}</td>
         <td>${statusBadge}</td>

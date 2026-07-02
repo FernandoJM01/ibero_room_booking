@@ -105,6 +105,9 @@ html, body {
   .topbar__breadcrumb {
     display: none;
   }
+  .hide-on-mobile {
+    display: none !important;
+  }
 }
 
 /* ════════════════════════════════
