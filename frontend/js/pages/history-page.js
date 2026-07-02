@@ -257,20 +257,22 @@ document.addEventListener('DOMContentLoaded', async () => {
          <line x1="12" y1="16" x2="12.01" y2="16"/>`;
 
     const actions = isSecretary && isActive
-      ? `<div class="row-actions">
+      ? `<div class="row-actions" style="display:flex; gap:6px; justify-content:flex-end;">
            <button class="btn btn-secondary btn-sm row-edit-btn" data-id="${r.id}"
-                   aria-label="${editLabel} reservación de ${Utils.escapeHTML(r.responsible)}">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5"
+                   title="${editLabel}" aria-label="${editLabel} reservación de ${Utils.escapeHTML(r.responsible)}"
+                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                ${editIcon}
              </svg>
            </button>
            ${canModify ? `
            <button class="btn btn-danger btn-sm row-cancel-btn" data-id="${r.id}"
-                   aria-label="Cancelar reservación de ${Utils.escapeHTML(r.responsible)}">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5"
+                   title="Cancelar" aria-label="Cancelar reservación de ${Utils.escapeHTML(r.responsible)}"
+                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                <line x1="18" y1="6" x2="6" y2="18"/>
                <line x1="6"  y1="6" x2="18" y2="18"/>
