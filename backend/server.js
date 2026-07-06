@@ -11,6 +11,7 @@ const aiRoutes = require('./routes/ai');
 const modificationRequestsRoutes = require('./routes/modification-requests');
 const diagnosticsRoutes = require('./routes/diagnostics');
 const notificationsRoutes = require('./routes/notifications');
+const externalContactsRoutes = require('./routes/externalContacts');
 const { runMigrations } = require('./db/migrate');
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/modification-requests', modificationRequestsRoutes);
 app.use('/api/diagnostics', diagnosticsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/external-contacts', externalContactsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

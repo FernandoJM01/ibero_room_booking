@@ -44,9 +44,11 @@ router.get('/', async (req, res) => {
 
   try {
     let query = `
-      SELECT r.*, u.name AS creator_name
+      SELECT r.*, u.name AS creator_name,
+             ec.email AS external_email, ec.organization AS external_organization
       FROM reservations r
       LEFT JOIN users u ON u.id = r.created_by
+      LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
       WHERE 1=1`;
     const params = [];
     let paramCount = 1;
@@ -104,9 +106,11 @@ router.get('/week', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT r.*, u.name AS creator_name
+      `SELECT r.*, u.name AS creator_name,
+              ec.email AS external_email, ec.organization AS external_organization
        FROM reservations r
        LEFT JOIN users u ON u.id = r.created_by
+       LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
        WHERE r.start_time >= $1 AND r.start_time < $2
        ORDER BY r.start_time ASC`,
       [weekStart.toISOString(), weekEnd.toISOString()]
@@ -123,13 +127,19 @@ router.get('/week', async (req, res) => {
 
 // POST /api/reservations/multi - Create multiple reservations in one logical booking (secretaria only)
 router.post('/multi', requireRole('secretaria'), async (req, res) => {
-  const { intervals, responsible_id, area, observations } = req.body || {};
+  const { intervals, responsible_id, external_responsible_id, area, observations } = req.body || {};
 
   if (!Array.isArray(intervals) || intervals.length === 0) {
     return res.status(400).json({ error: 'intervals[] is required' });
   }
-  if (!responsible_id || !area) {
-    return res.status(400).json({ error: 'responsible_id and area are required' });
+  if (!responsible_id && !external_responsible_id) {
+    return res.status(400).json({ error: 'responsible_id or external_responsible_id is required' });
+  }
+  if (responsible_id && external_responsible_id) {
+    return res.status(400).json({ error: 'Provide only one of responsible_id or external_responsible_id' });
+  }
+  if (!area) {
+    return res.status(400).json({ error: 'area is required' });
   }
   for (const it of intervals) {
     if (!it?.start_time || !it?.end_time) {
@@ -141,16 +151,34 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Look up responsible user
-    const userResult = await client.query(
-      'SELECT id, name, email FROM users WHERE id = $1 AND active = true',
-      [responsible_id]
-    );
-    if (userResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Responsible user not found' });
+    // Look up responsible entity
+    let responsible;
+    let internalId = null;
+    let externalId = null;
+
+    if (responsible_id) {
+      const userResult = await client.query(
+        'SELECT id, name, email FROM users WHERE id = $1 AND active = true',
+        [responsible_id]
+      );
+      if (userResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Responsible user not found' });
+      }
+      responsible = userResult.rows[0];
+      internalId = responsible.id;
+    } else {
+      const extResult = await client.query(
+        'SELECT id, name, email FROM external_contacts WHERE id = $1',
+        [external_responsible_id]
+      );
+      if (extResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'External responsible contact not found' });
+      }
+      responsible = extResult.rows[0];
+      externalId = responsible.id;
     }
-    const responsible = userResult.rows[0];
 
     // Conflict check across all intervals (incl. against each other)
     for (let i = 0; i < intervals.length; i++) {
@@ -193,12 +221,13 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
     for (const it of intervals) {
       const ins = await client.query(
         `INSERT INTO reservations (
-          responsible_id, responsible_name, area, start_time, end_time,
+          responsible_id, external_responsible_id, responsible_name, area, start_time, end_time,
           observations, grouped_id, created_by, last_modified_by
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
-          responsible.id,
+          internalId,
+          externalId,
           responsible.name,
           area,
           it.start_time,
@@ -243,7 +272,14 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
+    const result = await pool.query(`
+      SELECT r.*, u.name AS creator_name,
+             ec.email AS external_email, ec.organization AS external_organization
+      FROM reservations r
+      LEFT JOIN users u ON u.id = r.created_by
+      LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
+      WHERE r.id = $1
+    `, [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -258,6 +294,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireRole('secretaria'), async (req, res) => {
   const {
     responsible_id,
+    external_responsible_id,
     area,
     start_time,
     end_time,
@@ -266,20 +303,40 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     recurring_group
   } = req.body;
 
-  if (!responsible_id || !area || !start_time || !end_time) {
+  if ((!responsible_id && !external_responsible_id) || !area || !start_time || !end_time) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (responsible_id && external_responsible_id) {
+    return res.status(400).json({ error: 'Provide only one of responsible_id or external_responsible_id' });
   }
 
   try {
-    // Look up responsible user
-    const userResult = await pool.query(
-      'SELECT id, name, email FROM users WHERE id = $1 AND active = true',
-      [responsible_id]
-    );
-    if (userResult.rows.length === 0) {
-      return res.status(400).json({ error: 'Responsible user not found' });
+    // Look up responsible entity
+    let responsible;
+    let internalId = null;
+    let externalId = null;
+
+    if (responsible_id) {
+      const userResult = await pool.query(
+        'SELECT id, name, email FROM users WHERE id = $1 AND active = true',
+        [responsible_id]
+      );
+      if (userResult.rows.length === 0) {
+        return res.status(400).json({ error: 'Responsible user not found' });
+      }
+      responsible = userResult.rows[0];
+      internalId = responsible.id;
+    } else {
+      const extResult = await pool.query(
+        'SELECT id, name, email FROM external_contacts WHERE id = $1',
+        [external_responsible_id]
+      );
+      if (extResult.rows.length === 0) {
+        return res.status(400).json({ error: 'External responsible contact not found' });
+      }
+      responsible = extResult.rows[0];
+      externalId = responsible.id;
     }
-    const responsible = userResult.rows[0];
 
     // Check for overlap with active reservations
     const overlapCheck = await pool.query(
@@ -302,12 +359,13 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     // Create reservation
     const result = await pool.query(
       `INSERT INTO reservations (
-        responsible_id, responsible_name, area, start_time, end_time,
+        responsible_id, external_responsible_id, responsible_name, area, start_time, end_time,
         observations, is_recurring, recurring_group, created_by, last_modified_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
-        responsible.id,
+        internalId,
+        externalId,
         responsible.name,
         area,
         start_time,
@@ -341,7 +399,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
 // PUT /api/reservations/:id - Update reservation (secretaria only, own reservation; super-admin for any)
 router.put('/:id', requireRole('secretaria'), async (req, res) => {
   const { id } = req.params;
-  const { responsible_id, area, start_time, end_time, observations } = req.body;
+  const { responsible_id, external_responsible_id, area, start_time, end_time, observations } = req.body;
 
   try {
     // Check if reservation exists
@@ -356,8 +414,11 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       return res.status(403).json({ error: 'No puedes modificar una reservación de otra secretaria' });
     }
 
-    // Look up responsible user if provided
+    // Look up responsible entity if provided
     let responsible = null;
+    let internalId = null;
+    let externalId = null;
+
     if (responsible_id) {
       const userResult = await pool.query(
         'SELECT id, name, email FROM users WHERE id = $1 AND active = true',
@@ -367,6 +428,17 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
         return res.status(400).json({ error: 'Responsible user not found' });
       }
       responsible = userResult.rows[0];
+      internalId = responsible.id;
+    } else if (external_responsible_id) {
+      const extResult = await pool.query(
+        'SELECT id, name, email FROM external_contacts WHERE id = $1',
+        [external_responsible_id]
+      );
+      if (extResult.rows.length === 0) {
+        return res.status(400).json({ error: 'External responsible contact not found' });
+      }
+      responsible = extResult.rows[0];
+      externalId = responsible.id;
     }
 
     // Check for overlap (excluding current reservation)
@@ -383,20 +455,25 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       }
     }
 
+    // If we fetched a new responsible, we overwrite both fields to preserve the XOR constraint
+    const setResId = (responsible_id || external_responsible_id) ? internalId : existing.rows[0].responsible_id;
+    const setExtId = (responsible_id || external_responsible_id) ? externalId : existing.rows[0].external_responsible_id;
+
     // Update reservation
     const result = await pool.query(
       `UPDATE reservations
-       SET responsible_id   = COALESCE($2, responsible_id),
-           responsible_name = COALESCE($3, responsible_name),
-           area             = COALESCE($4, area),
-           start_time       = COALESCE($5, start_time),
-           end_time         = COALESCE($6, end_time),
-           observations     = COALESCE($7, observations),
-           last_modified_by = $8,
+       SET responsible_id   = $2,
+           external_responsible_id = $3,
+           responsible_name = COALESCE($4, responsible_name),
+           area             = COALESCE($5, area),
+           start_time       = COALESCE($6, start_time),
+           end_time         = COALESCE($7, end_time),
+           observations     = COALESCE($8, observations),
+           last_modified_by = $9,
            updated_at       = NOW()
        WHERE id = $1
        RETURNING *`,
-      [id, responsible?.id ?? null, responsible?.name ?? null, area, start_time, end_time, observations, req.user.id]
+      [id, setResId, setExtId, responsible?.name ?? null, area, start_time, end_time, observations, req.user.id]
     );
 
     // Log to audit
@@ -422,11 +499,19 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       return a !== b;
     }).map(k => fieldLabels[k]);
 
-    if (changes.length && after.responsible_id) {
-      const userQ = await pool.query('SELECT email FROM users WHERE id = $1', [after.responsible_id]);
-      if (userQ.rows[0]?.email) {
+    if (changes.length) {
+      let email = null;
+      if (after.responsible_id) {
+        const userQ = await pool.query('SELECT email FROM users WHERE id = $1', [after.responsible_id]);
+        email = userQ.rows[0]?.email;
+      } else if (after.external_responsible_id) {
+        const extQ = await pool.query('SELECT email FROM external_contacts WHERE id = $1', [after.external_responsible_id]);
+        email = extQ.rows[0]?.email;
+      }
+      
+      if (email) {
         const { subject, html } = reservationUpdatedEmail(after, changes);
-        sendEmail(userQ.rows[0].email, subject, html);
+        sendEmail(email, subject, html);
       }
     }
 
@@ -479,12 +564,18 @@ router.delete('/:id', requireRole('secretaria'), async (req, res) => {
     const cancelled = result.rows[0];
 
     // Send cancellation email to responsible person (non-blocking)
+    let respEmail = null;
     if (cancelled.responsible_id) {
       const resp = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.responsible_id]);
-      if (resp.rows.length > 0) {
-        const { subject, html } = reservationCancelledEmail(cancelled);
-        sendEmail(resp.rows[0].email, subject, html);
-      }
+      respEmail = resp.rows[0]?.email;
+    } else if (cancelled.external_responsible_id) {
+      const extQ = await pool.query('SELECT email FROM external_contacts WHERE id = $1', [cancelled.external_responsible_id]);
+      respEmail = extQ.rows[0]?.email;
+    }
+
+    if (respEmail) {
+      const { subject, html } = reservationCancelledEmail(cancelled);
+      sendEmail(respEmail, subject, html);
     }
 
     // Notify creating secretary when super-admin cancels their reservation
@@ -540,18 +631,35 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
 
     // Send a cancellation email per affected reservation (non-blocking)
     const responsibleIds = [...new Set(result.rows.map(r => r.responsible_id).filter(Boolean))];
+    const externalIds = [...new Set(result.rows.map(r => r.external_responsible_id).filter(Boolean))];
+    
+    const emailById = new Map();
+    const emailByExtId = new Map();
+
     if (responsibleIds.length) {
       const usersQ = await pool.query(
         'SELECT id, email FROM users WHERE id = ANY($1::uuid[])',
         [responsibleIds]
       );
-      const emailById = new Map(usersQ.rows.map(u => [u.id, u.email]));
-      for (const reservation of result.rows) {
-        const email = emailById.get(reservation.responsible_id);
-        if (email) {
-          const { subject, html } = reservationCancelledEmail(reservation);
-          sendEmail(email, subject, html);
-        }
+      usersQ.rows.forEach(u => emailById.set(u.id, u.email));
+    }
+    
+    if (externalIds.length) {
+      const extQ = await pool.query(
+        'SELECT id, email FROM external_contacts WHERE id = ANY($1::uuid[])',
+        [externalIds]
+      );
+      extQ.rows.forEach(ec => emailByExtId.set(ec.id, ec.email));
+    }
+
+    for (const reservation of result.rows) {
+      const email = reservation.responsible_id 
+        ? emailById.get(reservation.responsible_id)
+        : emailByExtId.get(reservation.external_responsible_id);
+        
+      if (email) {
+        const { subject, html } = reservationCancelledEmail(reservation);
+        sendEmail(email, subject, html);
       }
     }
 

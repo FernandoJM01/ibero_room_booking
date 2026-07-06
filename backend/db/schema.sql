@@ -13,6 +13,15 @@ CREATE TABLE users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- External contacts
+CREATE TABLE external_contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(200) NOT NULL,
+  email VARCHAR(200) UNIQUE NOT NULL,
+  organization VARCHAR(200),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Recurring groups
 CREATE TABLE recurring_groups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -26,6 +35,7 @@ CREATE TABLE recurring_groups (
 CREATE TABLE reservations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   responsible_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  external_responsible_id UUID REFERENCES external_contacts(id) ON DELETE SET NULL,
   responsible_name VARCHAR(200) NOT NULL,
   area VARCHAR(200) NOT NULL,
   start_time TIMESTAMPTZ NOT NULL,
@@ -38,7 +48,11 @@ CREATE TABLE reservations (
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   last_modified_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT chk_responsible_xor CHECK (
+    (responsible_id IS NOT NULL AND external_responsible_id IS NULL) OR
+    (responsible_id IS NULL AND external_responsible_id IS NOT NULL)
+  )
 );
 
 -- Calendar events (holidays and closures)

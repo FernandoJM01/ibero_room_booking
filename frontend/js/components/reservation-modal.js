@@ -39,14 +39,17 @@ const ReservationModal = (() => {
     }
 
     try {
-      const [users, ai] = await Promise.all([
+      const [users, external, ai] = await Promise.all([
         API.getUsers().catch(() => []),
+        API.getExternalContacts().catch(() => []),
         API.aiStatus().catch(() => ({ enabled: false })),
       ]);
       _users     = Array.isArray(users) ? users : [];
+      Store.setState({ externalContacts: Array.isArray(external) ? external : [] });
       _aiEnabled = Boolean(ai?.enabled);
     } catch {
       _users     = [];
+      Store.setState({ externalContacts: [] });
       _aiEnabled = false;
     }
 
@@ -139,6 +142,23 @@ const ReservationModal = (() => {
     newOpt.textContent = '+ Crear nuevo usuario…';
     sel.appendChild(newOpt);
     if (current && current !== '__new__') sel.value = current;
+  };
+
+  const _populateExternalContactsSelect = (sel) => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Selecciona un solicitante externo —</option>';
+    const externalContacts = Store.getState().externalContacts || [];
+    externalContacts.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value       = c.id;
+      opt.textContent = `${c.name} (${c.email})`;
+      sel.appendChild(opt);
+    });
+    const newOpt = document.createElement('option');
+    newOpt.value       = 'new';
+    newOpt.textContent = '+ Crear nuevo solicitante…';
+    sel.appendChild(newOpt);
+    if (current && current !== 'new') sel.value = current;
   };
 
   /* ── RENDER ── */
@@ -242,41 +262,80 @@ const ReservationModal = (() => {
             </div>
 
             <div class="rmodal__field">
-              <label for="rmodal-responsible">
-                Responsable <span class="rmodal__required">*</span>
-              </label>
-              <select id="rmodal-responsible" class="form-select"></select>
+              <label>Tipo de responsable <span class="rmodal__required">*</span></label>
+              <div class="rmodal__radio-group" style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+                <label><input type="radio" name="rmodal-resp-type" value="internal" ${!isEdit || _editReservation?.responsible_id ? 'checked' : ''}> Usuario Interno</label>
+                <label><input type="radio" name="rmodal-resp-type" value="external" ${isEdit && _editReservation?.external_responsible_id ? 'checked' : ''}> Solicitante Externo</label>
+              </div>
             </div>
 
-            <div id="rmodal-new-user-panel" class="rmodal__new-user hidden">
-              <div class="rmodal__new-user-title">Crear nuevo usuario</div>
-              <div class="rmodal__new-user-grid">
-                <div class="rmodal__field">
-                  <label for="rmodal-nu-name">Nombre <span class="rmodal__required">*</span></label>
-                  <input type="text" id="rmodal-nu-name" class="form-input" placeholder="Nombre completo" />
+            <div id="rmodal-internal-container" class="${isEdit && _editReservation?.external_responsible_id ? 'hidden' : ''}">
+              <div class="rmodal__field">
+                <label for="rmodal-responsible">
+                  Responsable <span class="rmodal__required">*</span>
+                </label>
+                <select id="rmodal-responsible" class="form-select"></select>
+              </div>
+
+              <div id="rmodal-new-user-panel" class="rmodal__new-user hidden">
+                <div class="rmodal__new-user-title">Crear nuevo usuario</div>
+                <div class="rmodal__new-user-grid">
+                  <div class="rmodal__field">
+                    <label for="rmodal-nu-name">Nombre <span class="rmodal__required">*</span></label>
+                    <input type="text" id="rmodal-nu-name" class="form-input" placeholder="Nombre completo" />
+                  </div>
+                  <div class="rmodal__field">
+                    <label for="rmodal-nu-email">Correo <span class="rmodal__required">*</span></label>
+                    <input type="email" id="rmodal-nu-email" class="form-input" placeholder="usuario@ibero.mx" />
+                  </div>
+                  <div class="rmodal__field">
+                    <label for="rmodal-nu-pwd">
+                      Contraseña <span class="rmodal__required">*</span>
+                      <span class="rmodal__hint">(mín. 8 car.)</span>
+                    </label>
+                    <input type="password" id="rmodal-nu-pwd" class="form-input" />
+                  </div>
+                  <div class="rmodal__field">
+                    <label for="rmodal-nu-role">Rol</label>
+                    <select id="rmodal-nu-role" class="form-select">
+                      <option value="academico" selected>Académico</option>
+                      <option value="secretaria">Secretaria</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="rmodal__field">
-                  <label for="rmodal-nu-email">Correo <span class="rmodal__required">*</span></label>
-                  <input type="email" id="rmodal-nu-email" class="form-input" placeholder="usuario@ibero.mx" />
-                </div>
-                <div class="rmodal__field">
-                  <label for="rmodal-nu-pwd">
-                    Contraseña <span class="rmodal__required">*</span>
-                    <span class="rmodal__hint">(mín. 8 car.)</span>
-                  </label>
-                  <input type="password" id="rmodal-nu-pwd" class="form-input" />
-                </div>
-                <div class="rmodal__field">
-                  <label for="rmodal-nu-role">Rol</label>
-                  <select id="rmodal-nu-role" class="form-select">
-                    <option value="academico" selected>Académico</option>
-                    <option value="secretaria">Secretaria</option>
-                  </select>
+                <div class="rmodal__new-user-actions">
+                  <button type="button" class="btn btn-secondary btn-sm" id="rmodal-nu-cancel">Cancelar</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="rmodal-nu-save">Crear usuario</button>
                 </div>
               </div>
-              <div class="rmodal__new-user-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="rmodal-nu-cancel">Cancelar</button>
-                <button type="button" class="btn btn-primary btn-sm" id="rmodal-nu-save">Crear usuario</button>
+            </div>
+
+            <div id="rmodal-external-container" class="${isEdit && _editReservation?.external_responsible_id ? '' : 'hidden'}">
+              <div class="rmodal__field">
+                <label for="rmodal-ext-select">Solicitante Externo <span class="rmodal__required">*</span></label>
+                <select id="rmodal-ext-select" class="form-select"></select>
+              </div>
+
+              <div id="rmodal-ext-new-panel" class="rmodal__new-user hidden">
+                <div class="rmodal__new-user-title">Crear nuevo solicitante</div>
+                <div class="rmodal__new-user-grid">
+                  <div class="rmodal__field">
+                    <label for="rmodal-ext-name">Nombre <span class="rmodal__required">*</span></label>
+                    <input type="text" id="rmodal-ext-name" class="form-input" placeholder="Nombre completo" />
+                  </div>
+                  <div class="rmodal__field">
+                    <label for="rmodal-ext-email">Correo <span class="rmodal__required">*</span></label>
+                    <input type="email" id="rmodal-ext-email" class="form-input" placeholder="correo@ejemplo.com" />
+                  </div>
+                  <div class="rmodal__field">
+                    <label for="rmodal-ext-org">Departamento (Opcional)</label>
+                    <input type="text" id="rmodal-ext-org" class="form-input" placeholder="Ej. Física y Matemáticas" />
+                  </div>
+                </div>
+                <div class="rmodal__new-user-actions" style="grid-column: 1 / -1; margin-top: 1rem;">
+                  <button type="button" class="btn btn-secondary btn-sm" id="rmodal-ext-cancel">Cancelar</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="rmodal-ext-save">Crear solicitante</button>
+                </div>
               </div>
             </div>
 
@@ -351,15 +410,29 @@ const ReservationModal = (() => {
     const respSel = overlay.querySelector('#rmodal-responsible');
     if (respSel) _populateResponsibleSelect(respSel);
 
+    const extSel = overlay.querySelector('#rmodal-ext-select');
+    if (extSel) _populateExternalContactsSelect(extSel);
+
     if (_editReservation) {
       const r      = _editReservation;
       const areaEl = overlay.querySelector('#rmodal-area');
       const obsEl  = overlay.querySelector('#rmodal-obs');
-      if (respSel) respSel.value = String(r.responsible_id);
+      if (r.external_responsible_id && extSel) {
+         extSel.value = String(r.external_responsible_id);
+      } else if (respSel) {
+         respSel.value = String(r.responsible_id);
+      }
       if (areaEl)  areaEl.value  = r.area ?? '';
       if (obsEl)   obsEl.value   = r.observations ?? '';
     } else if (_prefill) {
-      if (_prefill.responsible_id) respSel.value = String(_prefill.responsible_id);
+      if (_prefill.external_responsible_id && extSel) {
+         extSel.value = String(_prefill.external_responsible_id);
+         overlay.querySelector('input[name="rmodal-resp-type"][value="external"]').checked = true;
+         overlay.querySelector('#rmodal-internal-container').classList.add('hidden');
+         overlay.querySelector('#rmodal-external-container').classList.remove('hidden');
+      } else if (_prefill.responsible_id && respSel) {
+         respSel.value = String(_prefill.responsible_id);
+      }
       const areaEl = overlay.querySelector('#rmodal-area');
       const obsEl  = overlay.querySelector('#rmodal-obs');
       if (areaEl && _prefill.area)         areaEl.value = _prefill.area;
@@ -462,6 +535,24 @@ const ReservationModal = (() => {
     });
     _overlay.querySelector('#rmodal-ai-run')?.addEventListener('click', _runAI);
 
+    // Radio buttons toggle
+    const radioInt = _overlay.querySelector('input[name="rmodal-resp-type"][value="internal"]');
+    const radioExt = _overlay.querySelector('input[name="rmodal-resp-type"][value="external"]');
+    const intContainer = _overlay.querySelector('#rmodal-internal-container');
+    const extContainer = _overlay.querySelector('#rmodal-external-container');
+
+    const toggleType = () => {
+      if (radioInt?.checked) {
+        intContainer?.classList.remove('hidden');
+        extContainer?.classList.add('hidden');
+      } else {
+        intContainer?.classList.add('hidden');
+        extContainer?.classList.remove('hidden');
+      }
+    };
+    radioInt?.addEventListener('change', toggleType);
+    radioExt?.addEventListener('change', toggleType);
+
     // Responsible select + new user panel
     const respSel      = _overlay.querySelector('#rmodal-responsible');
     const newUserPanel = _overlay.querySelector('#rmodal-new-user-panel');
@@ -476,6 +567,21 @@ const ReservationModal = (() => {
       newUserPanel?.classList.add('hidden');
     });
     _overlay.querySelector('#rmodal-nu-save')?.addEventListener('click', _createNewUser);
+
+    // External select + new contact panel
+    const extSel      = _overlay.querySelector('#rmodal-ext-select');
+    const newExtPanel = _overlay.querySelector('#rmodal-ext-new-panel');
+    extSel?.addEventListener('change', () => {
+      const isNew = extSel.value === 'new';
+      newExtPanel?.classList.toggle('hidden', !isNew);
+      if (isNew) _overlay.querySelector('#rmodal-ext-name')?.focus();
+    });
+
+    _overlay.querySelector('#rmodal-ext-cancel')?.addEventListener('click', () => {
+      extSel.value = '';
+      newExtPanel?.classList.add('hidden');
+    });
+    _overlay.querySelector('#rmodal-ext-save')?.addEventListener('click', _createNewExternal);
 
     // Recurring toggle
     const recurChk   = _overlay.querySelector('#rmodal-recur-chk');
@@ -569,25 +675,72 @@ const ReservationModal = (() => {
     }
   };
 
+  /* ── CREAR NUEVO SOLICITANTE EXTERNO ── */
+  const _createNewExternal = async () => {
+    const name  = (_overlay.querySelector('#rmodal-ext-name')?.value ?? '').trim();
+    const email = (_overlay.querySelector('#rmodal-ext-email')?.value ?? '').trim();
+    const org   = (_overlay.querySelector('#rmodal-ext-org')?.value ?? '').trim();
+
+    if (!name || !email) {
+      Toast?.show('Nombre y correo son obligatorios.', 'warning');
+      return;
+    }
+
+    const saveBtn       = _overlay.querySelector('#rmodal-ext-save');
+    saveBtn.disabled    = true;
+    saveBtn.textContent = 'Creando…';
+
+    try {
+      const created = await API.createExternalContact({ name, email, organization: org });
+      const externalContacts = Store.getState().externalContacts || [];
+      if (!externalContacts.find(c => c.id === created.id)) {
+         externalContacts.push(created);
+      }
+      const extSel = _overlay.querySelector('#rmodal-ext-select');
+      _populateExternalContactsSelect(extSel);
+      extSel.value = created.id;
+      _overlay.querySelector('#rmodal-ext-new-panel')?.classList.add('hidden');
+      Toast?.show(`Solicitante "${Utils.escapeHTML(name)}" registrado.`, 'success');
+    } catch (err) {
+      Toast?.show('Error al crear el solicitante externo.', 'error');
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Crear solicitante';
+    }
+  };
+
   /* ── GUARDAR ── */
   const _save = async () => {
+    const isExternal = _overlay.querySelector('input[name="rmodal-resp-type"][value="external"]')?.checked;
     const respEl  = _overlay.querySelector('#rmodal-responsible');
+    const extEl   = _overlay.querySelector('#rmodal-ext-select');
     const areaEl  = _overlay.querySelector('#rmodal-area');
     const obsEl   = _overlay.querySelector('#rmodal-obs');
     const errEl   = _overlay.querySelector('#rmodal-error');
     const saveBtn = _overlay.querySelector('#rmodal-save');
 
-    if (respEl.value === '__new__') {
+    if (!isExternal && respEl.value === '__new__') {
       errEl.textContent = 'Completa o cancela la creación del nuevo responsable.';
       errEl.classList.remove('hidden');
       return;
     }
+    if (isExternal && extEl.value === 'new') {
+      errEl.textContent = 'Completa o cancela la creación del solicitante externo.';
+      errEl.classList.remove('hidden');
+      return;
+    }
 
-    const responsible_id = respEl.value;
-    const area           = areaEl.value.trim();
-    const observations   = obsEl.value.trim();
+    const payload = {
+      area: areaEl.value.trim(),
+      observations: obsEl.value.trim()
+    };
 
-    if (!responsible_id || !area) {
+    if (isExternal) {
+      payload.external_responsible_id = extEl.value;
+    } else {
+      payload.responsible_id = respEl.value;
+    }
+
+    if ((!payload.responsible_id && !payload.external_responsible_id) || !payload.area) {
       errEl.textContent = 'Completa los campos obligatorios (responsable y área).';
       errEl.classList.remove('hidden');
       return;
@@ -611,9 +764,7 @@ const ReservationModal = (() => {
       const result = await Reservations.update(_editReservation.id, {
         start_time:     `${iv.date}T${iv.startTime}:00`,
         end_time:       `${iv.date}T${iv.endTime}:00`,
-        responsible_id,
-        area,
-        observations,
+        ...payload
       });
       if (result.success) {
         Toast?.show('Reservación actualizada correctamente.', 'success');
@@ -633,7 +784,7 @@ const ReservationModal = (() => {
     // Recurring path (single interval only)
     const recurChk = _overlay.querySelector('#rmodal-recur-chk');
     if (recurChk?.checked && _intervals.length === 1) {
-      await _saveRecurring({ responsible_id, area, observations });
+      await _saveRecurring(payload);
       saveBtn.disabled    = false;
       saveBtn.textContent = 'Guardar reservación';
       return;
@@ -648,9 +799,7 @@ const ReservationModal = (() => {
     try {
       const { reservations: created } = await API.createMultiReservation({
         intervals,
-        responsible_id,
-        area,
-        observations,
+        ...payload
       });
 
       created.forEach(r => Store.addReservation(r));
@@ -685,7 +834,7 @@ const ReservationModal = (() => {
     }
   };
 
-  const _saveRecurring = async ({ responsible_id, area, observations }) => {
+  const _saveRecurring = async (payload) => {
     const iv      = _intervals[0];
     const freq    = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
     const rawCnt  = parseInt(_overlay.querySelector('#rmodal-recur-count')?.value ?? '4', 10);
@@ -695,7 +844,7 @@ const ReservationModal = (() => {
 
     const { group, instances, skipped } = Recurring.generate({
       date: iv.date, startTime: iv.startTime, endTime: iv.endTime,
-      responsible_id, area, observations,
+      ...payload,
       frequency: freq, count, endDate,
     });
 

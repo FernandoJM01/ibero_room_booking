@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Function declarations below are hoisted and callable immediately, but they reference
   // these let variables, which are NOT hoisted. Declaring them first prevents the ReferenceError.
   let _usersInitialized  = false;
+  let _externalInitialized = false;
   let _calInitialized    = false;
   let _selectedDate      = null;
   let _calYear           = new Date().getFullYear();
@@ -139,11 +140,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   ════════════════════════════════════════════════════════ */
 
   function _initUsersSection() {
-    if (_usersInitialized) { _renderUsersGrid(); return; }
+    if (_usersInitialized) { 
+      _renderUsersGrid(); 
+      if (_externalInitialized) _renderExternalGrid();
+      return; 
+    }
     _usersInitialized = true;
 
     document.getElementById('btn-add-user')?.addEventListener('click', () => _openUserModal(null));
     document.getElementById('users-search')?.addEventListener('input', _renderUsersGrid);
+
+    // Subtabs logic
+    const subtabInt = document.getElementById('subtab-internal');
+    const subtabExt = document.getElementById('subtab-external');
+    const viewInt = document.getElementById('view-internal-users');
+    const viewExt = document.getElementById('view-external-users');
+
+    subtabInt?.addEventListener('click', () => {
+      subtabInt.style.borderBottomColor = 'var(--color-primary)';
+      subtabInt.style.color = 'var(--color-primary)';
+      subtabExt.style.borderBottomColor = 'transparent';
+      subtabExt.style.color = 'var(--color-text)';
+      viewInt.classList.remove('hidden');
+      viewExt.classList.add('hidden');
+    });
+
+    subtabExt?.addEventListener('click', () => {
+      subtabExt.style.borderBottomColor = 'var(--color-primary)';
+      subtabExt.style.color = 'var(--color-primary)';
+      subtabInt.style.borderBottomColor = 'transparent';
+      subtabInt.style.color = 'var(--color-text)';
+      viewExt.classList.remove('hidden');
+      viewInt.classList.add('hidden');
+      _initExternalSection();
+    });
 
     _renderUsersGrid();
   }
@@ -363,6 +393,152 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Focus first field
     overlay.querySelector('#um-name')?.focus();
+  }
+
+  /* ════════════════════════════════════════════════════════
+     SECTION: EXTERNAL CONTACTS
+  ════════════════════════════════════════════════════════ */
+
+  let _externalContacts = [];
+  async function _initExternalSection() {
+    if (_externalInitialized) return;
+    _externalInitialized = true;
+
+    document.getElementById('external-search')?.addEventListener('input', () => _renderExternalGrid());
+    
+    await _fetchExternalContacts();
+  }
+
+  async function _fetchExternalContacts() {
+    try {
+      const gridEl = document.getElementById('external-grid');
+      if (gridEl) gridEl.innerHTML = `<div style="padding:var(--space-6);">Cargando...</div>`;
+      _externalContacts = await API.getExternalContacts();
+      _renderExternalGrid();
+    } catch (e) {
+      Toast.show('Error al cargar contactos externos', 'error');
+    }
+  }
+
+  function _renderExternalGrid() {
+    const gridEl = document.getElementById('external-grid');
+    if (!gridEl) return;
+
+    const q = Utils.normalize(document.getElementById('external-search')?.value ?? '');
+    let contacts = _externalContacts;
+    if (q) {
+      contacts = contacts.filter(c => 
+        Utils.normalize(c.name).includes(q) || Utils.normalize(c.email).includes(q) || Utils.normalize(c.organization || '').includes(q)
+      );
+    }
+
+    if (!contacts.length) {
+      gridEl.innerHTML = `<div style="grid-column:1/-1;color:var(--color-secondary-light);font-size:var(--font-size-sm);padding:var(--space-6);">No se encontraron contactos.</div>`;
+      return;
+    }
+
+    gridEl.innerHTML = contacts.map(c => _buildExternalCard(c)).join('');
+
+    gridEl.querySelectorAll('[data-ext-edit]').forEach(btn => {
+      btn.addEventListener('click', () => _openExternalModal(btn.dataset.extEdit));
+    });
+  }
+
+  function _buildExternalCard(c) {
+    const initial = c.name.charAt(0).toUpperCase();
+    const resCount = c.reservation_count ?? 0;
+    const lastRes = c.last_reservation ? Utils.formatDateShort(c.last_reservation.slice(0, 10)) : 'Ninguna';
+
+    return `
+      <div class="user-card">
+        <div class="user-card__header">
+          <div class="user-card__avatar" aria-hidden="true">${initial}</div>
+          <div class="user-card__info">
+            <div class="user-card__name" title="${Utils.escapeHTML(c.name)}">${Utils.escapeHTML(c.name)}</div>
+            <div class="user-card__email" title="${Utils.escapeHTML(c.email)}">${Utils.escapeHTML(c.email)}</div>
+          </div>
+        </div>
+        <div class="user-card__meta">
+          <span class="badge badge-primary" style="font-size:10px;">Externo</span>
+          <span style="font-size:11px; color:var(--color-secondary); margin-left:8px;">${Utils.escapeHTML(c.organization || '—')}</span>
+        </div>
+        <div class="user-card__last-login">
+          Reservaciones: ${resCount} &bull; Última: ${lastRes}
+        </div>
+        <div class="user-card__actions">
+          <button class="btn btn-secondary btn-sm" data-ext-edit="${c.id}"
+                  aria-label="Editar ${Utils.escapeHTML(c.name)}">
+            Editar
+          </button>
+        </div>
+      </div>`;
+  }
+
+  function _openExternalModal(id) {
+    const c = _externalContacts.find(x => x.id === id);
+    if (!c) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'user-modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Editar Contacto Externo');
+
+    overlay.innerHTML = `
+      <div class="user-modal-dialog">
+        <div class="user-modal-header">
+          <h3>Editar Contacto Externo</h3>
+          <button class="btn btn-ghost btn-sm" id="ext-modal-close" aria-label="Cerrar modal">✕</button>
+        </div>
+        <div class="user-modal-body">
+          <div class="form-group">
+            <label for="em-name" class="form-label">Nombre completo *</label>
+            <input type="text" id="em-name" class="form-input" value="${Utils.escapeHTML(c.name)}" />
+          </div>
+          <div class="form-group">
+            <label for="em-email" class="form-label">Correo electrónico *</label>
+            <input type="email" id="em-email" class="form-input" value="${Utils.escapeHTML(c.email)}" />
+          </div>
+          <div class="form-group">
+            <label for="em-org" class="form-label">Organización / Depto</label>
+            <input type="text" id="em-org" class="form-input" value="${Utils.escapeHTML(c.organization || '')}" />
+          </div>
+        </div>
+        <div class="user-modal-footer">
+          <button class="btn btn-secondary" id="ext-modal-cancel">Cancelar</button>
+          <button class="btn btn-primary" id="ext-modal-save">Guardar cambios</button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('#ext-modal-close')?.addEventListener('click', close);
+    overlay.querySelector('#ext-modal-cancel')?.addEventListener('click', close);
+
+    overlay.querySelector('#ext-modal-save')?.addEventListener('click', async () => {
+      const name = overlay.querySelector('#em-name')?.value.trim();
+      const email = overlay.querySelector('#em-email')?.value.trim();
+      const org = overlay.querySelector('#em-org')?.value.trim();
+
+      if (!name || !email) {
+        Toast.show('Nombre y correo son obligatorios', 'error');
+        return;
+      }
+
+      try {
+        await API.updateExternalContact(id, { name, email, organization: org });
+        Toast.show('Contacto actualizado', 'success');
+        close();
+        _fetchExternalContacts(); // reload stats and data
+      } catch (err) {
+        if (err.message && err.message.includes('en uso')) {
+          Toast.show('Ese correo ya está en uso por otro contacto', 'error');
+        } else {
+          Toast.show('Error al actualizar contacto', 'error');
+        }
+      }
+    });
   }
 
   /* ════════════════════════════════════════════════════════

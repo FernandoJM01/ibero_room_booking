@@ -16,6 +16,7 @@ const Export = (() => {
     return reservations.map(r => ({
       Fecha:        r.date,
       Responsable:  r.responsible,
+      Tipo:         r.externalEmail ? 'Externo' : 'Interno',
       'Creado por': r.creatorName ?? '—',
       'Área':       r.area,
       'Hora inicio':r.startTime,
@@ -67,15 +68,15 @@ const Export = (() => {
     doc.setTextColor(0, 0, 0);
 
     // Auto-table
-    const head = [['Fecha', 'Responsable', 'Creado por', 'Área / Dpto.', 'Inicio', 'Fin', 'Estado']];
+    const head = [['Fecha', 'Responsable', 'Tipo', 'Creado por', 'Área / Dpto.', 'Inicio', 'Fin']];
     const body = reservations.map(r => [
       r.date,
       r.responsible,
+      r.externalEmail ? 'Externo' : 'Interno',
       r.creatorName ?? '—',
       r.area,
       r.startTime,
       r.endTime,
-      r.status === 'active' ? 'Activa' : 'Cancelada',
     ]);
 
     // Use autoTable if available (jspdf-autotable plugin)
@@ -93,13 +94,14 @@ const Export = (() => {
         bodyStyles:  { fontSize: 8 },
         alternateRowStyles: { fillColor: [250, 250, 250] },
         columnStyles: {
-          0: { cellWidth: 22 },  // Fecha
-          1: { cellWidth: 45 },  // Responsable
-          2: { cellWidth: 35 },  // Creado por
-          3: { cellWidth: 55 },  // Área
-          4: { cellWidth: 15 },  // Inicio
-          5: { cellWidth: 15 },  // Fin
-          6: { cellWidth: 20 },  // Estado
+          0: { cellWidth: 18 },  // Fecha
+          1: { cellWidth: 35 },  // Responsable
+          2: { cellWidth: 35 },  // Tipo/Correo
+          3: { cellWidth: 30 },  // Depto Ext
+          4: { cellWidth: 25 },  // Creado por
+          5: { cellWidth: 45 },  // Área
+          6: { cellWidth: 12 },  // Inicio
+          7: { cellWidth: 12 },  // Fin
         },
         margin: { left: 10, right: 10 },
       });
@@ -127,7 +129,7 @@ const Export = (() => {
 
   /** Minimal table renderer for when autoTable plugin is absent */
   function _drawSimpleTable(doc, headers, rows, startY) {
-    const colW  = [22, 45, 35, 55, 15, 15, 20];
+    const colW  = [18, 35, 35, 30, 25, 45, 12, 12];
     const rowH  = 7;
     let   x     = 10;
     let   y     = startY;
@@ -185,6 +187,9 @@ const Export = (() => {
     ws['!cols'] = [
       { wch: 14 },  // Fecha
       { wch: 35 },  // Responsable
+      { wch: 12 },  // Tipo
+      { wch: 30 },  // Correo (Ext)
+      { wch: 30 },  // Depto (Ext)
       { wch: 30 },  // Creado por
       { wch: 35 },  // Área
       { wch: 12 },  // Hora inicio

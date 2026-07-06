@@ -80,6 +80,8 @@ const API = (() => {
       endTime:          end.time,
       responsible:      r.responsible_name,
       creatorName:      r.creator_name ?? null,
+      externalEmail:    r.external_email ?? null,
+      externalOrg:      r.external_organization ?? null,
       isRecurring:      r.is_recurring,
       recurringGroupId: r.recurring_group,
     };
@@ -180,6 +182,16 @@ const API = (() => {
   const activateUser = (id) =>
     _request('PATCH', `/users/${id}/activate`);
 
+  // External Contacts
+  const getExternalContacts = () =>
+    _request('GET', '/external-contacts');
+
+  const createExternalContact = (data) =>
+    _request('POST', '/external-contacts', data);
+
+  const updateExternalContact = (id, data) =>
+    _request('PUT', `/external-contacts/${id}`, data);
+
   // Stats
   const getDashboardStats = () =>
     _request('GET', '/stats/dashboard');
@@ -239,6 +251,9 @@ const API = (() => {
     updateUser,
     deactivateUser,
     activateUser,
+    getExternalContacts,
+    createExternalContact,
+    updateExternalContact,
     getDashboardStats,
     createRecurringGroup,
     aiStatus,

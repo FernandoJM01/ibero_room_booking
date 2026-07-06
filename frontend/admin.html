@@ -63,6 +63,7 @@
           </svg>
           Usuarios
         </button>
+
         <button class="admin-tab" id="tab-requests" role="tab"
                 aria-controls="section-requests" aria-selected="false">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -109,22 +110,41 @@
       ══════════════════════════════════════════ -->
       <div id="section-users" role="tabpanel" aria-labelledby="tab-users" class="hidden">
 
-        <div class="users-toolbar">
-          <input type="search" id="users-search" class="users-toolbar__search"
-                 placeholder="Buscar por nombre o correo…"
-                 aria-label="Buscar usuarios" />
-          <button class="btn btn-primary btn-sm" id="btn-add-user">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Nuevo usuario
-          </button>
+        <div class="users-type-tabs" style="display:flex; gap:16px; margin-bottom:16px; border-bottom:1px solid var(--color-border);">
+          <button class="btn btn-ghost" id="subtab-internal" style="border-radius:0; border-bottom:2px solid var(--color-primary); color:var(--color-primary);">Usuarios Internos</button>
+          <button class="btn btn-ghost" id="subtab-external" style="border-radius:0; border-bottom:2px solid transparent; color:var(--color-text);">Contactos Externos</button>
         </div>
 
-        <div class="users-grid" id="users-grid" aria-label="Lista de usuarios">
-          <!-- JS renders here -->
+        <div id="view-internal-users">
+          <div class="users-toolbar">
+            <input type="search" id="users-search" class="users-toolbar__search"
+                   placeholder="Buscar por nombre o correo…"
+                   aria-label="Buscar usuarios" />
+            <button class="btn btn-primary btn-sm" id="btn-add-user">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Nuevo usuario
+            </button>
+          </div>
+
+          <div class="users-grid" id="users-grid" aria-label="Lista de usuarios">
+            <!-- JS renders here -->
+          </div>
+        </div>
+
+        <div id="view-external-users" class="hidden">
+          <div class="users-toolbar">
+            <input type="search" id="external-search" class="users-toolbar__search"
+                   placeholder="Buscar por nombre o correo…"
+                   aria-label="Buscar contactos externos" />
+          </div>
+
+          <div class="users-grid" id="external-grid" aria-label="Lista de contactos externos">
+            <!-- JS renders here -->
+          </div>
         </div>
 
       </div>

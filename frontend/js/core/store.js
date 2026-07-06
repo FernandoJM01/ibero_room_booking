@@ -9,6 +9,7 @@ const Store = (() => {
     reservations:       [],
     recurringGroups:    [],
     users:              [],
+    externalContacts:   [],
     holidays:           [],
     responsibleHistory: [],
     currentMonth:       new Date().getMonth(),

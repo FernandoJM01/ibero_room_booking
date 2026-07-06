@@ -77,7 +77,7 @@
             <div style="display: flex; gap: 8px;">
               <select id="filter-field" class="filter-select" aria-label="Seleccionar campo de búsqueda" style="width: auto;">
                 <option value="all">Todos los campos</option>
-                <option value="responsible">Responsable</option>
+                <option value="responsible">Responsable / Solicitante</option>
                 <option value="area">Área / Depto</option>
                 <option value="creator">Creado por</option>
                 <option value="observations">Observaciones</option>
@@ -106,6 +106,15 @@
               <option value="all">Todas</option>
               <option value="active">Activas</option>
               <option value="cancelled">Canceladas</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-type">Tipo</label>
+            <select id="filter-type" class="filter-select" aria-label="Filtrar por tipo">
+              <option value="all">Todos</option>
+              <option value="internals">Internos</option>
+              <option value="externals">Externos</option>
             </select>
           </div>
 
@@ -151,7 +160,7 @@
               <th class="sortable" data-sort="date" scope="col">Fecha</th>
               <th class="sortable" data-sort="responsible" scope="col">Responsable</th>
               <th scope="col" class="hide-on-mobile">Creado por</th>
-              <th scope="col">Área / Departamento</th>
+              <th scope="col">Área</th>
               <th scope="col">Horario</th>
               <th scope="col">Estado</th>
               <th class="col-actions" scope="col">Acciones</th>

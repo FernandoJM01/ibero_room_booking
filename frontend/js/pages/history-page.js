@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const filterDateFrom = document.getElementById('filter-date-from');
   const filterDateTo   = document.getElementById('filter-date-to');
   const filterStatus   = document.getElementById('filter-status');
+  const filterType     = document.getElementById('filter-type');
   const btnClear       = document.getElementById('btn-clear-filters');
   const selectAllTop   = document.getElementById('select-all-top');
   const bulkBar        = document.getElementById('bulk-bar');
@@ -62,18 +63,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tableFooter    = document.getElementById('table-footer');
 
   /* ── FILTROS ── */
-  filterField?.addEventListener('change', _applyFilters);
+  filterField?.addEventListener('change',  _applyFilters);
   filterSearch?.addEventListener('input',  _applyFilters);
-  filterStatus?.addEventListener('change', _applyFilters);
   filterDateFrom?.addEventListener('change', _applyFilters);
   filterDateTo?.addEventListener('change',   _applyFilters);
+  filterStatus?.addEventListener('change', _applyFilters);
+  filterType?.addEventListener('change', _applyFilters);
 
   btnClear?.addEventListener('click', () => {
-    if (filterField)    filterField.value    = 'all';
-    if (filterSearch)   filterSearch.value   = '';
+    if (filterField)    filterField.value = 'all';
+    if (filterSearch)   filterSearch.value = '';
     if (filterDateFrom) filterDateFrom.value = '';
-    if (filterDateTo)   filterDateTo.value   = '';
-    if (filterStatus)   filterStatus.value   = 'all';
+    if (filterDateTo)   filterDateTo.value = '';
+    if (filterStatus)   filterStatus.value = 'all';
+    if (filterType)     filterType.value = 'all';
     _applyFilters();
   });
 
@@ -137,11 +140,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateFrom = filterDateFrom?.value ?? '';
     const dateTo   = filterDateTo?.value   ?? '';
     const status   = filterStatus?.value   ?? 'all';
+    const type     = filterType?.value     ?? 'all';
 
     const all = Store.getState().reservations;
 
     _filtered = all.filter(r => {
       if (status !== 'all' && r.status !== status) return false;
+      if (type === 'internals' && r.externalEmail) return false;
+      if (type === 'externals' && !r.externalEmail) return false;
       if (dateFrom && r.date < dateFrom)           return false;
       if (dateTo   && r.date > dateTo)             return false;
       if (search) {
@@ -149,13 +155,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (field === 'responsible') {
           hay = Utils.normalize(r.responsible ?? '');
         } else if (field === 'area') {
-          hay = Utils.normalize(r.area ?? '');
+          hay = Utils.normalize(`${r.area ?? ''} ${r.externalOrg ?? ''}`);
         } else if (field === 'creator') {
           hay = Utils.normalize(r.creatorName ?? '');
         } else if (field === 'observations') {
           hay = Utils.normalize(r.observations ?? '');
         } else {
-          hay = Utils.normalize(`${r.responsible} ${r.area} ${r.observations ?? ''} ${r.creatorName ?? ''}`);
+          hay = Utils.normalize(`${r.responsible} ${r.area} ${r.externalOrg ?? ''} ${r.observations ?? ''} ${r.creatorName ?? ''}`);
         }
         if (!hay.includes(search)) return false;
       }
@@ -294,11 +300,21 @@ document.addEventListener('DOMContentLoaded', async () => {
          </div>`
       : `<span style="color:var(--color-secondary-light);font-size:var(--font-size-xs);">—</span>`;
 
+    const isExternal = !!r.externalEmail;
+    let responsibleHTML = `<span class="row-name" style="display:block; font-weight:500;">${Utils.escapeHTML(r.responsible)}</span>`;
+    
+    if (isExternal) {
+      responsibleHTML += `
+        <div style="margin-top:2px; display:inline-block; font-size:10px;">
+          <span class="badge badge-primary" style="padding: 2px 4px;">Externo</span>
+        </div>`;
+    }
+
     return `
       <tr class="${rowCls}" data-id="${r.id}">
         ${checkCell}
         <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
-        <td><span class="row-name">${Utils.escapeHTML(r.responsible)}</span></td>
+        <td>${responsibleHTML}</td>
         <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>
         <td style="white-space:nowrap;">${r.startTime}–${r.endTime}</td>
