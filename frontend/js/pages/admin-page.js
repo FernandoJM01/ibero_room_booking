@@ -405,6 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     _externalInitialized = true;
 
     document.getElementById('external-search')?.addEventListener('input', () => _renderExternalGrid());
+    document.getElementById('btn-add-external')?.addEventListener('click', () => _openExternalModal(null));
     
     await _fetchExternalContacts();
   }
@@ -475,38 +476,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function _openExternalModal(id) {
-    const c = _externalContacts.find(x => x.id === id);
-    if (!c) return;
+    const isEdit = !!id;
+    const c = isEdit ? _externalContacts.find(x => x.id === id) : null;
+    if (isEdit && !c) return;
 
     const overlay = document.createElement('div');
     overlay.className = 'user-modal-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Editar Contacto Externo');
+    overlay.setAttribute('aria-label', isEdit ? 'Editar Contacto Externo' : 'Crear Contacto Externo');
 
     overlay.innerHTML = `
       <div class="user-modal-dialog">
         <div class="user-modal-header">
-          <h3>Editar Contacto Externo</h3>
+          <h3>${isEdit ? 'Editar Contacto Externo' : 'Nuevo Contacto Externo'}</h3>
           <button class="btn btn-ghost btn-sm" id="ext-modal-close" aria-label="Cerrar modal">✕</button>
         </div>
         <div class="user-modal-body">
           <div class="form-group">
             <label for="em-name" class="form-label">Nombre completo *</label>
-            <input type="text" id="em-name" class="form-input" value="${Utils.escapeHTML(c.name)}" />
+            <input type="text" id="em-name" class="form-input" value="${Utils.escapeHTML(c?.name ?? '')}" />
           </div>
           <div class="form-group">
             <label for="em-email" class="form-label">Correo electrónico *</label>
-            <input type="email" id="em-email" class="form-input" value="${Utils.escapeHTML(c.email)}" />
+            <input type="email" id="em-email" class="form-input" value="${Utils.escapeHTML(c?.email ?? '')}" />
           </div>
           <div class="form-group">
             <label for="em-org" class="form-label">Organización / Depto</label>
-            <input type="text" id="em-org" class="form-input" value="${Utils.escapeHTML(c.organization || '')}" />
+            <input type="text" id="em-org" class="form-input" value="${Utils.escapeHTML(c?.organization ?? '')}" />
           </div>
         </div>
         <div class="user-modal-footer">
           <button class="btn btn-secondary" id="ext-modal-cancel">Cancelar</button>
-          <button class="btn btn-primary" id="ext-modal-save">Guardar cambios</button>
+          <button class="btn btn-primary" id="ext-modal-save">${isEdit ? 'Guardar cambios' : 'Crear contacto'}</button>
         </div>
       </div>`;
 
@@ -527,15 +529,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       try {
-        await API.updateExternalContact(id, { name, email, organization: org });
-        Toast.show('Contacto actualizado', 'success');
+        if (isEdit) {
+          await API.updateExternalContact(id, { name, email, organization: org });
+          Toast.show('Contacto actualizado', 'success');
+        } else {
+          await API.createExternalContact({ name, email, organization: org });
+          Toast.show('Contacto creado', 'success');
+        }
         close();
         _fetchExternalContacts(); // reload stats and data
       } catch (err) {
         if (err.message && err.message.includes('en uso')) {
           Toast.show('Ese correo ya está en uso por otro contacto', 'error');
         } else {
-          Toast.show('Error al actualizar contacto', 'error');
+          Toast.show(isEdit ? 'Error al actualizar contacto' : 'Error al crear contacto', 'error');
         }
       }
     });

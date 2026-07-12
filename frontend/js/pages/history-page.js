@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (field === 'observations') {
           hay = Utils.normalize(r.observations ?? '');
         } else {
-          hay = Utils.normalize(`${r.responsible} ${r.area} ${r.externalOrg ?? ''} ${r.observations ?? ''} ${r.creatorName ?? ''}`);
+          hay = Utils.normalize(`${r.responsible} ${r.area} ${r.externalOrg ?? ''} ${r.externalEmail ?? ''} ${r.observations ?? ''} ${r.creatorName ?? ''}`);
         }
         if (!hay.includes(search)) return false;
       }
@@ -180,14 +180,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ════════════════════════════════════════
      RENDER TABLA
      ════════════════════════════════════════ */
-  function _renderTable() {
-    const sorted = [..._filtered].sort((a, b) => {
+  function _getSortedData() {
+    return [..._filtered].sort((a, b) => {
       let va = (a[_sortField] ?? '').toString().toLowerCase();
       let vb = (b[_sortField] ?? '').toString().toLowerCase();
       if (va < vb) return _sortDir === 'asc' ? -1 :  1;
       if (va > vb) return _sortDir === 'asc' ?  1 : -1;
       return 0;
     });
+  }
+
+  function _renderTable() {
+    const sorted = _getSortedData();
 
     if (!sorted.length) {
       tableBody.innerHTML = '';
@@ -426,7 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       pdfBtnId:        'btn-export-pdf',
       excelBtnId:      'btn-export-excel',
       csvBtnId:        'btn-export-csv',
-      getReservations: () => _filtered,
+      getReservations: () => _getSortedData(),
       getOpts:         () => ({
         title:    'Reservaciones — Sala de Juntas Ibero',
         dateFrom: filterDateFrom?.value ?? '',
