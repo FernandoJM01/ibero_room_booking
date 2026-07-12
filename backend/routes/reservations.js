@@ -77,6 +77,13 @@ router.get('/', async (req, res) => {
       paramCount++;
     }
 
+    // Security: Academics should only see reservations they own or created
+    if (req.user.role === 'academico') {
+      query += ` AND (r.created_by = $${paramCount} OR r.responsible_id = $${paramCount})`;
+      params.push(req.user.id);
+      paramCount++;
+    }
+
     query += ' ORDER BY r.start_time ASC';
 
     const result = await pool.query(query, params);

@@ -259,13 +259,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `<span class="badge badge-neutral">Cancelada</span>`
         : `<span class="badge badge-info">Pasada</span>`;
 
-    const checkCell = isSecretary && isActive
+    const checkCell = isSecretary
       ? `<td class="col-check">
-           <input type="checkbox" class="row-check" data-id="${r.id}"
+           ${isActive ? `<input type="checkbox" class="row-check" data-id="${r.id}"
                   ${isSel ? 'checked' : ''}
-                  aria-label="Seleccionar reservación de ${Utils.escapeHTML(r.responsible)}" />
+                  aria-label="Seleccionar reservación de ${Utils.escapeHTML(r.responsible)}" />` : ''}
          </td>`
-      : `<td class="col-check"></td>`;
+      : ``;
 
     const isOwner      = isSecretary && r.created_by === user?.id;
     const isSuperAdmin = !!user?.isAdmin;
@@ -424,20 +424,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* ── EXPORT BUTTONS ── */
-  if (isSecretary) {
-    document.getElementById('export-btn-group')?.style.setProperty('display', '');
-    Export.attachExportButtons({
-      pdfBtnId:        'btn-export-pdf',
-      excelBtnId:      'btn-export-excel',
-      csvBtnId:        'btn-export-csv',
-      getReservations: () => _getSortedData(),
-      getOpts:         () => ({
-        title:    'Reservaciones — Sala de Juntas Ibero',
-        dateFrom: filterDateFrom?.value ?? '',
-        dateTo:   filterDateTo?.value   ?? '',
-      }),
-    });
-  }
+  document.getElementById('export-btn-group')?.style.setProperty('display', '');
+  Export.attachExportButtons({
+    pdfBtnId:        'btn-export-pdf',
+    excelBtnId:      'btn-export-excel',
+    csvBtnId:        'btn-export-csv',
+    getReservations: () => _getSortedData(),
+    getOpts:         () => ({
+      title:    'Reservaciones — Sala de Juntas Ibero',
+      dateFrom: filterDateFrom?.value ?? '',
+      dateTo:   filterDateTo?.value   ?? '',
+    }),
+  });
 
   /* ── INICIO ── */
   _updateSortIndicators();
