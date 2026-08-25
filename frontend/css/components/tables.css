@@ -52,7 +52,7 @@
 
 /* Indicador de dirección de sort */
 .data-table th.sortable {
-  position: relative;
+  /* position: relative; removed because sticky creates a containing block and relative breaks the sticky header */
   padding-right: 20px;
 }
 

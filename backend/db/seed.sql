@@ -23,9 +23,40 @@ VALUES (
   TRUE
 );
 
+-- Super Admins with password Admin123!
+INSERT INTO users (id, name, email, password_hash, role, is_admin, active)
+VALUES (
+  '550e8400-e29b-41d4-a716-446655440003'::UUID,
+  'Julieta Esquinca',
+  'julieta.esquinca@ibero.mx',
+  '$2b$10$4Imio4htsQ4w0fo2aku7wOy8PFusDeuCNATsl/2i4y3TC.l.2jmBK',
+  'secretaria',
+  TRUE,
+  TRUE
+),
+(
+  '550e8400-e29b-41d4-a716-446655440004'::UUID,
+  'Yael Maya Díaz',
+  'ferjm789@gmail.com',
+  '$2b$10$4Imio4htsQ4w0fo2aku7wOy8PFusDeuCNATsl/2i4y3TC.l.2jmBK',
+  'secretaria',
+  TRUE,
+  TRUE
+);
+
+-- Insert external contacts
+INSERT INTO external_contacts (id, name, email, organization)
+VALUES (
+  '750e8400-e29b-41d4-a716-446655440001'::UUID,
+  'Ing. Carlos Ramírez',
+  'carlos.ramirez@empresa-externa.com',
+  'Empresa Externa S.A.'
+);
+
 -- Insert sample reservations
 INSERT INTO reservations (
   id,
+  responsible_id,
   responsible_name,
   area,
   start_time,
@@ -36,6 +67,7 @@ INSERT INTO reservations (
   last_modified_by
 ) VALUES (
   '650e8400-e29b-41d4-a716-446655440001'::UUID,
+  '550e8400-e29b-41d4-a716-446655440002'::UUID,
   'Dr. Miguel Ángel Álvarez Hernández',
   'Academia de Telecomunicaciones',
   '2026-04-15 10:00:00+00',
@@ -48,6 +80,7 @@ INSERT INTO reservations (
 
 INSERT INTO reservations (
   id,
+  responsible_id,
   responsible_name,
   area,
   start_time,
@@ -59,6 +92,7 @@ INSERT INTO reservations (
   last_modified_by
 ) VALUES (
   '650e8400-e29b-41d4-a716-446655440002'::UUID,
+  '550e8400-e29b-41d4-a716-446655440001'::UUID,
   'Lic. Patricia Torres Mendoza',
   'Coordinación Administrativa',
   '2026-04-16 09:00:00+00',
@@ -68,6 +102,52 @@ INSERT INTO reservations (
   FALSE,
   '550e8400-e29b-41d4-a716-446655440001'::UUID,
   '550e8400-e29b-41d4-a716-446655440001'::UUID
+);
+
+-- External Reservation
+INSERT INTO reservations (
+  id,
+  external_responsible_id,
+  responsible_name,
+  area,
+  start_time,
+  end_time,
+  observations,
+  status,
+  is_recurring,
+  created_by,
+  last_modified_by
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440003'::UUID,
+  '750e8400-e29b-41d4-a716-446655440001'::UUID,
+  'Ing. Carlos Ramírez',
+  'Externo',
+  '2026-04-17 11:00:00+00',
+  '2026-04-17 13:00:00+00',
+  'Reunión de proveedores',
+  'active',
+  FALSE,
+  '550e8400-e29b-41d4-a716-446655440003'::UUID,
+  '550e8400-e29b-41d4-a716-446655440003'::UUID
+);
+
+-- Mock modification request
+INSERT INTO modification_requests (
+  id,
+  reservation_id,
+  requested_by,
+  new_start_time,
+  new_end_time,
+  reason,
+  status
+) VALUES (
+  '850e8400-e29b-41d4-a716-446655440001'::UUID,
+  '650e8400-e29b-41d4-a716-446655440001'::UUID,
+  '550e8400-e29b-41d4-a716-446655440003'::UUID,
+  '2026-04-15 11:00:00+00',
+  '2026-04-15 13:00:00+00',
+  'El área requiere la sala a las 10am',
+  'pending'
 );
 
 -- Insert holidays

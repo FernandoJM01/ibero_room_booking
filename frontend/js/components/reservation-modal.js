@@ -12,19 +12,22 @@ const ReservationModal = (() => {
   let _aiEnabled       = false;
   let _prefill         = null;  // { responsible_id, area, observations }
   let _editReservation = null;  // full reservation object when editing
+  let _readOnly        = false;
 
   /**
    * @param {object}   opts
    * @param {Array}    [opts.intervals]        — [{date, startTime, endTime}, ...] (create mode)
    * @param {object}   [opts.editReservation]  — existing reservation object (edit mode)
    * @param {Function} [opts.onSaved]          — (savedArray) => void
+   * @param {boolean}  [opts.readOnly]         — true to disable fields and hide save button
    */
-  const open = async ({ intervals = [], editReservation = null, onSaved = null, prefill = null } = {}) => {
+  const open = async ({ intervals = [], editReservation = null, onSaved = null, prefill = null, readOnly = false } = {}) => {
     if (_overlay) close();
 
     _editReservation = editReservation ?? null;
     _onSaved         = onSaved;
     _prefill         = prefill;
+    _readOnly        = readOnly;
 
     if (_editReservation) {
       const r    = _editReservation;
@@ -62,6 +65,7 @@ const ReservationModal = (() => {
     _overlay.remove();
     _overlay          = null;
     _editReservation  = null;
+    _readOnly         = false;
   };
 
   /* ── HELPERS ── */
@@ -172,6 +176,7 @@ const ReservationModal = (() => {
     const n        = _intervals.length;
     const isSingle = n === 1;
     const isEdit   = Boolean(_editReservation);
+    const isReadOnly = _readOnly;
 
     overlay.innerHTML = `
       <div class="modal-dialog modal-dialog--lg rmodal">
@@ -188,7 +193,7 @@ const ReservationModal = (() => {
             </svg>
           </div>
           <div class="rmodal__header-text">
-            <h3 id="rmodal-title">${isEdit ? 'Editar reservación' : 'Nueva reservación'}</h3>
+            <h3 id="rmodal-title">${isReadOnly ? 'Información de reservación' : isEdit ? 'Editar reservación' : 'Nueva reservación'}</h3>
             <p class="rmodal__header-sub">${isEdit ? Utils.escapeHTML(Utils.formatDateShort(_editReservation.date)) : `${n} horario${n !== 1 ? 's' : ''} seleccionado${n !== 1 ? 's' : ''}`}</p>
           </div>
           <button type="button" class="rmodal__close" aria-label="Cerrar" data-rmodal-close>
@@ -230,7 +235,7 @@ const ReservationModal = (() => {
           </div>
 
           <!-- 2. Asistente IA (condicional) -->
-          ${_aiEnabled ? `
+          ${_aiEnabled && !isReadOnly ? `
           <div class="rmodal__section rmodal__ai-section">
             <label class="rmodal__toggle">
               <input type="checkbox" id="rmodal-ai-toggle" />
@@ -397,15 +402,20 @@ const ReservationModal = (() => {
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-rmodal-close>Cancelar</button>
-          <button type="button" class="btn btn-primary" id="rmodal-save">
+          <button type="button" class="btn btn-secondary" data-rmodal-close>${isReadOnly ? 'Cerrar' : 'Cancelar'}</button>
+          ${!isReadOnly ? `<button type="button" class="btn btn-primary" id="rmodal-save">
             ${isEdit ? 'Guardar cambios' : `Guardar ${n > 1 ? `(${n} reservaciones)` : 'reservación'}`}
-          </button>
+          </button>` : ''}
         </div>
       </div>`;
 
     document.body.appendChild(overlay);
     _overlay = overlay;
+
+    if (isReadOnly) {
+      overlay.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+      // Ensure radio buttons are disabled too, they are covered by 'input'
+    }
 
     const respSel = overlay.querySelector('#rmodal-responsible');
     if (respSel) _populateResponsibleSelect(respSel);

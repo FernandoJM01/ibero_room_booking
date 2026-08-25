@@ -50,8 +50,7 @@ CREATE TABLE reservations (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT chk_responsible_xor CHECK (
-    (responsible_id IS NOT NULL AND external_responsible_id IS NULL) OR
-    (responsible_id IS NULL AND external_responsible_id IS NOT NULL)
+    NOT (responsible_id IS NOT NULL AND external_responsible_id IS NOT NULL)
   )
 );
 
@@ -62,6 +61,21 @@ CREATE TABLE calendar_events (
   name VARCHAR(200) NOT NULL,
   type VARCHAR(20) NOT NULL CHECK (type IN ('holiday', 'closure', 'evento')),
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Secretary modification request table
+CREATE TABLE modification_requests (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reservation_id   UUID NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+  requested_by     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  new_start_time   TIMESTAMPTZ NOT NULL,
+  new_end_time     TIMESTAMPTZ NOT NULL,
+  reason           TEXT,
+  status           VARCHAR(20) NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending', 'approved', 'rejected')),
+  resolved_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at      TIMESTAMPTZ
 );
 
 -- Audit log
@@ -98,10 +112,10 @@ CREATE TABLE backups (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_reset_token ON users(reset_token_hash) WHERE reset_token_hash IS NOT NULL;
 CREATE INDEX idx_reservations_status ON reservations(status);
+CREATE INDEX idx_reservations_grouped_id ON reservations(grouped_id) WHERE grouped_id IS NOT NULL;
 CREATE INDEX idx_reservations_start_time ON reservations(start_time);
 CREATE INDEX idx_reservations_created_by ON reservations(created_by);
 CREATE INDEX idx_reservations_responsible_id ON reservations(responsible_id);
-CREATE INDEX idx_reservations_grouped_id ON reservations(grouped_id) WHERE grouped_id IS NOT NULL;
 CREATE INDEX idx_calendar_events_date ON calendar_events(date);
 CREATE INDEX idx_audit_log_user_id ON audit_log(user_id);
 CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp);

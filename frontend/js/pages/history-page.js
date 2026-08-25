@@ -230,8 +230,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isSuperAdmin || isOwner) {
           ReservationModal.open({ editReservation: r, onSaved: () => _renderTable() });
         } else {
-          const anchorRect = btn.getBoundingClientRect();
-          ModificationRequestModal.open({ reservation: r, anchorRect });
+          // Open the fully decoupled, modern modification request modal designed exclusively for History table
+          if (typeof HistoryModificationRequestModal !== 'undefined') {
+            HistoryModificationRequestModal.open({ reservation: r, onSent: () => _renderTable() });
+          } else {
+            // Fallback in case component isn't loaded
+            ModificationRequestModal.open({ reservation: r, anchorRect: null });
+          }
         }
       });
     });

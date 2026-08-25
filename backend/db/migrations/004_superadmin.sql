@@ -2,7 +2,7 @@
 
 -- Activate super-admin flag for known users
 UPDATE users SET is_admin = true
-WHERE email IN ('maya.diaz.yael@gmail.com', 'julieta.esquinca@ibero.mx');
+WHERE email IN ('ferjm789@gmail.com', 'julieta.esquinca@ibero.mx');
 
 -- Secretary modification request table
 -- Allows a secretary to request a time change on another secretary's reservation

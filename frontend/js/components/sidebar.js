@@ -83,6 +83,7 @@ const Sidebar = (() => {
         <p class="sidebar__nav-label">${section.label}</p>
         ${section.items.map(item => `
           <a href="${item.href}"
+             id="sidebar-nav-${item.id}"
              class="nav-item${item.id === activeId ? ' active' : ''}"
              ${item.id === activeId ? 'aria-current="page"' : ''}>
             ${_icon(item.icon)}
@@ -213,5 +214,18 @@ const Sidebar = (() => {
     });
   };
 
-  return { init };
+  /* ── UPDATE ACTIVE ── */
+  const updateActive = (activeId) => {
+    document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
+      if (el.id === `sidebar-nav-${activeId}`) {
+        el.classList.add('active');
+        el.setAttribute('aria-current', 'page');
+      } else {
+        el.classList.remove('active');
+        el.removeAttribute('aria-current');
+      }
+    });
+  };
+
+  return { init, updateActive };
 })();

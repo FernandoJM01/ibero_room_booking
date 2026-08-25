@@ -13,6 +13,7 @@ const diagnosticsRoutes = require('./routes/diagnostics');
 const notificationsRoutes = require('./routes/notifications');
 const externalContactsRoutes = require('./routes/externalContacts');
 const { runMigrations } = require('./db/migrate');
+const { startRetentionScheduler } = require('./utils/retentionJob');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -81,5 +82,6 @@ runMigrations()
   .finally(() => {
     app.listen(PORT, () => {
       console.log(`Backend server running on port ${PORT}`);
+      startRetentionScheduler();
     });
   });

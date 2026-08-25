@@ -44,6 +44,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     badge.className   = `badge ${isSuperAdmin ? 'badge-warning' : 'badge-primary'} topbar__badge-role`;
   }
 
+  function _openExternalInfoModal(id) {
+    const c = _externalContacts.find(x => x.id === id);
+    if (!c) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'user-modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Información de Contacto Externo');
+
+    const resCount = c.reservation_count ?? 0;
+    const lastRes = c.last_reservation ? Utils.formatDateLong(c.last_reservation) : 'Ninguna';
+
+    overlay.innerHTML = `
+      <div class="user-modal-dialog" style="max-width:450px;">
+        <div class="user-modal-header">
+          <h3>Información de Contacto Externo</h3>
+          <button class="btn btn-ghost btn-sm" id="ext-info-close" aria-label="Cerrar modal">✕</button>
+        </div>
+        <div class="user-modal-body" style="padding-top: var(--space-4);">
+          
+          <section style="margin-bottom: var(--space-5);">
+            <h4 style="margin-bottom: var(--space-3); color: var(--color-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Información Básica</h4>
+            
+            <div style="margin-bottom: var(--space-2);">
+              <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Nombre completo</div>
+              <div style="font-weight: 500;">${Utils.escapeHTML(c.name || 'Sin nombre')}</div>
+            </div>
+            
+            <div style="margin-bottom: var(--space-2);">
+              <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Correo electrónico</div>
+              <div style="word-break: break-all;">${c.email ? Utils.escapeHTML(c.email) : '<span style="color:var(--color-secondary-light)">—</span>'}</div>
+            </div>
+
+            <div style="margin-bottom: var(--space-2);">
+              <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Teléfono</div>
+              <div>${c.phone ? Utils.escapeHTML(c.phone) : '<span style="color:var(--color-secondary-light)">—</span>'}</div>
+            </div>
+          </section>
+
+          <section style="margin-bottom: var(--space-5);">
+            <h4 style="margin-bottom: var(--space-3); color: var(--color-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Organización</h4>
+            
+            <div>
+              <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Institución / Empresa</div>
+              <div>${c.organization ? Utils.escapeHTML(c.organization) : '<span style="color:var(--color-secondary-light)">—</span>'}</div>
+            </div>
+          </section>
+
+          <section>
+            <h4 style="margin-bottom: var(--space-3); color: var(--color-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Actividad</h4>
+            
+            <div style="display: flex; gap: var(--space-4);">
+              <div style="flex: 1;">
+                <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Total de reservaciones</div>
+                <div style="font-weight: 500; font-size: var(--font-size-lg);">${resCount}</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Última reservación</div>
+                <div>${lastRes}</div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+        <div class="user-modal-footer" style="justify-content: flex-end;">
+          <button class="btn btn-primary" id="ext-info-accept">Aceptar</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('modal-container').appendChild(overlay);
+
+    const closeBtn = document.getElementById('ext-info-close');
+    const acceptBtn = document.getElementById('ext-info-accept');
+
+    const closeModal = () => overlay.remove();
+
+    closeBtn.addEventListener('click', closeModal);
+    acceptBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) closeModal();
+    });
+  }
+
   /* ════════════════════════════════════════════════════════
      TABS
   ════════════════════════════════════════════════════════ */
@@ -88,6 +173,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (breadEl) breadEl.textContent  = tab.breadcrumb;
 
     if (pushState) history.replaceState(null, '', tab.hash);
+    
+    // Sync sidebar active state dynamically
+    if (typeof Sidebar !== 'undefined' && Sidebar.updateActive) {
+      Sidebar.updateActive(_navIdForHash(tab.hash));
+    }
 
     // Lazy-init section content
     if (tab.id === 'tab-users')     _initUsersSection();
@@ -440,6 +530,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     gridEl.innerHTML = contacts.map(c => _buildExternalCard(c)).join('');
 
+    gridEl.querySelectorAll('[data-ext-info]').forEach(btn => {
+      btn.addEventListener('click', () => _openExternalInfoModal(btn.dataset.extInfo));
+    });
+
     gridEl.querySelectorAll('[data-ext-edit]').forEach(btn => {
       btn.addEventListener('click', () => _openExternalModal(btn.dataset.extEdit));
     });
@@ -466,7 +560,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="user-card__last-login">
           Reservaciones: ${resCount} &bull; Última: ${lastRes}
         </div>
-        <div class="user-card__actions">
+        <div class="user-card__actions" style="display:flex; gap:8px;">
+          <button class="btn btn-outline btn-sm" data-ext-info="${c.id}"
+                  aria-label="Ver información de ${Utils.escapeHTML(c.name)}">
+            Información
+          </button>
           <button class="btn btn-secondary btn-sm" data-ext-edit="${c.id}"
                   aria-label="Editar ${Utils.escapeHTML(c.name)}">
             Editar

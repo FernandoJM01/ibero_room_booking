@@ -126,15 +126,25 @@ const Holidays = (() => {
 
     // Botones de eliminar
     el.querySelectorAll('.holiday-item__del').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const name = btn.closest('.holiday-item')
                         .querySelector('.holiday-item__name').textContent;
-        if (!confirm(`¿Eliminar "${name}"?`)) return;
-        const success = await remove(btn.dataset.id || btn.dataset.date);
-        if (success) {
-          renderList(containerId, onChanged);
-          onChanged?.();
-        }
+        
+        Modal.confirm(
+          {
+            title: 'Eliminar registro',
+            message: `¿Estás seguro de que deseas eliminar "${name}"?`,
+            confirmText: 'Eliminar',
+            danger: true
+          },
+          async () => {
+            const success = await remove(btn.dataset.id || btn.dataset.date);
+            if (success) {
+              renderList(containerId, onChanged);
+              onChanged?.();
+            }
+          }
+        );
       });
     });
   };

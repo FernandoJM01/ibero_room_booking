@@ -36,6 +36,10 @@ docker compose up -d --build
 - Email: `academico@ibero.mx`
 - Contraseña: `Acad456!`
 
+**Usuario Super Administrador:**
+- Email: `julieta.esquinca@ibero.mx` o `ferjm789@gmail.com`
+- Contraseña: `Admin123!`
+
 ## 📋 Características Implementadas
 
 ### Autenticación (HU-01, 02, 03)
@@ -63,12 +67,22 @@ docker compose up -d --build
 - ✅ **Reservaciones recurrentes (HU-27)** - semanal, quincenal, mensual
 
 ### Gestión (HU-18 al 30)
-- ✅ Historial de reservaciones con filtros
+- ✅ Historial de reservaciones con filtros y vistas de usuario
 - ✅ Búsqueda y filtrado avanzado
-- ✅ Dashboard de estadísticas
+- ✅ Dashboard de estadísticas y analíticas
 - ✅ Exportación a PDF/Excel
-- ✅ Gestión de usuarios (CRUD)
 - ✅ Configuración de días festivos y cierres
+- ✅ **Gestión de Contactos Externos**: Administración unificada para asignar salas a usuarios ajenos a la Ibero.
+
+### Administración (Super Admin)
+- ✅ Gestión de Usuarios centralizada (CRUD completo)
+- ✅ Consola de configuración y backups.
+- ✅ **Solicitudes de Cambio**: Flujo donde las secretarias pueden solicitar modificaciones a reservaciones de otras áreas, gestionado mediante una interfaz dedicada en el Historial.
+
+### Interfaz y Experiencia de Usuario (UX)
+- ✅ **Componentes Modales Modernos**: Eliminación de alertas nativas a favor de un sistema de modales unificado y estilizado.
+- ✅ Sincronización dinámica de navegación en menú lateral sin recargar página.
+- ✅ Tablas responsivas con encabezados anclados (*sticky headers*).
 
 ## 🏗️ Arquitectura
 
@@ -240,21 +254,28 @@ curl -X POST http://localhost:8080/api/reservations \
 - ✅ Validación de roles en cada endpoint
 - ✅ Sanitización de inputs
 - ✅ HTTPS en producción (configurar Nginx)
-- ✅ Soft deletes (nunca borrar datos)
+- ✅ Soft deletes (nunca borrar datos activos manualmente)
 - ✅ Logs de auditoría para cambios críticos
+- ✅ **Política de Retención Automática:** Job de limpieza automática de datos de más de 18 meses (`DATA_RETENTION_MONTHS`) para proteger la privacidad del usuario (reservaciones, logs de auditoría, solicitudes).
 
 ## 📊 Base de Datos
 
 ### Tablas Principales
 
 **users**
-- Usuarios del sistema con roles diferenciados
+- Usuarios del sistema con roles diferenciados (academico, secretaria) y bandera `is_admin` para Super Admins.
 - Hashed passwords con bcryptjs
+
+**external_contacts**
+- Directorio de usuarios externos a la universidad que asumen responsabilidad de salas.
 
 **reservations**
 - Todas las reservaciones con estado (active/cancelled/past)
-- Tracking de quién creó y modificó
-- Soft deletes mediante status
+- Soporte para responsables internos (`responsible_id`) y externos (`external_responsible_id`).
+- Tracking de quién creó y modificó, y soft deletes mediante status.
+
+**modification_requests**
+- Rastreo de solicitudes de cambio de horario realizadas por secretarias a reservaciones de terceros, con soporte de estados (pending, approved, rejected).
 
 **recurring_groups**
 - Agrupar instancias de reservaciones recurrentes
@@ -336,6 +357,6 @@ Código propietario de la Universidad Iberoamericana CDMX.
 
 ---
 
-**Última actualización:** 21 de Abril, 2026  
-**Versión:** 1.0.0  
+**Última actualización:** Agosto 2026  
+**Versión:** 1.2.0  
 **Estado:** Production Ready ✅
