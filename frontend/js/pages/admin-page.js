@@ -202,26 +202,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tab) _activateTab(tab.id, false);
   });
 
-  // Sidebar link interception — prevents browser navigation and calls _activateTab
-  // directly, bypassing the hashchange dependency entirely. This is necessary because
-  // replaceState (used by in-page tab clicks) updates the URL without firing hashchange,
-  // so a sidebar link pointing to the same hash would be a no-op for the browser.
-  document.querySelectorAll('.nav-item[href^="admin.html"]').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      const rawHref = a.getAttribute('href');
-      const hash    = rawHref.includes('#') ? rawHref.slice(rawHref.indexOf('#')) : '';
-      const tab     = TABS.find(t => t.hash === hash) ?? TABS[0];
+  // Sidebar link interception using event delegation
+  document.getElementById('sidebar').addEventListener('click', (e) => {
+    const a = e.target.closest('.nav-item[href^="admin.html"]');
+    if (!a) return;
+    
+    e.preventDefault();
+    const rawHref = a.getAttribute('href');
+    const hash    = rawHref.includes('#') ? rawHref.slice(rawHref.indexOf('#')) : '';
+    const tab     = TABS.find(t => t.hash === hash) ?? TABS[0];
 
-      history.replaceState(null, '', hash);
-      _activateTab(tab.id, false);
+    history.replaceState(null, '', hash);
+    _activateTab(tab.id, false);
 
-      // Sync sidebar highlight
-      document.querySelectorAll('.nav-item').forEach(el => {
-        el.classList.toggle('active', el === a);
-        if (el === a) el.setAttribute('aria-current', 'page');
-        else          el.removeAttribute('aria-current');
-      });
+    // Sync sidebar highlight
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.toggle('active', el === a);
+      if (el === a) el.setAttribute('aria-current', 'page');
+      else          el.removeAttribute('aria-current');
     });
   });
 
