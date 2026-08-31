@@ -1,472 +1,457 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Administración — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/reset.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/components/calendar.css" />
-  <link rel="stylesheet" href="css/components/forms.css" />
-  <link rel="stylesheet" href="css/components/modals.css" />
-  <link rel="stylesheet" href="css/pages/admin.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/variables.css?v=4" />
+  <link rel="stylesheet" href="css/reset.css?v=4" />
+  <link rel="stylesheet" href="css/base.css?v=4" />
+  <link rel="stylesheet" href="css/layout.css?v=4" />
+  <link rel="stylesheet" href="css/components/calendar.css?v=4" />
+  <link rel="stylesheet" href="css/components/forms.css?v=4" />
+  <link rel="stylesheet" href="css/components/modals.css?v=4" />
+  <link rel="stylesheet" href="css/pages/admin.css?v=4" />
+  <link rel="stylesheet" href="css/responsive.css?v=4" />
+  <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
+
 <body>
 
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="app">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="app">
 
-  <!-- Sidebar -->
-  <nav class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal"></nav>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal"></nav>
 
-  <div class="main-content">
+    <div class="main-content">
 
-    <!-- Topbar -->
-    <header class="topbar" role="banner">
-      <button class="topbar__toggle" id="sidebar-toggle"
-              aria-label="Abrir menú" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="6"  x2="21" y2="6"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
-      <h1 class="topbar__title" id="admin-page-title">Administración</h1>
-      <nav class="topbar__breadcrumb" aria-label="Ruta de navegación">
-        <a href="dashboard.html">Inicio</a>
-        <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
-        <span aria-current="page" id="admin-breadcrumb">Administración</span>
-      </nav>
-      <div class="topbar__actions">
-        <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
-      </div>
-    </header>
-
-    <!-- Page body -->
-    <main class="page-content" role="main">
-
-      <!-- ── TAB BAR ── -->
-      <div class="admin-tabs" role="tablist" aria-label="Secciones de administración">
-        <button class="admin-tab" id="tab-users" role="tab"
-                aria-controls="section-users" aria-selected="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      <!-- Topbar -->
+      <header class="topbar" role="banner">
+        <button class="topbar__toggle" id="sidebar-toggle" aria-label="Abrir menú" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
-          Usuarios
         </button>
+        <h1 class="topbar__title" id="admin-page-title">Administración</h1>
+        <nav class="topbar__breadcrumb" aria-label="Ruta de navegación">
+          <a href="dashboard.html">Inicio</a>
+          <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+          <span aria-current="page" id="admin-breadcrumb">Administración</span>
+        </nav>
+        <div class="topbar__actions">
+          <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
+        </div>
+      </header>
 
-        <button class="admin-tab" id="tab-requests" role="tab"
-                aria-controls="section-requests" aria-selected="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
-            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
-          </svg>
-          Solicitudes
-        </button>
-        <button class="admin-tab" id="tab-calendar" role="tab"
-                aria-controls="section-calendar" aria-selected="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8"  y1="2" x2="8"  y2="6"/>
-            <line x1="3"  y1="10" x2="21" y2="10"/>
-          </svg>
-          Calendario
-        </button>
-        <button class="admin-tab" id="tab-notif" role="tab"
-                aria-controls="section-notif" aria-selected="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          Notificaciones
-        </button>
-        <button class="admin-tab" id="tab-backup" role="tab"
-                aria-controls="section-backup" aria-selected="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Respaldos
-        </button>
-      </div>
+      <!-- Page body -->
+      <main class="page-content" role="main">
 
-      <!-- ══════════════════════════════════════════
+        <!-- ── TAB BAR ── -->
+        <div class="admin-tabs" role="tablist" aria-label="Secciones de administración">
+          <button class="admin-tab" id="tab-users" role="tab" aria-controls="section-users" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            Usuarios
+          </button>
+
+          <button class="admin-tab" id="tab-requests" role="tab" aria-controls="section-requests" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+              <path
+                d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+            </svg>
+            Solicitudes
+          </button>
+          <button class="admin-tab" id="tab-calendar" role="tab" aria-controls="section-calendar" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Calendario
+          </button>
+          <button class="admin-tab" id="tab-notif" role="tab" aria-controls="section-notif" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            Notificaciones
+          </button>
+          <button class="admin-tab" id="tab-backup" role="tab" aria-controls="section-backup" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Respaldos
+          </button>
+        </div>
+
+        <!-- ══════════════════════════════════════════
            SECCIÓN: USUARIOS
       ══════════════════════════════════════════ -->
-      <div id="section-users" role="tabpanel" aria-labelledby="tab-users" class="hidden">
+        <div id="section-users" role="tabpanel" aria-labelledby="tab-users" class="hidden">
 
-        <div class="users-type-tabs" style="display:flex; gap:16px; margin-bottom:16px; border-bottom:1px solid var(--color-border);">
-          <button class="btn btn-ghost" id="subtab-internal" style="border-radius:0; border-bottom:2px solid var(--color-primary); color:var(--color-primary);">Usuarios Internos</button>
-          <button class="btn btn-ghost" id="subtab-external" style="border-radius:0; border-bottom:2px solid transparent; color:var(--color-text);">Contactos Externos</button>
+          <div class="users-type-tabs"
+            style="display:flex; gap:16px; margin-bottom:16px; border-bottom:1px solid var(--color-border);">
+            <button class="btn btn-ghost" id="subtab-internal"
+              style="border-radius:0; border-bottom:2px solid var(--color-primary); color:var(--color-primary);">Usuarios
+              Internos</button>
+            <button class="btn btn-ghost" id="subtab-external"
+              style="border-radius:0; border-bottom:2px solid transparent; color:var(--color-text);">Contactos
+              Externos</button>
+          </div>
+
+          <div id="view-internal-users">
+            <div class="users-toolbar">
+              <input type="search" id="users-search" class="users-toolbar__search"
+                placeholder="Buscar por nombre o correo…" aria-label="Buscar usuarios" />
+              <button class="btn btn-primary btn-sm" id="btn-add-user">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Nuevo usuario
+              </button>
+            </div>
+
+            <div class="users-grid" id="users-grid" aria-label="Lista de usuarios">
+              <!-- JS renders here -->
+            </div>
+          </div>
+
+          <div id="view-external-users" class="hidden">
+            <div class="users-toolbar">
+              <input type="search" id="external-search" class="users-toolbar__search"
+                placeholder="Buscar por nombre o correo…" aria-label="Buscar contactos externos" />
+              <button class="btn btn-primary btn-sm" id="btn-add-external">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Nuevo contacto
+              </button>
+            </div>
+
+            <div class="users-grid" id="external-grid" aria-label="Lista de contactos externos">
+              <!-- JS renders here -->
+            </div>
+          </div>
+
         </div>
 
-        <div id="view-internal-users">
-          <div class="users-toolbar">
-            <input type="search" id="users-search" class="users-toolbar__search"
-                   placeholder="Buscar por nombre o correo…"
-                   aria-label="Buscar usuarios" />
-            <button class="btn btn-primary btn-sm" id="btn-add-user">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Nuevo usuario
-            </button>
-          </div>
-
-          <div class="users-grid" id="users-grid" aria-label="Lista de usuarios">
-            <!-- JS renders here -->
-          </div>
-        </div>
-
-        <div id="view-external-users" class="hidden">
-          <div class="users-toolbar">
-            <input type="search" id="external-search" class="users-toolbar__search"
-                   placeholder="Buscar por nombre o correo…"
-                   aria-label="Buscar contactos externos" />
-            <button class="btn btn-primary btn-sm" id="btn-add-external">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Nuevo contacto
-            </button>
-          </div>
-
-          <div class="users-grid" id="external-grid" aria-label="Lista de contactos externos">
-            <!-- JS renders here -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ══════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
            SECCIÓN: SOLICITUDES DE CAMBIO (super-admin)
       ══════════════════════════════════════════ -->
-      <div id="section-requests" role="tabpanel" aria-labelledby="tab-requests" class="hidden">
-        <div class="admin-panel" style="max-width:720px;">
-          <div class="admin-panel__header">
-            <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
-              <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
-            </svg>
-            <h2 class="admin-panel__title">Solicitudes pendientes de cambio de horario</h2>
-          </div>
-          <div class="admin-panel__body">
-            <div id="requests-list" aria-live="polite">
-              <div class="notif-empty">Cargando…</div>
+        <div id="section-requests" role="tabpanel" aria-labelledby="tab-requests" class="hidden">
+          <div class="admin-panel" style="max-width:720px;">
+            <div class="admin-panel__header">
+              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                <path
+                  d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+              </svg>
+              <h2 class="admin-panel__title">Solicitudes pendientes de cambio de horario</h2>
+            </div>
+            <div class="admin-panel__body">
+              <div id="requests-list" aria-live="polite">
+                <div class="notif-empty">Cargando…</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- ══════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
            SECCIÓN: CALENDARIO MAESTRO
       ══════════════════════════════════════════ -->
-      <div id="section-calendar" role="tabpanel" aria-labelledby="tab-calendar" class="hidden">
-        <div class="admin-layout">
+        <div id="section-calendar" role="tabpanel" aria-labelledby="tab-calendar" class="hidden">
+          <div class="admin-layout">
 
-          <!-- Panel izquierdo: mini calendario + formulario -->
-          <div class="admin-panel">
-            <div class="admin-panel__header">
-              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                <line x1="3"  y1="10" x2="21" y2="10"/>
-              </svg>
-              <h2 class="admin-panel__title">Marcar días festivos y cierres</h2>
-            </div>
-
-            <div class="admin-panel__body">
-              <div class="admin-cal__nav" role="group" aria-label="Navegar mes">
-                <button class="admin-cal__nav-btn" id="admin-cal-prev" aria-label="Mes anterior">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5"
-                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polyline points="15 18 9 12 15 6"/>
-                  </svg>
-                </button>
-                <span class="admin-cal__title" id="admin-cal-title" aria-live="polite" aria-atomic="true">Cargando…</span>
-                <button class="admin-cal__nav-btn" id="admin-cal-next" aria-label="Mes siguiente">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5"
-                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
-              </div>
-
-              <div id="admin-mini-cal" aria-label="Seleccionar fecha"></div>
-
-              <div class="admin-selected-box" role="status" aria-live="polite">
-                <span class="admin-selected-box__label">Fecha seleccionada</span>
-                <span class="admin-selected-box__date" id="selected-date-display">
-                  Haz clic en un día del calendario
-                </span>
-              </div>
-
-              <div class="admin-conflict-alert hidden" id="conflict-warning" role="alert" aria-live="polite">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                  <line x1="12" y1="9"  x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <!-- Panel izquierdo: mini calendario + formulario -->
+            <div class="admin-panel">
+              <div class="admin-panel__header">
+                <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-                <span id="conflict-warning-text"></span>
+                <h2 class="admin-panel__title">Marcar días festivos y cierres</h2>
               </div>
 
-              <form class="admin-form" id="add-holiday-form" novalidate>
-                <div class="form-group">
-                  <label for="holiday-type">Tipo de fecha</label>
-                  <select id="holiday-type" name="type" required>
-                    <option value="holiday">🟡 Día Festivo</option>
-                    <option value="closure">⚫ Cierre Institucional</option>
-                  </select>
+              <div class="admin-panel__body">
+                <div class="admin-cal__nav" role="group" aria-label="Navegar mes">
+                  <button class="admin-cal__nav-btn" id="admin-cal-prev" aria-label="Mes anterior">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <span class="admin-cal__title" id="admin-cal-title" aria-live="polite"
+                    aria-atomic="true">Cargando…</span>
+                  <button class="admin-cal__nav-btn" id="admin-cal-next" aria-label="Mes siguiente">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
                 </div>
-                <div class="form-group">
-                  <label for="holiday-name">Nombre / descripción</label>
-                  <input type="text" id="holiday-name" name="name"
-                         placeholder="Ej. Día del Trabajo"
-                         maxlength="100" autocomplete="off" required />
+
+                <div id="admin-mini-cal" aria-label="Seleccionar fecha"></div>
+
+                <div class="admin-selected-box" role="status" aria-live="polite">
+                  <span class="admin-selected-box__label">Fecha seleccionada</span>
+                  <span class="admin-selected-box__date" id="selected-date-display">
+                    Haz clic en un día del calendario
+                  </span>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full" id="btn-mark-date" disabled>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5"
-                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5"  y1="12" x2="19" y2="12"/>
+
+                <div class="admin-conflict-alert hidden" id="conflict-warning" role="alert" aria-live="polite">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
                   </svg>
-                  Marcar fecha
-                </button>
-              </form>
-            </div>
-          </div>
+                  <span id="conflict-warning-text"></span>
+                </div>
 
-          <!-- Panel derecho: lista de fechas marcadas -->
-          <div class="admin-panel">
-            <div class="admin-panel__header">
-              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="8"  y1="6"  x2="21" y2="6"/>
-                <line x1="8"  y1="12" x2="21" y2="12"/>
-                <line x1="8"  y1="18" x2="21" y2="18"/>
-                <line x1="3"  y1="6"  x2="3.01" y2="6"/>
-                <line x1="3"  y1="12" x2="3.01" y2="12"/>
-                <line x1="3"  y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <h2 class="admin-panel__title">Fechas marcadas</h2>
+                <form class="admin-form" id="add-holiday-form" novalidate>
+                  <div class="form-group">
+                    <label for="holiday-type">Tipo de fecha</label>
+                    <select id="holiday-type" name="type" required>
+                      <option value="holiday">🟡 Día Festivo</option>
+                      <option value="closure">⚫ Cierre Institucional</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="holiday-name">Nombre / descripción</label>
+                    <input type="text" id="holiday-name" name="name" placeholder="Ej. Día del Trabajo" maxlength="100"
+                      autocomplete="off" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-full" id="btn-mark-date" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Marcar fecha
+                  </button>
+                </form>
+              </div>
             </div>
-            <div id="holiday-list" role="list" aria-label="Días festivos y cierres">
-              <div class="holiday-list__empty"><p>Cargando…</p></div>
+
+            <!-- Panel derecho: lista de fechas marcadas -->
+            <div class="admin-panel">
+              <div class="admin-panel__header">
+                <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                <h2 class="admin-panel__title">Fechas marcadas</h2>
+              </div>
+              <div id="holiday-list" role="list" aria-label="Días festivos y cierres">
+                <div class="holiday-list__empty">
+                  <p>Cargando…</p>
+                </div>
+              </div>
+              <div class="holiday-list__count" id="holiday-count" aria-live="polite"></div>
             </div>
-            <div class="holiday-list__count" id="holiday-count" aria-live="polite"></div>
-          </div>
 
-        </div><!-- /.admin-layout -->
-      </div>
+          </div><!-- /.admin-layout -->
+        </div>
 
-      <!-- ══════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
            SECCIÓN: NOTIFICACIONES
       ══════════════════════════════════════════ -->
-      <div id="section-notif" role="tabpanel" aria-labelledby="tab-notif" class="hidden">
+        <div id="section-notif" role="tabpanel" aria-labelledby="tab-notif" class="hidden">
 
-        <!-- Panel: Configuración de Correo (Diagnóstico) -->
-        <div class="admin-panel" style="margin-bottom:var(--space-5); max-width: 720px;">
-          <div class="admin-panel__header">
-            <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-            <h2 class="admin-panel__title">Diagnóstico de Correo Electrónico</h2>
+          <!-- Panel: Configuración de Correo (Diagnóstico) -->
+          <div class="admin-panel" style="margin-bottom:var(--space-5); max-width: 720px;">
+            <div class="admin-panel__header">
+              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <h2 class="admin-panel__title">Diagnóstico de Correo Electrónico</h2>
+            </div>
+            <div class="admin-panel__body" id="smtp-config-body">
+              <div class="notif-empty">Cargando configuración...</div>
+            </div>
           </div>
-          <div class="admin-panel__body" id="smtp-config-body">
-            <div class="notif-empty">Cargando configuración...</div>
+
+          <div class="notif-log">
+            <div class="notif-log__header">
+              <span class="notif-log__title">Log de notificaciones enviadas</span>
+              <button class="btn btn-ghost btn-sm" id="btn-clear-notif">Limpiar log</button>
+            </div>
+            <div id="notif-log-body" aria-live="polite">
+              <!-- JS renders here -->
+            </div>
           </div>
+
         </div>
 
-        <div class="notif-log">
-          <div class="notif-log__header">
-            <span class="notif-log__title">Log de notificaciones enviadas</span>
-            <button class="btn btn-ghost btn-sm" id="btn-clear-notif">Limpiar log</button>
-          </div>
-          <div id="notif-log-body" aria-live="polite">
-            <!-- JS renders here -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ══════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
            SECCIÓN: RESPALDOS
       ══════════════════════════════════════════ -->
-      <div id="section-backup" role="tabpanel" aria-labelledby="tab-backup" class="hidden">
+        <div id="section-backup" role="tabpanel" aria-labelledby="tab-backup" class="hidden">
 
-        <div class="admin-layout" style="grid-template-columns:1fr 1fr;">
+          <div class="admin-layout" style="grid-template-columns:1fr 1fr;">
 
-          <!-- Panel: Crear respaldo -->
-          <div class="admin-panel">
-            <div class="admin-panel__header">
-              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              <h2 class="admin-panel__title">Crear respaldo</h2>
-            </div>
-            <div class="admin-panel__body">
-              <p style="font-size:var(--font-size-sm);color:var(--color-secondary-mid);margin-bottom:var(--space-4);">
-                Descarga un archivo JSON con todas las reservaciones, usuarios, festivos e historial.
-                Guárdalo en un lugar seguro para poder restaurarlo si es necesario.
-              </p>
-
-              <div style="background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-5);font-size:var(--font-size-sm);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-2);">
-                  <span style="color:var(--color-secondary-light);">Reservaciones</span>
-                  <strong id="bkp-count-reservations">—</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-2);">
-                  <span style="color:var(--color-secondary-light);">Usuarios</span>
-                  <strong id="bkp-count-users">—</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;">
-                  <span style="color:var(--color-secondary-light);">Fechas festivas / cierres</span>
-                  <strong id="bkp-count-holidays">—</strong>
-                </div>
-              </div>
-
-              <button class="btn btn-primary btn-full" id="btn-create-backup" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2.5"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
+            <!-- Panel: Crear respaldo -->
+            <div class="admin-panel">
+              <div class="admin-panel__header">
+                <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Descargar respaldo (.json)
-              </button>
-
-              <div style="margin-top:var(--space-4);border-top:1px solid var(--color-border);padding-top:var(--space-4);">
-                <button class="btn btn-secondary btn-sm" id="btn-auto-save" type="button">
-                  Guardar copia rápida (memoria)
-                </button>
-                <p style="font-size:11px;color:var(--color-secondary-light);margin-top:var(--space-2);">
-                  Crea un punto de restauración en este navegador sin descargar archivo.
+                <h2 class="admin-panel__title">Crear respaldo</h2>
+              </div>
+              <div class="admin-panel__body">
+                <p style="font-size:var(--font-size-sm);color:var(--color-secondary-mid);margin-bottom:var(--space-4);">
+                  Descarga un archivo SQL con todas las reservaciones, usuarios, festivos e historial.
+                  Guárdalo en un lugar seguro para poder restaurarlo si es necesario.
                 </p>
+
+                <div
+                  style="background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-5);font-size:var(--font-size-sm);">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-2);">
+                    <span style="color:var(--color-secondary-light);">Reservaciones</span>
+                    <strong id="bkp-count-reservations">—</strong>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-2);">
+                    <span style="color:var(--color-secondary-light);">Usuarios</span>
+                    <strong id="bkp-count-users">—</strong>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;">
+                    <span style="color:var(--color-secondary-light);">Fechas festivas / cierres</span>
+                    <strong id="bkp-count-holidays">—</strong>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="btn-create-backup" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Descargar respaldo SQL (.sql)
+                </button>
+
+
               </div>
             </div>
-          </div>
 
-          <!-- Panel: Restaurar -->
-          <div class="admin-panel">
-            <div class="admin-panel__header">
-              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="1 4 1 10 7 10"/>
-                <path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
-              </svg>
-              <h2 class="admin-panel__title">Restaurar respaldo</h2>
-            </div>
-            <div class="admin-panel__body">
-              <p style="font-size:var(--font-size-sm);color:var(--color-secondary-mid);margin-bottom:var(--space-4);">
-                Selecciona un archivo de respaldo para restaurar los datos.
-                <strong style="color:var(--color-warning);">Esta operación reemplazará todos los datos actuales.</strong>
-              </p>
-
-              <div class="form-group" style="margin-bottom:var(--space-4);">
-                <label class="form-label" for="backup-file-input">Archivo de respaldo (.json)</label>
-                <input type="file" id="backup-file-input" accept=".json"
-                       class="form-input" style="cursor:pointer;"
-                       aria-label="Seleccionar archivo de respaldo" />
-              </div>
-
-              <button class="btn btn-danger btn-full" id="btn-restore-backup" type="button" disabled>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2.5"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="1 4 1 10 7 10"/>
-                  <path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+            <!-- Panel: Restaurar (Oculto temporalmente) -->
+            <div class="admin-panel" style="display: none;">
+              <div class="admin-panel__header">
+                <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 .49-4.5" />
                 </svg>
-                Restaurar datos desde archivo
-              </button>
-
-              <div style="margin-top:var(--space-4);border-top:1px solid var(--color-border);padding-top:var(--space-4);">
-                <button class="btn btn-ghost btn-sm" id="btn-restore-auto" type="button">
-                  Restaurar copia rápida
-                </button>
-                <p style="font-size:11px;color:var(--color-secondary-light);margin-top:var(--space-2);">
-                  Restaura el último punto de restauración guardado en este navegador.
-                </p>
+                <h2 class="admin-panel__title">Restaurar respaldo</h2>
               </div>
+              <div class="admin-panel__body">
+                <p style="font-size:var(--font-size-sm);color:var(--color-secondary-mid);margin-bottom:var(--space-4);">
+                  Selecciona un archivo de respaldo para restaurar los datos.
+                  <strong style="color:var(--color-warning);">Esta operación reemplazará todos los datos
+                    actuales.</strong>
+                </p>
+
+                <div class="form-group" style="margin-bottom:var(--space-4);">
+                  <label class="form-label" for="backup-file-input">Archivo de respaldo (.json)</label>
+                  <input type="file" id="backup-file-input" accept=".json" class="form-input" style="cursor:pointer;"
+                    aria-label="Seleccionar archivo de respaldo" />
+                </div>
+
+                <button class="btn btn-danger btn-full" id="btn-restore-backup" type="button" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 .49-4.5" />
+                  </svg>
+                  Restaurar datos desde archivo
+                </button>
+
+
+              </div>
+            </div>
+
+          </div><!-- /.admin-layout -->
+
+          <!-- Log de respaldos -->
+          <div class="notif-log" style="margin-top:var(--space-5);">
+            <div class="notif-log__header">
+              <span class="notif-log__title">Historial de respaldos</span>
+              <button class="btn btn-ghost btn-sm" id="btn-clear-backup-log">Limpiar</button>
+            </div>
+            <div id="backup-log-body" aria-live="polite">
+              <div class="notif-empty">No hay respaldos registrados.</div>
             </div>
           </div>
 
-        </div><!-- /.admin-layout -->
+        </div><!-- /#section-backup -->
 
-        <!-- Log de respaldos -->
-        <div class="notif-log" style="margin-top:var(--space-5);">
-          <div class="notif-log__header">
-            <span class="notif-log__title">Historial de respaldos</span>
-            <button class="btn btn-ghost btn-sm" id="btn-clear-backup-log">Limpiar</button>
-          </div>
-          <div id="backup-log-body" aria-live="polite">
-            <div class="notif-empty">No hay respaldos registrados.</div>
-          </div>
-        </div>
+      </main>
+    </div><!-- /.main-content -->
+  </div><!-- /.app -->
 
-      </div><!-- /#section-backup -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <div id="modal-container"></div>
 
-    </main>
-  </div><!-- /.main-content -->
-</div><!-- /.app -->
-
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-<div id="modal-container"></div>
-
-<!-- Scripts -->
-<script src="js/core/utils.js"></script>
-<script src="js/core/api.js"></script>
-<script src="js/core/store.js"></script>
-<script src="js/components/toast.js"></script>
-<script src="js/components/sidebar.js"></script>
-<script src="js/components/change-password-modal.js"></script>
-<script src="js/components/calendar-grid.js"></script>
-<script src="js/components/modal.js"></script>
-<script src="js/modules/notifications.js"></script>
-<script src="js/modules/auth.js"></script>
-<script src="js/modules/reservations.js"></script>
-<script src="js/modules/holidays.js"></script>
-<script src="js/modules/users.js"></script>
-<script src="js/modules/backup.js"></script>
-<script src="js/pages/admin-page.js"></script>
+  <!-- Scripts -->
+  <script src="js/core/utils.js?v=4"></script>
+  <script src="js/core/api.js?v=4"></script>
+  <script src="js/core/store.js?v=4"></script>
+  <script src="js/components/toast.js?v=4"></script>
+  <script src="js/components/sidebar.js?v=4"></script>
+  <script src="js/components/change-password-modal.js?v=4"></script>
+  <script src="js/components/calendar-grid.js?v=4"></script>
+  <script src="js/components/modal.js?v=4"></script>
+  <script src="js/modules/notifications.js?v=4"></script>
+  <script src="js/modules/auth.js?v=4"></script>
+  <script src="js/modules/reservations.js?v=4"></script>
+  <script src="js/modules/holidays.js?v=4"></script>
+  <script src="js/modules/users.js?v=4"></script>
+  <script src="js/modules/backup.js?v=4"></script>
+  <script src="js/pages/admin-page.js?v=4"></script>
 
 </body>
+
 </html>

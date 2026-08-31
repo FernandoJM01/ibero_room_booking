@@ -21,7 +21,7 @@ const API = (() => {
     try {
       const response = await fetch(`${BASE}${path}`, options);
 
-      if (response.status === 401) {
+      if (response.status === 401 && path !== '/auth/login') {
         localStorage.removeItem('ibero_jwt');
         localStorage.removeItem('ibero_session');
         localStorage.removeItem('ibero_login_time');

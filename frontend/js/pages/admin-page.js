@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     overlay.setAttribute('aria-label', 'Información de Contacto Externo');
 
     const resCount = c.reservation_count ?? 0;
-    const lastRes = c.last_reservation ? Utils.formatDateLong(c.last_reservation) : 'Ninguna';
+    const lastRes = c.last_reservation ? new Date(c.last_reservation).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin reservaciones';
 
     overlay.innerHTML = `
       <div class="user-modal-dialog" style="max-width:450px;">
@@ -76,11 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div style="margin-bottom: var(--space-2);">
               <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Correo electrónico</div>
               <div style="word-break: break-all;">${c.email ? Utils.escapeHTML(c.email) : '<span style="color:var(--color-secondary-light)">—</span>'}</div>
-            </div>
-
-            <div style="margin-bottom: var(--space-2);">
-              <div style="font-size: var(--font-size-xs); color: var(--color-secondary-light);">Teléfono</div>
-              <div>${c.phone ? Utils.escapeHTML(c.phone) : '<span style="color:var(--color-secondary-light)">—</span>'}</div>
             </div>
           </section>
 
@@ -153,6 +148,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let _calYear           = new Date().getFullYear();
   let _calMonth          = new Date().getMonth();
   let _backupInitialized = false;
+  let _requestsInitialized = false;
+  let _externalContacts = [];
 
   function _activateTab(tabId, pushState = true) {
     const tab = TABS.find(t => t.id === tabId) ?? TABS[0];
@@ -196,31 +193,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const _initialTab = TABS.find(t => t.hash === location.hash)?.id ?? TABS[0]?.id ?? 'tab-calendar';
   _activateTab(_initialTab, false);
 
-  // Back/forward button support
+  // Back/forward button support and native hash navigation
   window.addEventListener('hashchange', () => {
-    const tab = TABS.find(t => t.hash === location.hash);
-    if (tab) _activateTab(tab.id, false);
-  });
-
-  // Sidebar link interception using event delegation
-  document.getElementById('sidebar').addEventListener('click', (e) => {
-    const a = e.target.closest('.nav-item[href^="admin.html"]');
-    if (!a) return;
-    
-    e.preventDefault();
-    const rawHref = a.getAttribute('href');
-    const hash    = rawHref.includes('#') ? rawHref.slice(rawHref.indexOf('#')) : '';
-    const tab     = TABS.find(t => t.hash === hash) ?? TABS[0];
-
-    history.replaceState(null, '', hash);
+    const hash = location.hash.split('?')[0]; // Ignore query strings if any
+    const tab = TABS.find(t => t.hash === hash) ?? TABS[0];
     _activateTab(tab.id, false);
-
-    // Sync sidebar highlight
-    document.querySelectorAll('.nav-item').forEach(el => {
-      el.classList.toggle('active', el === a);
-      if (el === a) el.setAttribute('aria-current', 'page');
-      else          el.removeAttribute('aria-current');
-    });
   });
 
   /* ════════════════════════════════════════════════════════
@@ -487,7 +464,6 @@ document.addEventListener('DOMContentLoaded', async () => {
      SECTION: EXTERNAL CONTACTS
   ════════════════════════════════════════════════════════ */
 
-  let _externalContacts = [];
   async function _initExternalSection() {
     if (_externalInitialized) return;
     _externalInitialized = true;
@@ -822,37 +798,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btnTest = document.getElementById('btn-test-smtp');
       if (btnTest) {
         btnTest.addEventListener('click', () => {
-          const recipient = prompt('Ingresa el correo destinatario para la prueba:', Store.getUser()?.email || '');
-          if (!recipient) return;
+          Modal.prompt({
+            title: 'Correo de Prueba',
+            message: 'Ingresa el correo destinatario para la prueba:',
+            defaultValue: Store.getUser()?.email || '',
+            placeholder: 'ejemplo@correo.com',
+            confirmText: 'Enviar'
+          }, (recipient) => {
+            if (!recipient) return;
 
-          btnTest.disabled = true;
-          const origContent = btnTest.innerHTML;
-          btnTest.innerHTML = 'Enviando...';
+            btnTest.disabled = true;
+            const origContent = btnTest.innerHTML;
+            btnTest.innerHTML = 'Enviando...';
 
-          API.testSmtp(recipient).then(res => {
-            btnTest.disabled = false;
-            btnTest.innerHTML = origContent;
-            
-            if (res.success) {
-              Modal.confirm({
-                title: 'Prueba Exitosa',
-                message: `El correo fue aceptado por el servidor SMTP y enviado a <strong>${Utils.escapeHTML(recipient)}</strong>.<br><br>Revisa la bandeja de entrada o spam.`,
-                confirmText: 'Aceptar',
-                danger: false
-              }, () => {});
-            } else {
-              Modal.confirm({
-                title: 'Error de Envío',
-                message: `<strong style="color:var(--color-danger);">${Utils.escapeHTML(res.message)}</strong><br><br><span style="font-size:12px;color:var(--color-secondary-mid);">${Utils.escapeHTML(res.rawError || '')}</span>`,
-                confirmText: 'Cerrar',
-                danger: true
-              }, () => {});
-            }
-          }).catch(err => {
-            btnTest.disabled = false;
-            btnTest.innerHTML = origContent;
-            Toast.show('Error interno al probar SMTP.', 'error');
-            console.error(err);
+            API.testSmtp(recipient).then(res => {
+              btnTest.disabled = false;
+              btnTest.innerHTML = origContent;
+              
+              if (res.success) {
+                Modal.confirm({
+                  title: 'Prueba Exitosa',
+                  message: `El correo fue aceptado por el servidor SMTP y enviado a <strong>${Utils.escapeHTML(recipient)}</strong>.<br><br>Revisa la bandeja de entrada o spam.`,
+                  confirmText: 'Aceptar',
+                  danger: false
+                }, () => {});
+              } else {
+                Modal.confirm({
+                  title: 'Error de Envío',
+                  message: `<strong style="color:var(--color-danger);">${Utils.escapeHTML(res.message)}</strong><br><br><span style="font-size:12px;color:var(--color-secondary-mid);">${Utils.escapeHTML(res.rawError || '')}</span>`,
+                  confirmText: 'Cerrar',
+                  danger: true
+                }, () => {});
+              }
+            }).catch(err => {
+              btnTest.disabled = false;
+              btnTest.innerHTML = origContent;
+              Toast.show('Error interno al probar SMTP.', 'error');
+              console.error(err);
+            });
           });
         });
       }
@@ -936,24 +919,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     _backupInitialized = true;
 
     /* ── Crear respaldo ── */
-    document.getElementById('btn-create-backup')?.addEventListener('click', () => {
-      const result = Backup.create();
+    document.getElementById('btn-create-backup')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-create-backup');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Descargando...';
+      btn.disabled = true;
+
+      const result = await Backup.create();
+      
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+
       if (result.success) {
         Toast.show(`Respaldo descargado: ${result.filename}`, 'success');
         _renderBackupLog();
       } else {
         Toast.show('Error al crear el respaldo.', 'error');
-      }
-    });
-
-    /* ── Copia rápida (autoSave) ── */
-    document.getElementById('btn-auto-save')?.addEventListener('click', () => {
-      const result = Backup.autoSave();
-      if (result.success) {
-        Toast.show('Copia rápida guardada en este navegador.', 'success');
-        _renderBackupLog();
-      } else {
-        Toast.show('No se pudo guardar la copia rápida.', 'error');
       }
     });
 
@@ -966,61 +947,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ── Restaurar desde archivo ── */
     btnRestore?.addEventListener('click', () => {
-      const file = fileInput?.files?.[0];
-      if (!file) return;
-
-      Modal.confirm(
-        {
-          title:       'Restaurar respaldo',
-          message:     `¿Restaurar los datos desde <strong>${Utils.escapeHTML(file.name)}</strong>?<br>
-                        <span style="color:var(--color-warning);">Esta acción reemplazará TODOS los datos actuales.</span>`,
-          confirmText: 'Sí, restaurar',
-          danger:      true,
-        },
-        async () => {
-          const result = await Backup.restore(file);
-          if (result.success) {
-            const { reservations, users, holidays } = result.restored;
-            Toast.show(
-              `Datos restaurados: ${reservations} reservaciones, ${users} usuarios, ${holidays} festivos.`,
-              'success'
-            );
-            _updateBackupCounts();
-            _renderBackupLog();
-            if (fileInput) fileInput.value = '';
-            if (btnRestore) btnRestore.disabled = true;
-          } else {
-            Toast.show(Backup.errorMessage(result.error), 'error');
-          }
-        }
-      );
+      Modal.alert({
+        title: 'Funcionalidad Deshabilitada',
+        message: 'Por seguridad e integridad de los datos, la restauración de respaldos (archivos .sql) debe realizarse directamente en el servidor utilizando la consola de PostgreSQL (psql). Por favor, contacta al administrador de sistemas.',
+      });
+      if (fileInput) fileInput.value = '';
+      if (btnRestore) btnRestore.disabled = true;
     });
 
-    /* ── Restaurar copia rápida ── */
-    document.getElementById('btn-restore-auto')?.addEventListener('click', () => {
-      Modal.confirm(
-        {
-          title:       'Restaurar copia rápida',
-          message:     '¿Restaurar el último punto de restauración guardado en este navegador?<br>' +
-                       '<span style="color:var(--color-warning);">Esto reemplazará los datos actuales.</span>',
-          confirmText: 'Restaurar',
-          danger:      true,
-        },
-        () => {
-          const result = Backup.restoreAuto();
-          if (result.success) {
-            const when = result.createdAt
-              ? `Punto guardado: ${new Date(result.createdAt).toLocaleString('es-MX')}`
-              : '';
-            Toast.show(`Copia rápida restaurada. ${when}`, 'success');
-            _updateBackupCounts();
-            _renderBackupLog();
-          } else {
-            Toast.show(Backup.errorMessage(result.error), 'error');
-          }
-        }
-      );
-    });
 
     /* ── Limpiar log ── */
     document.getElementById('btn-clear-backup-log')?.addEventListener('click', () => {
@@ -1091,8 +1025,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ════════════════════════════════════════════════════════
      SECTION: MODIFICATION REQUESTS  (super-admin only)
   ════════════════════════════════════════════════════════ */
-
-  let _requestsInitialized = false;
 
   function _initRequestsSection() {
     _renderRequests();

@@ -19,7 +19,7 @@ const Sidebar = (() => {
       items: [
         { id: 'historial',    href: 'historial.html',    label: 'Historial',    icon: 'file-text'     },
         { id: 'estadisticas', href: 'estadisticas.html', label: 'Estadísticas', icon: 'bar-chart-2'   },
-        { id: 'ai-panel',     href: 'ai-panel.html',     label: 'Asistente IA', icon: 'message-square' },
+        // { id: 'ai-panel',     href: 'ai-panel.html',     label: 'Asistente IA', icon: 'message-square' },
       ]
     },
     {

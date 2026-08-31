@@ -49,7 +49,7 @@ const ReservationModal = (() => {
       ]);
       _users     = Array.isArray(users) ? users : [];
       Store.setState({ externalContacts: Array.isArray(external) ? external : [] });
-      _aiEnabled = Boolean(ai?.enabled);
+      _aiEnabled = false; // Boolean(ai?.enabled); DESACTIVADO TEMPORALMENTE
     } catch {
       _users     = [];
       Store.setState({ externalContacts: [] });

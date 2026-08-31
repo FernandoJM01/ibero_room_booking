@@ -358,6 +358,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ── SIDEBAR OVERLAY (mobile) ── */

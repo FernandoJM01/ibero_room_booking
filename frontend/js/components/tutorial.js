@@ -140,7 +140,7 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
       body:     `Desde el menú lateral accedes a:
 <ul class="tut__list">
   <li><strong>Historial</strong> — todas las reservaciones pasadas y canceladas</li>
-  <li><strong>Asistente IA</strong> — captura reservaciones con lenguaje natural</li>
+  <!-- <li><strong>Asistente IA</strong> — captura reservaciones con lenguaje natural</li> -->
   <li><strong>Administración</strong> — gestión de usuarios y solicitudes de cambio</li>
 </ul>`,
     },

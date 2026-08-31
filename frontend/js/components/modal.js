@@ -79,6 +79,42 @@ const Modal = (() => {
   };
 
   /* ════════════════════════════════════════
+     PROMPT — Diálogo con input de texto
+     ════════════════════════════════════════ */
+  const prompt = (opts, onConfirm) => {
+    const { title, message, defaultValue = '', placeholder = '', confirmText = 'Aceptar' } = opts;
+
+    _open(`
+      <div class="modal-header">
+        <h3 id="modal-title">${Utils.escapeHTML(title)}</h3>
+      </div>
+      <div class="modal-body">
+        <p>${message}</p>
+        <div class="form-group" style="margin-top:var(--space-3);margin-bottom:0;">
+          <input type="text" id="modal-prompt-input" class="form-input"
+                 value="${Utils.escapeHTML(defaultValue)}" 
+                 placeholder="${Utils.escapeHTML(placeholder)}" 
+                 autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal-action="cancel">Cancelar</button>
+        <button class="btn btn-primary"   data-modal-action="confirm">${Utils.escapeHTML(confirmText)}</button>
+      </div>`,
+      { confirm: onConfirm },
+      'confirm'
+    );
+    
+    setTimeout(() => {
+      const input = document.getElementById('modal-prompt-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 50);
+  };
+
+  /* ════════════════════════════════════════
      PRIVATE: _open
      ════════════════════════════════════════ */
   const _open = (bodyHTML, actions, defaultFocus) => {
@@ -97,8 +133,10 @@ const Modal = (() => {
     overlay.querySelectorAll('[data-modal-action]').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.modalAction;
+        const promptInput = overlay.querySelector('#modal-prompt-input');
+        const payload = promptInput ? promptInput.value.trim() : null;
         close();
-        actions[action]?.();
+        actions[action]?.(payload);
       });
     });
 
@@ -118,5 +156,5 @@ const Modal = (() => {
     overlay.querySelector(`[data-modal-action="${defaultFocus}"]`)?.focus();
   };
 
-  return { confirm, choice };
+  return { confirm, choice, prompt };
 })();

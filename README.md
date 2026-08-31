@@ -289,6 +289,26 @@ curl -X POST http://localhost:8080/api/reservations \
 - Log de todas las acciones críticas
 - Trazabilidad completa
 
+### Respaldos y Restauración
+
+El sistema cuenta con una función de respaldo completo de la base de datos, accesible para los Super Administradores desde el panel web (sección **Respaldos**). Al solicitarlo, el backend ejecuta `pg_dump` y descarga un archivo `.sql` con todos los datos.
+
+#### Restaurar un Respaldo (.sql)
+
+Por seguridad e integridad, la restauración está deshabilitada en la interfaz web y debe realizarse desde la consola del servidor usando Docker:
+
+1. **Copiar el archivo de respaldo al contenedor de base de datos:**
+   ```bash
+   docker cp respaldo_ibero_YYYY-MM-DD.sql <nombre-del-contenedor-db>:/tmp/backup.sql
+   ```
+   *(Nota: Usa `docker ps` para encontrar el nombre exacto de tu contenedor de base de datos, por ejemplo `sala-juntas-ibero-db-1`)*
+
+2. **Ejecutar la restauración:**
+   ```bash
+   docker exec -it <nombre-del-contenedor-db> psql -U ibero -d sala_juntas -f /tmp/backup.sql
+   ```
+   *(Reemplaza `ibero` y `sala_juntas` por tus valores de `DB_USER` y `DB_NAME` si los cambiaste en `.env`). El archivo `.sql` autogenerado ya contiene los comandos para borrar y recrear los datos limpiamente.*
+
 ## 🚀 Deployment
 
 ### Producción en Railway, Vercel o similar
@@ -337,6 +357,34 @@ docker container stop $(docker container ls -q)
 # Asegurar que los volúmenes están correctos:
 docker volume ls | grep sala-juntas
 ```
+
+## 🤖 Módulo de Asistente IA (Oculto)
+
+Para esta versión de entrega, el módulo del **Asistente IA** ha sido ocultado de la interfaz pública para mantener un flujo tradicional, sin embargo, todo el código y la integración permanecen intactos.
+
+Si en el futuro se desea reactivar esta funcionalidad, solo es necesario modificar 3 líneas de código en el frontend:
+
+1. **Mostrar en el Menú Lateral:**
+   En `frontend/js/components/sidebar.js` (aprox. línea 22), descomentar la línea:
+   ```javascript
+   { id: 'ai-panel', href: 'ai-panel.html', label: 'Asistente IA', icon: 'message-square' },
+   ```
+
+2. **Habilitar el Auto-rellenado (Modal de Reservación):**
+   En `frontend/js/components/reservation-modal.js` (aprox. línea 52), cambiar:
+   ```javascript
+   _aiEnabled = false; // Boolean(ai?.enabled); DESACTIVADO TEMPORALMENTE
+   ```
+   por:
+   ```javascript
+   _aiEnabled = Boolean(ai?.enabled);
+   ```
+
+3. **Mostrar en el Tutorial Inicial:**
+   En `frontend/js/components/tutorial.js` (aprox. línea 143), descomentar la línea:
+   ```html
+   <li><strong>Asistente IA</strong> — captura reservaciones con lenguaje natural</li>
+   ```
 
 ## 📚 Documentación Adicional
 
