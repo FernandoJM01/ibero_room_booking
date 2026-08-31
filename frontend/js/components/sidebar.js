@@ -172,10 +172,14 @@ const Sidebar = (() => {
 
     // Mobile toggle
     _initMobileToggle(mountId);
+    _initPJAX(mountId);
   };
 
   /* ── MOBILE TOGGLE ── */
+  let _mobileToggleInit = false;
   const _initMobileToggle = (sidebarId) => {
+    if (_mobileToggleInit) return;
+    _mobileToggleInit = true;
     const toggleBtn = document.getElementById('sidebar-toggle');
     const sidebar   = document.getElementById(sidebarId);
     const overlay   = document.getElementById('sidebar-overlay');
@@ -211,6 +215,122 @@ const Sidebar = (() => {
       item.addEventListener('click', () => {
         if (window.innerWidth <= 768) close();
       });
+    });
+  };
+
+
+  /* ── PJAX SPA ROUTER ── */
+  let _pjaxInitialized = false;
+  const _initPJAX = (sidebarId) => {
+    if (_pjaxInitialized) return;
+    _pjaxInitialized = true;
+
+    document.addEventListener('click', async (e) => {
+      const link = e.target.closest('.sidebar__nav .nav-item');
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      // Ignorar enlaces externos o anclas locales
+      if (href.startsWith('http') || href.startsWith('#')) return;
+      
+      // Si ya estamos en esta URL, no interceptar (permitir navegación por ancla nativa)
+      const url = new URL(href, window.location.origin);
+      if (window.location.pathname === url.pathname) return;
+      
+      e.preventDefault();
+      
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const html = await res.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extraer contenido principal
+        const newPageContent = doc.querySelector('.page-content');
+        if (!newPageContent) {
+           window.location.href = href;
+           return;
+        }
+        
+        const currentPageContent = document.querySelector('.page-content');
+        if (!currentPageContent) {
+           window.location.href = href;
+           return;
+        }
+
+        currentPageContent.innerHTML = newPageContent.innerHTML;
+        
+        // Reiniciar animaciones
+        currentPageContent.classList.remove('animate-fade-up');
+        void currentPageContent.offsetWidth; // trigger reflow
+        currentPageContent.classList.add('animate-fade-up');
+        
+        // Actualizar URL
+        history.pushState(null, '', url);
+        
+        // Actualizar título de la ventana y topbar
+        document.title = doc.querySelector('title')?.innerText || '';
+        const topbarTitle = doc.querySelector('.topbar__title');
+        const currentTopbarTitle = document.querySelector('.topbar__title');
+        if (topbarTitle && currentTopbarTitle) {
+          currentTopbarTitle.innerHTML = topbarTitle.innerHTML;
+        }
+        
+        // Actualizar activo en sidebar
+        document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
+           el.classList.remove('active');
+           el.removeAttribute('aria-current');
+        });
+        link.classList.add('active');
+        link.setAttribute('aria-current', 'page');
+        
+        // Extraer e inyectar CSS
+        const stylesheets = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
+        stylesheets.forEach(oldLink => {
+          if (!document.querySelector(`link[href="${oldLink.getAttribute('href')}"]`)) {
+            const newLink = document.createElement('link');
+            newLink.rel = 'stylesheet';
+            newLink.href = oldLink.href;
+            document.head.appendChild(newLink);
+          }
+        });
+
+        // Extraer e inyectar scripts (esperando a que carguen)
+        const scripts = Array.from(doc.querySelectorAll('script[src]'));
+        const scriptPromises = [];
+        
+        scripts.forEach(oldScript => {
+          if (!document.querySelector(`script[src="${oldScript.getAttribute('src')}"]`)) {
+            const promise = new Promise((resolve) => {
+              const newScript = document.createElement('script');
+              newScript.src = oldScript.src;
+              newScript.async = false;
+              newScript.onload = resolve;
+              newScript.onerror = resolve;
+              document.body.appendChild(newScript);
+            });
+            scriptPromises.push(promise);
+          }
+        });
+        
+        if (scriptPromises.length > 0) {
+          await Promise.all(scriptPromises);
+        }
+        
+        // Notificar a la app que la página cambió
+        const event = new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } });
+        document.dispatchEvent(event);
+        
+      } catch (err) {
+        console.error('PJAX Error:', err);
+        window.location.href = href; // fallback nativo
+      }
+    });
+    
+    window.addEventListener('popstate', () => {
+      window.location.reload();
     });
   };
 

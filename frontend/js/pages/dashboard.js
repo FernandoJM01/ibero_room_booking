@@ -4,7 +4,10 @@
    Plataforma Reservación Sala de Juntas · Ibero CDMX
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', async () => {
+(() => {
+const init = async () => {
+  if (!document.getElementById('stat-total')) return;
+
   // 1. Proteger ruta
   Store.init();
   const user = Auth.requireAuth();
@@ -55,7 +58,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 10. Tutorial
   document.getElementById('btn-tutorial')?.addEventListener('click', Tutorial.start);
   Tutorial.autoStart();
-});
+};
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('SPA:Navigated', init);
+})();
+
 
 /* ── ESTADÍSTICAS ── */
 function _renderStats() {
