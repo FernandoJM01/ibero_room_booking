@@ -235,7 +235,7 @@ const Sidebar = (() => {
       
       // Solución definitiva para las pestañas de Administración en producción:
       // Si el enlace es de administración y ya estamos en la página de administración (comprobado vía DOM)
-      if (document.getElementById('admin-page-title') && href.startsWith('admin.html#')) {
+      if (document.querySelector('.admin-tabs') && href.startsWith('admin.html#')) {
         e.preventDefault();
         
         const hash = href.split('#')[1]; // ej. 'usuarios'

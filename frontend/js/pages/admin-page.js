@@ -166,7 +166,7 @@ const init = async () => {
     });
 
     // Update breadcrumb + title
-    const titleEl = document.getElementById('admin-page-title');
+    const titleEl = document.getElementById('admin-page-title') || document.querySelector('.topbar__title');
     const breadEl = document.getElementById('admin-breadcrumb');
     if (titleEl) titleEl.textContent = tab.label;
     if (breadEl) breadEl.textContent  = tab.breadcrumb;
