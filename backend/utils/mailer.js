@@ -218,45 +218,61 @@ function reservationAdminCancelledEmail(reservation, adminName) {
   };
 }
 
-function modificationRequestReceivedEmail(adminName, requesterName, reservation, newStart, newEnd, reason) {
+function modificationRequestReceivedEmail(adminName, requesterName, reservation, newStart, newEnd, reason, type = 'modification') {
   const currentDate  = _formatDate(reservation.start_time);
   const currentStart = _formatTime(reservation.start_time);
   const currentEnd   = _formatTime(reservation.end_time);
-  const newDateStr   = _formatDate(newStart);
-  const newStartStr  = _formatTime(newStart);
-  const newEndStr    = _formatTime(newEnd);
+  
+  let typeStr = 'cambiar el horario de';
+  let title = 'Nueva solicitud de cambio de horario';
+  let newTimeHtml = '';
+  
+  if (type === 'cancellation') {
+    typeStr = 'cancelar';
+    title = 'Nueva solicitud de cancelación';
+  } else {
+    const newDateStr   = _formatDate(newStart);
+    const newStartStr  = _formatTime(newStart);
+    const newEndStr    = _formatTime(newEnd);
+    newTimeHtml = `<tr><td style="padding:6px 0;color:#555;">Horario solicitado</td><td style="padding:6px 0;font-weight:600;">${newDateStr} ${newStartStr}–${newEndStr}</td></tr>`;
+  }
+  
   return {
-    subject: `Nueva solicitud de cambio de horario — Sala de Juntas Ibero`,
-    html: _layout('#0277bd', 'Nueva solicitud de cambio de horario',
+    subject: `${title} — Sala de Juntas Ibero`,
+    html: _layout('#0277bd', title,
       `<p>Hola <strong>${_esc(adminName)}</strong>,</p>
-       <p><strong>${_esc(requesterName)}</strong> solicita cambiar el horario de la siguiente reservación:</p>
+       <p><strong>${_esc(requesterName)}</strong> solicita ${typeStr} la siguiente reservación:</p>
        <table style="width:100%;border-collapse:collapse;font-size:14px;">
          <tr><td style="padding:6px 0;color:#555;">Responsable</td><td style="padding:6px 0;font-weight:600;">${_esc(reservation.responsible_name)}</td></tr>
          <tr><td style="padding:6px 0;color:#555;">Área</td><td style="padding:6px 0;">${_esc(reservation.area)}</td></tr>
          <tr><td style="padding:6px 0;color:#555;">Horario actual</td><td style="padding:6px 0;">${currentDate} ${currentStart}–${currentEnd}</td></tr>
-         <tr><td style="padding:6px 0;color:#555;">Horario solicitado</td><td style="padding:6px 0;font-weight:600;">${newDateStr} ${newStartStr}–${newEndStr}</td></tr>
+         ${newTimeHtml}
          ${reason ? `<tr><td style="padding:6px 0;color:#555;">Motivo</td><td style="padding:6px 0;font-style:italic;">${_esc(reason)}</td></tr>` : ''}
        </table>
        <p style="margin-top:16px;font-size:13px;color:#555;">Ingresa al sistema para aprobar o rechazar esta solicitud.</p>`),
   };
 }
 
-function modificationRequestApprovedEmail(requesterName, reservation) {
+function modificationRequestApprovedEmail(requesterName, reservation, type = 'modification') {
+  const isCancel = type === 'cancellation';
+  const title = isCancel ? 'Solicitud de cancelación aprobada' : 'Solicitud de cambio aprobada';
   return {
-    subject: `Solicitud de cambio aprobada — Sala de Juntas Ibero`,
-    html: _layout('#2e7d32', 'Solicitud de cambio aprobada',
+    subject: `${title} — Sala de Juntas Ibero`,
+    html: _layout('#2e7d32', title,
       `<p>Hola <strong>${_esc(requesterName)}</strong>,</p>
-       <p>Tu solicitud de cambio de horario fue <strong>aprobada</strong>. Los datos actualizados de la reservación son:</p>
-       ${_reservationTable(reservation, true)}`),
+       <p>Tu solicitud para ${isCancel ? 'cancelar' : 'cambiar de horario'} fue <strong>aprobada</strong>. Los datos actualizados de la reservación son:</p>
+       ${_reservationTable(reservation, !isCancel)}`),
   };
 }
 
-function modificationRequestRejectedEmail(requesterName, reservation, reason) {
+function modificationRequestRejectedEmail(requesterName, reservation, reason, type = 'modification') {
+  const isCancel = type === 'cancellation';
+  const title = isCancel ? 'Solicitud de cancelación rechazada' : 'Solicitud de cambio rechazada';
   return {
-    subject: `Solicitud de cambio rechazada — Sala de Juntas Ibero`,
-    html: _layout('#c62828', 'Solicitud de cambio rechazada',
+    subject: `${title} — Sala de Juntas Ibero`,
+    html: _layout('#c62828', title,
       `<p>Hola <strong>${_esc(requesterName)}</strong>,</p>
-       <p>Tu solicitud de cambio de horario para la siguiente reservación fue <strong>rechazada</strong>:</p>
+       <p>Tu solicitud para ${isCancel ? 'cancelar' : 'cambiar de horario'} para la siguiente reservación fue <strong>rechazada</strong>:</p>
        ${_reservationTable(reservation, false)}
        ${reason ? `<p style="font-size:13px;color:#555;">Motivo: ${_esc(reason)}</p>` : ''}`),
   };

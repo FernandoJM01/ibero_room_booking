@@ -83,22 +83,36 @@ const HistoryModificationRequestModal = (() => {
 
           <div class="rmodal__section">
             <div class="rmodal__field" style="margin-bottom: var(--space-4);">
-              <label class="form-label" for="hmreq-date">Nueva fecha sugerida</label>
-              <input type="date" id="hmreq-date" class="form-input" value="${newDateISO}" min="${Utils.today()}" />
+              <label class="form-label">Tipo de solicitud</label>
+              <div style="display:flex;gap:var(--space-2);">
+                <label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
+                  <input type="radio" name="hmreq-type" value="modification" checked> Cambio de horario
+                </label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
+                  <input type="radio" name="hmreq-type" value="cancellation"> Cancelación
+                </label>
+              </div>
             </div>
 
-            <div class="rmodal__field" style="margin-bottom: var(--space-4);">
-              <label class="form-label">Nuevo horario sugerido</label>
-              <div style="display:flex; align-items:center; gap:var(--space-3);">
-                <select class="form-select" id="hmreq-start" aria-label="Hora inicio" style="flex:1;">
-                  ${_timeOptions(newStartVal)}
-                </select>
-                <span style="color:var(--color-secondary-light);">→</span>
-                <select class="form-select" id="hmreq-end" aria-label="Hora fin" style="flex:1;">
-                  ${_timeOptions(newEndVal)}
-                </select>
+            <div id="hmreq-datetime-fields">
+              <div class="rmodal__field" style="margin-bottom: var(--space-4);">
+                <label class="form-label" for="hmreq-date">Nueva fecha sugerida</label>
+                <input type="date" id="hmreq-date" class="form-input" value="${newDateISO}" min="${Utils.today()}" />
               </div>
-              <div id="hmreq-overlap" class="rmodal__iv-overlap hidden" role="status" aria-live="polite"></div>
+
+              <div class="rmodal__field" style="margin-bottom: var(--space-4);">
+                <label class="form-label">Nuevo horario sugerido</label>
+                <div style="display:flex; align-items:center; gap:var(--space-3);">
+                  <select class="form-select" id="hmreq-start" aria-label="Hora inicio" style="flex:1;">
+                    ${_timeOptions(newStartVal)}
+                  </select>
+                  <span style="color:var(--color-secondary-light);">→</span>
+                  <select class="form-select" id="hmreq-end" aria-label="Hora fin" style="flex:1;">
+                    ${_timeOptions(newEndVal)}
+                  </select>
+                </div>
+                <div id="hmreq-overlap" class="rmodal__iv-overlap hidden" role="status" aria-live="polite"></div>
+              </div>
             </div>
 
             <div class="rmodal__field" style="margin-bottom:0;">
@@ -155,6 +169,15 @@ const HistoryModificationRequestModal = (() => {
     document.getElementById('hmreq-date')?.addEventListener('change', _checkOverlap);
     document.getElementById('hmreq-submit')?.addEventListener('click', _submit);
 
+    overlay.querySelectorAll('input[name="hmreq-type"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const datetimeFields = document.getElementById('hmreq-datetime-fields');
+        if (datetimeFields) {
+          datetimeFields.style.display = e.target.value === 'cancellation' ? 'none' : 'block';
+        }
+      });
+    });
+
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) close();
     });
@@ -166,14 +189,18 @@ const HistoryModificationRequestModal = (() => {
 
   /* ── Submit ── */
   const _submit = async () => {
+    const typeRadio = document.querySelector('input[name="hmreq-type"]:checked');
+    const typeVal   = typeRadio ? typeRadio.value : 'modification';
     const dateVal   = document.getElementById('hmreq-date')?.value;
     const startVal  = document.getElementById('hmreq-start')?.value;
     const endVal    = document.getElementById('hmreq-end')?.value;
     const reasonVal = document.getElementById('hmreq-reason')?.value?.trim();
 
-    if (!dateVal) { Toast.show('Selecciona una fecha', 'warning'); return; }
-    if (!startVal || !endVal || startVal >= endVal) {
-      Toast.show('La hora de inicio debe ser anterior a la hora de fin', 'warning'); return;
+    if (typeVal === 'modification') {
+      if (!dateVal) { Toast.show('Selecciona una fecha', 'warning'); return; }
+      if (!startVal || !endVal || startVal >= endVal) {
+        Toast.show('La hora de inicio debe ser anterior a la hora de fin', 'warning'); return;
+      }
     }
 
     const submitBtn = document.getElementById('hmreq-submit');
@@ -182,8 +209,9 @@ const HistoryModificationRequestModal = (() => {
     try {
       await API.submitModificationRequest({
         reservation_id: _reservation.id,
-        new_start_time: `${dateVal}T${startVal}:00`,
-        new_end_time:   `${dateVal}T${endVal}:00`,
+        type: typeVal,
+        new_start_time: typeVal === 'modification' ? `${dateVal}T${startVal}:00` : null,
+        new_end_time:   typeVal === 'modification' ? `${dateVal}T${endVal}:00` : null,
         reason: reasonVal || null,
       });
       const savedOnSent = _onSent;

@@ -10,21 +10,28 @@ const {
   modificationRequestRejectedEmail,
   reservationUpdatedEmail,
   reservationAdminModifiedEmail,
+  reservationAdminCancelledEmail,
 } = require('../utils/mailer');
 
 const router = express.Router();
 router.use(auth);
 
 // POST /api/modification-requests
-// Secretary submits a request to change another secretary's reservation time
+// Secretary submits a request to change/cancel another secretary's reservation
 router.post('/', requireRole('secretaria'), async (req, res) => {
-  const { reservation_id, new_start_time, new_end_time, reason } = req.body;
+  const { reservation_id, new_start_time, new_end_time, reason, type = 'modification' } = req.body;
 
-  if (!reservation_id || !new_start_time || !new_end_time) {
-    return res.status(400).json({ error: 'reservation_id, new_start_time, and new_end_time are required' });
+  if (!reservation_id) {
+    return res.status(400).json({ error: 'reservation_id is required' });
   }
-  if (new_start_time >= new_end_time) {
-    return res.status(400).json({ error: 'new_start_time must be before new_end_time' });
+  
+  if (type === 'modification') {
+    if (!new_start_time || !new_end_time) {
+      return res.status(400).json({ error: 'new_start_time and new_end_time are required for modification' });
+    }
+    if (new_start_time >= new_end_time) {
+      return res.status(400).json({ error: 'new_start_time must be before new_end_time' });
+    }
   }
 
   try {
@@ -40,18 +47,20 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
 
     // Requester must NOT be the owner (owners can edit directly)
     if (reservation.created_by === req.user.id) {
-      return res.status(400).json({ error: 'You own this reservation — edit it directly' });
+      return res.status(400).json({ error: 'You own this reservation — edit or cancel it directly' });
     }
 
-    // Check proposed slot for conflicts (excluding the target reservation)
-    const overlap = await pool.query(
-      `SELECT id FROM reservations
-       WHERE status = 'active' AND id != $1
-       AND start_time < $3 AND end_time > $2`,
-      [reservation_id, new_start_time, new_end_time]
-    );
-    if (overlap.rows.length > 0) {
-      return res.status(409).json({ error: 'El horario solicitado ya está ocupado' });
+    // Check proposed slot for conflicts (only for modifications)
+    if (type === 'modification') {
+      const overlap = await pool.query(
+        `SELECT id FROM reservations
+         WHERE status = 'active' AND id != $1
+         AND start_time < $3 AND end_time > $2`,
+        [reservation_id, new_start_time, new_end_time]
+      );
+      if (overlap.rows.length > 0) {
+        return res.status(409).json({ error: 'El horario solicitado ya está ocupado' });
+      }
     }
 
     // Check for existing pending request for same reservation by same user
@@ -65,10 +74,10 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO modification_requests (reservation_id, requested_by, new_start_time, new_end_time, reason)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO modification_requests (reservation_id, requested_by, type, new_start_time, new_end_time, reason)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [reservation_id, req.user.id, new_start_time, new_end_time, reason || null]
+      [reservation_id, req.user.id, type, type === 'modification' ? new_start_time : null, type === 'modification' ? new_end_time : null, reason || null]
     );
 
     await pool.query(
@@ -83,7 +92,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     );
     for (const admin of adminsQ.rows) {
       const { subject, html } = modificationRequestReceivedEmail(
-        admin.name, req.user.name, reservation, new_start_time, new_end_time, reason
+        admin.name, req.user.name, reservation, new_start_time, new_end_time, reason, type
       );
       sendEmail(admin.email, subject, html);
     }
@@ -95,22 +104,30 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
   }
 });
 
-// GET /api/modification-requests — super-admin sees all pending requests
-router.get('/', requireSuperAdmin, async (req, res) => {
+// GET /api/modification-requests — admins see all, secretarias see requests for their reservations
+router.get('/', requireRole('secretaria'), async (req, res) => {
   const { status = 'pending' } = req.query;
 
   try {
-    const result = await pool.query(
-      `SELECT mr.*,
-              r.responsible_name, r.area, r.start_time  AS current_start, r.end_time AS current_end,
-              u.name AS requester_name, u.email AS requester_email
-       FROM modification_requests mr
-       JOIN reservations r ON r.id = mr.reservation_id
-       JOIN users        u ON u.id = mr.requested_by
-       WHERE mr.status = $1
-       ORDER BY mr.created_at ASC`,
-      [status]
-    );
+    let query = `
+      SELECT mr.*,
+             r.responsible_name, r.area, r.start_time  AS current_start, r.end_time AS current_end,
+             u.name AS requester_name, u.email AS requester_email
+      FROM modification_requests mr
+      JOIN reservations r ON r.id = mr.reservation_id
+      JOIN users        u ON u.id = mr.requested_by
+      WHERE mr.status = $1
+    `;
+    const params = [status];
+
+    if (!req.user.isAdmin) {
+      params.push(req.user.id);
+      query += ` AND (r.created_by = $2 OR r.responsible_id = $2) `;
+    }
+
+    query += ` ORDER BY mr.created_at ASC`;
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching modification requests:', err);
@@ -118,45 +135,68 @@ router.get('/', requireSuperAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/modification-requests/:id/approve — super-admin approves
-router.patch('/:id/approve', requireSuperAdmin, async (req, res) => {
+// PATCH /api/modification-requests/:id/approve — admin or responsible secretaria approves
+router.patch('/:id/approve', requireRole('secretaria'), async (req, res) => {
   const { id } = req.params;
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    const mrQ = await client.query('SELECT * FROM modification_requests WHERE id = $1', [id]);
+    const mrQ = await client.query(
+      `SELECT mr.*, r.created_by, r.responsible_id 
+       FROM modification_requests mr 
+       JOIN reservations r ON r.id = mr.reservation_id 
+       WHERE mr.id = $1`, 
+      [id]
+    );
     if (mrQ.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Request not found' });
     }
     const mr = mrQ.rows[0];
+
+    if (!req.user.isAdmin && mr.created_by !== req.user.id && mr.responsible_id !== req.user.id) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Not authorized to approve this request' });
+    }
+
     if (mr.status !== 'pending') {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Request is no longer pending' });
     }
 
-    // Conflict check at approval time (slot may have been taken since submission)
-    const overlap = await client.query(
-      `SELECT id FROM reservations
-       WHERE status = 'active' AND id != $1
-       AND start_time < $3 AND end_time > $2`,
-      [mr.reservation_id, mr.new_start_time, mr.new_end_time]
-    );
-    if (overlap.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ error: 'El horario solicitado ya no está disponible' });
-    }
+    let updated;
+    if (mr.type === 'cancellation') {
+      updated = await client.query(
+        `UPDATE reservations
+         SET status = 'cancelled', updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [mr.reservation_id]
+      );
+    } else {
+      // Conflict check at approval time (slot may have been taken since submission)
+      const overlap = await client.query(
+        `SELECT id FROM reservations
+         WHERE status = 'active' AND id != $1
+         AND start_time < $3 AND end_time > $2`,
+        [mr.reservation_id, mr.new_start_time, mr.new_end_time]
+      );
+      if (overlap.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'El horario solicitado ya no está disponible' });
+      }
 
-    // Apply the change
-    const updated = await client.query(
-      `UPDATE reservations
-       SET start_time = $2, end_time = $3, last_modified_by = $4, updated_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
-      [mr.reservation_id, mr.new_start_time, mr.new_end_time, req.user.id]
-    );
+      // Apply the change
+      updated = await client.query(
+        `UPDATE reservations
+         SET start_time = $2, end_time = $3, last_modified_by = $4, updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [mr.reservation_id, mr.new_start_time, mr.new_end_time, req.user.id]
+      );
+    }
 
     // Mark request resolved
     await client.query(
@@ -179,7 +219,7 @@ router.patch('/:id/approve', requireSuperAdmin, async (req, res) => {
     // Email requester
     const requesterQ = await pool.query('SELECT name, email FROM users WHERE id = $1', [mr.requested_by]);
     if (requesterQ.rows[0]?.email) {
-      const { subject, html } = modificationRequestApprovedEmail(requesterQ.rows[0].name, reservation);
+      const { subject, html } = modificationRequestApprovedEmail(requesterQ.rows[0].name, reservation, mr.type);
       sendEmail(requesterQ.rows[0].email, subject, html);
     }
 
@@ -187,8 +227,13 @@ router.patch('/:id/approve', requireSuperAdmin, async (req, res) => {
     if (reservation.responsible_id) {
       const respQ = await pool.query('SELECT email FROM users WHERE id = $1', [reservation.responsible_id]);
       if (respQ.rows[0]?.email) {
-        const { subject, html } = reservationUpdatedEmail(reservation, ['inicio', 'fin']);
-        sendEmail(respQ.rows[0].email, subject, html);
+        if (mr.type === 'cancellation') {
+          const { subject, html } = reservationAdminCancelledEmail(reservation, req.user.name);
+          sendEmail(respQ.rows[0].email, subject, html);
+        } else {
+          const { subject, html } = reservationUpdatedEmail(reservation, ['inicio', 'fin']);
+          sendEmail(respQ.rows[0].email, subject, html);
+        }
       }
     }
 
@@ -196,8 +241,13 @@ router.patch('/:id/approve', requireSuperAdmin, async (req, res) => {
     if (reservation.created_by && reservation.created_by !== mr.requested_by) {
       const creatorQ = await pool.query('SELECT email FROM users WHERE id = $1', [reservation.created_by]);
       if (creatorQ.rows[0]?.email) {
-        const { subject, html } = reservationAdminModifiedEmail(reservation, req.user.name, ['inicio', 'fin']);
-        sendEmail(creatorQ.rows[0].email, subject, html);
+        if (mr.type === 'cancellation') {
+          const { subject, html } = reservationAdminCancelledEmail(reservation, req.user.name);
+          sendEmail(creatorQ.rows[0].email, subject, html);
+        } else {
+          const { subject, html } = reservationAdminModifiedEmail(reservation, req.user.name, ['inicio', 'fin']);
+          sendEmail(creatorQ.rows[0].email, subject, html);
+        }
       }
     }
 
@@ -211,17 +261,28 @@ router.patch('/:id/approve', requireSuperAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/modification-requests/:id/reject — super-admin rejects
-router.patch('/:id/reject', requireSuperAdmin, async (req, res) => {
+// PATCH /api/modification-requests/:id/reject — admin or responsible secretaria rejects
+router.patch('/:id/reject', requireRole('secretaria'), async (req, res) => {
   const { id } = req.params;
   const { reason } = req.body;
 
   try {
-    const mrQ = await pool.query('SELECT * FROM modification_requests WHERE id = $1', [id]);
+    const mrQ = await pool.query(
+      `SELECT mr.*, r.created_by, r.responsible_id 
+       FROM modification_requests mr 
+       JOIN reservations r ON r.id = mr.reservation_id 
+       WHERE mr.id = $1`, 
+      [id]
+    );
     if (mrQ.rows.length === 0) {
       return res.status(404).json({ error: 'Request not found' });
     }
     const mr = mrQ.rows[0];
+
+    if (!req.user.isAdmin && mr.created_by !== req.user.id && mr.responsible_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to reject this request' });
+    }
+
     if (mr.status !== 'pending') {
       return res.status(400).json({ error: 'Request is no longer pending' });
     }
@@ -243,7 +304,7 @@ router.patch('/:id/reject', requireSuperAdmin, async (req, res) => {
     const reservation = (await pool.query('SELECT * FROM reservations WHERE id = $1', [mr.reservation_id])).rows[0];
     const requesterQ = await pool.query('SELECT name, email FROM users WHERE id = $1', [mr.requested_by]);
     if (requesterQ.rows[0]?.email && reservation) {
-      const { subject, html } = modificationRequestRejectedEmail(requesterQ.rows[0].name, reservation, reason);
+      const { subject, html } = modificationRequestRejectedEmail(requesterQ.rows[0].name, reservation, reason, mr.type);
       sendEmail(requesterQ.rows[0].email, subject, html);
     }
 

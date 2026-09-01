@@ -130,11 +130,18 @@ const init = async () => {
      TABS
   ════════════════════════════════════════════════════════ */
 
+  if (!isSuperAdmin) {
+    const tabUsers = document.getElementById('tab-users');
+    const secUsers = document.getElementById('section-users');
+    if (tabUsers) tabUsers.style.display = 'none';
+    if (secUsers) secUsers.style.display = 'none';
+  }
+
   const TABS = [
     ...(isSuperAdmin ? [
       { id: 'tab-users',     section: 'section-users',     hash: '#usuarios',       label: 'Usuarios',    breadcrumb: 'Usuarios'          },
-      { id: 'tab-requests',  section: 'section-requests',  hash: '#solicitudes',    label: 'Solicitudes', breadcrumb: 'Solicitudes de cambio' },
     ] : []),
+    { id: 'tab-requests',  section: 'section-requests',  hash: '#solicitudes',    label: 'Solicitudes', breadcrumb: 'Solicitudes de cambio' },
     { id: 'tab-calendar', section: 'section-calendar', hash: '#calendario',     label: 'Calendario',     breadcrumb: 'Calendario Maestro' },
     { id: 'tab-notif',    section: 'section-notif',    hash: '#notificaciones', label: 'Notificaciones', breadcrumb: 'Notificaciones'     },
     { id: 'tab-backup',   section: 'section-backup',   hash: '#respaldos',      label: 'Respaldos',      breadcrumb: 'Respaldos'          },
@@ -1050,26 +1057,34 @@ const init = async () => {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ
       });
 
-      container.innerHTML = requests.map(r => `
+      container.innerHTML = requests.map(r => {
+        const isCancel = r.type === 'cancellation';
+        const titleStr = isCancel ? 'cancelar' : 'cambiar el horario de';
+        const requestedHtml = isCancel 
+          ? `<div class="req-card__times"><span class="req-card__label" style="color:var(--color-danger);">Solicita Cancelación</span></div>`
+          : `<div class="req-card__times">
+               <span class="req-card__label">Solicitado:</span>
+               ${_fmt(r.new_start_time)} – ${_fmt(r.new_end_time)}
+             </div>`;
+             
+        return `
         <div class="req-card" data-req-id="${r.id}">
           <div class="req-card__meta">
-            <strong>${Utils.escapeHTML(r.requester_name)}</strong> solicita cambiar la reservación de
+            <strong>${Utils.escapeHTML(r.requester_name)}</strong> solicita ${titleStr} la reservación de
             <strong>${Utils.escapeHTML(r.responsible_name)}</strong> (${Utils.escapeHTML(r.area)})
           </div>
           <div class="req-card__times">
             <span class="req-card__label">Actual:</span>
             ${_fmt(r.current_start)} – ${_fmt(r.current_end)}
           </div>
-          <div class="req-card__times">
-            <span class="req-card__label">Solicitado:</span>
-            ${_fmt(r.new_start_time)} – ${_fmt(r.new_end_time)}
-          </div>
+          ${requestedHtml}
           ${r.reason ? `<div class="req-card__reason">"${Utils.escapeHTML(r.reason)}"</div>` : ''}
           <div class="req-card__actions">
             <button class="btn btn-success btn-sm req-approve" data-id="${r.id}">Aprobar</button>
             <button class="btn btn-danger btn-sm req-reject"  data-id="${r.id}">Rechazar</button>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
 
       container.querySelectorAll('.req-approve').forEach(btn => {
         btn.addEventListener('click', () => _approveRequest(btn.dataset.id));
@@ -1088,6 +1103,9 @@ const init = async () => {
       await API.approveModificationRequest(id);
       Toast.show('Solicitud aprobada', 'success');
       _renderRequests();
+      if (typeof Sidebar !== 'undefined' && Sidebar.refreshBadge) {
+        Sidebar.refreshBadge();
+      }
     } catch (err) {
       Toast.show(err.message || 'Error al aprobar', 'error');
     }
@@ -1099,6 +1117,9 @@ const init = async () => {
       await API.rejectModificationRequest(id, reason);
       Toast.show('Solicitud rechazada', 'success');
       _renderRequests();
+      if (typeof Sidebar !== 'undefined' && Sidebar.refreshBadge) {
+        Sidebar.refreshBadge();
+      }
     } catch (err) {
       Toast.show(err.message || 'Error al rechazar', 'error');
     }

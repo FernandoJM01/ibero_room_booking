@@ -27,8 +27,8 @@ const Sidebar = (() => {
       items: [
         ...(isAdmin ? [
           { id: 'admin-users',     href: 'admin.html#usuarios',        label: 'Usuarios',          icon: 'users'    },
-          { id: 'admin-requests',  href: 'admin.html#solicitudes',     label: 'Solicitudes',       icon: 'inbox'    },
         ] : []),
+        { id: 'admin-requests',  href: 'admin.html#solicitudes',     label: 'Solicitudes',       icon: 'inbox'    },
         { id: 'admin-config',  href: 'admin.html#calendario',    label: 'Festivos / Cierres', icon: 'settings' },
         { id: 'admin-notif',   href: 'admin.html#notificaciones', label: 'Notificaciones',    icon: 'bell'     },
         { id: 'admin-backup',  href: 'admin.html#respaldos',     label: 'Respaldos',         icon: 'download' },
@@ -173,6 +173,9 @@ const Sidebar = (() => {
     // Mobile toggle
     _initMobileToggle(mountId);
     _initPJAX(mountId);
+    
+    // Refresh admin requests badge
+    refreshBadge();
   };
 
   /* ── MOBILE TOGGLE ── */
@@ -379,9 +382,11 @@ const Sidebar = (() => {
         if (document.startViewTransition) {
           const transition = document.startViewTransition(() => performDOMUpdate());
           await transition.updateCallbackDone; 
+          refreshBadge();
           document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
         } else {
           await performDOMUpdate();
+          refreshBadge();
           document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
         }
         
@@ -394,6 +399,34 @@ const Sidebar = (() => {
     window.addEventListener('popstate', () => {
       window.location.reload();
     });
+  };
+
+  /* ── BADGE ── */
+  const refreshBadge = async () => {
+    const user = typeof Store !== 'undefined' ? Store.getUser() : null;
+    if (!user || user.role !== 'secretaria') return;
+    try {
+      if (typeof API === 'undefined' || !API.getModificationRequests) return;
+      const requests = await API.getModificationRequests('pending');
+      const count = Array.isArray(requests) ? requests.length : 0;
+      
+      const navItem = document.getElementById('sidebar-nav-admin-requests');
+      if (navItem) {
+        let badge = navItem.querySelector('.nav-item__badge');
+        if (count > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'nav-item__badge';
+            navItem.appendChild(badge);
+          }
+          badge.textContent = count > 99 ? '99+' : count;
+        } else if (badge) {
+          badge.remove();
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to update pending requests badge:', err);
+    }
   };
 
   /* ── UPDATE ACTIVE ── */
@@ -409,5 +442,5 @@ const Sidebar = (() => {
     });
   };
 
-  return { init, updateActive };
+  return { init, updateActive, refreshBadge };
 })();

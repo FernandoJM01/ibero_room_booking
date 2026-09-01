@@ -83,28 +83,43 @@ const ModificationRequestModal = (() => {
 
         <hr style="border:none;border-top:1px solid var(--color-border);margin:0;" />
 
-        <!-- New date -->
+        <!-- Request Type -->
         <div>
-          <label class="form-label" for="mod-req-date"
-                 style="font-size:var(--font-size-xs);margin-bottom:var(--space-1);">Nueva fecha</label>
-          <input type="date" id="mod-req-date" class="form-input"
-                 value="${newDateISO}" min="${Utils.today()}" />
+          <label class="form-label" style="font-size:var(--font-size-xs);margin-bottom:var(--space-1);">Tipo de solicitud</label>
+          <div style="display:flex;gap:var(--space-2);">
+            <label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
+              <input type="radio" name="mod-req-type" value="modification" checked> Cambio de horario
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
+              <input type="radio" name="mod-req-type" value="cancellation"> Cancelación
+            </label>
+          </div>
         </div>
 
-        <!-- New time -->
-        <div>
-          <label class="form-label"
-                 style="font-size:var(--font-size-xs);margin-bottom:var(--space-1);">Nuevo horario</label>
-          <div style="display:flex;align-items:center;gap:var(--space-2);">
-            <select class="form-select" id="mod-req-start" aria-label="Hora inicio" style="flex:1;">
-              ${_timeOptions(newStartVal)}
-            </select>
-            <span style="color:var(--color-secondary-light);font-size:var(--font-size-xs);">→</span>
-            <select class="form-select" id="mod-req-end" aria-label="Hora fin" style="flex:1;">
-              ${_timeOptions(newEndVal)}
-            </select>
+        <div id="mod-req-datetime-fields" style="display:flex;flex-direction:column;gap:var(--space-3);">
+          <!-- New date -->
+          <div>
+            <label class="form-label" for="mod-req-date"
+                   style="font-size:var(--font-size-xs);margin-bottom:var(--space-1);">Nueva fecha</label>
+            <input type="date" id="mod-req-date" class="form-input"
+                   value="${newDateISO}" min="${Utils.today()}" />
           </div>
-          <div id="mod-req-overlap" class="rmodal__iv-overlap hidden" role="status" aria-live="polite"></div>
+
+          <!-- New time -->
+          <div>
+            <label class="form-label"
+                   style="font-size:var(--font-size-xs);margin-bottom:var(--space-1);">Nuevo horario</label>
+            <div style="display:flex;align-items:center;gap:var(--space-2);">
+              <select class="form-select" id="mod-req-start" aria-label="Hora inicio" style="flex:1;">
+                ${_timeOptions(newStartVal)}
+              </select>
+              <span style="color:var(--color-secondary-light);font-size:var(--font-size-xs);">→</span>
+              <select class="form-select" id="mod-req-end" aria-label="Hora fin" style="flex:1;">
+                ${_timeOptions(newEndVal)}
+              </select>
+            </div>
+            <div id="mod-req-overlap" class="rmodal__iv-overlap hidden" role="status" aria-live="polite"></div>
+          </div>
         </div>
 
         <!-- Reason -->
@@ -188,6 +203,16 @@ const ModificationRequestModal = (() => {
     document.getElementById('mod-req-date')?.addEventListener('change', _checkOverlap);
     document.getElementById('mod-req-submit')?.addEventListener('click', _submit);
 
+    // Toggle fields on type change
+    el.querySelectorAll('input[name="mod-req-type"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const datetimeFields = document.getElementById('mod-req-datetime-fields');
+        if (datetimeFields) {
+          datetimeFields.style.display = e.target.value === 'cancellation' ? 'none' : 'flex';
+        }
+      });
+    });
+
     // Close on Escape or outside click
     const _onKey = (e) => { if (e.key === 'Escape') close(); };
     const _onOutside = (e) => { if (!el.contains(e.target)) close(); };
@@ -203,14 +228,18 @@ const ModificationRequestModal = (() => {
 
   /* ── Submit ── */
   const _submit = async () => {
+    const typeRadio = document.querySelector('input[name="mod-req-type"]:checked');
+    const typeVal   = typeRadio ? typeRadio.value : 'modification';
     const dateVal   = document.getElementById('mod-req-date')?.value;
     const startVal  = document.getElementById('mod-req-start')?.value;
     const endVal    = document.getElementById('mod-req-end')?.value;
     const reasonVal = document.getElementById('mod-req-reason')?.value?.trim();
 
-    if (!dateVal) { Toast.show('Selecciona una fecha', 'warning'); return; }
-    if (!startVal || !endVal || startVal >= endVal) {
-      Toast.show('La hora de inicio debe ser anterior a la hora de fin', 'warning'); return;
+    if (typeVal === 'modification') {
+      if (!dateVal) { Toast.show('Selecciona una fecha', 'warning'); return; }
+      if (!startVal || !endVal || startVal >= endVal) {
+        Toast.show('La hora de inicio debe ser anterior a la hora de fin', 'warning'); return;
+      }
     }
 
     const submitBtn = document.getElementById('mod-req-submit');
@@ -219,8 +248,9 @@ const ModificationRequestModal = (() => {
     try {
       await API.submitModificationRequest({
         reservation_id: _reservation.id,
-        new_start_time: `${dateVal}T${startVal}:00`,
-        new_end_time:   `${dateVal}T${endVal}:00`,
+        type: typeVal,
+        new_start_time: typeVal === 'modification' ? `${dateVal}T${startVal}:00` : null,
+        new_end_time:   typeVal === 'modification' ? `${dateVal}T${endVal}:00` : null,
         reason: reasonVal || null,
       });
       const savedOnSent = _onSent;

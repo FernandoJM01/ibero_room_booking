@@ -11,9 +11,11 @@ function requireSuperAdmin(req, res, next) {
   next();
 }
 
+const requireRole = require('../middleware/requireRole');
+
 // GET /api/notifications/log
-// Fetch the 50 most recent notification logs (Super Admin only)
-router.get('/log', auth, requireSuperAdmin, async (req, res) => {
+// Fetch the 50 most recent notification logs (Available to super admins and secretarias)
+router.get('/log', auth, requireRole('secretaria'), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM notification_logs 

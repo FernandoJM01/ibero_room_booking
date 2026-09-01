@@ -68,8 +68,9 @@ CREATE TABLE modification_requests (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id   UUID NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
   requested_by     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  new_start_time   TIMESTAMPTZ NOT NULL,
-  new_end_time     TIMESTAMPTZ NOT NULL,
+  type             VARCHAR(20) NOT NULL DEFAULT 'modification' CHECK (type IN ('modification', 'cancellation')),
+  new_start_time   TIMESTAMPTZ,
+  new_end_time     TIMESTAMPTZ,
   reason           TEXT,
   status           VARCHAR(20) NOT NULL DEFAULT 'pending'
                      CHECK (status IN ('pending', 'approved', 'rejected')),
