@@ -221,153 +221,173 @@ const Sidebar = (() => {
 
   /* ── PJAX SPA ROUTER ── */
   let _pjaxInitialized = false;
+  const _prefetchCache = {};
+
   const _initPJAX = (sidebarId) => {
     if (_pjaxInitialized) return;
     _pjaxInitialized = true;
+
+    // --- PREFETCHING (Hover-to-fetch) ---
+    document.addEventListener('mouseover', (e) => {
+      const link = e.target.closest('.sidebar__nav .nav-item');
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      
+      // No prefetch para sub-pestañas de admin si ya estamos en admin
+      if (document.querySelector('.admin-tabs') && href.startsWith('admin.html#')) return;
+      
+      const url = new URL(href, window.location.origin);
+      const key = url.pathname + url.search;
+      
+      if (!_prefetchCache[key]) {
+        _prefetchCache[key] = fetch(url).then(r => {
+          if (!r.ok) throw new Error('Prefetch failed');
+          return r.text();
+        }).catch(err => {
+          delete _prefetchCache[key]; // Limpiar en error
+          console.warn('Prefetch silencioso falló', err);
+        });
+      }
+    });
 
     document.addEventListener('click', async (e) => {
       const link = e.target.closest('.sidebar__nav .nav-item');
       if (!link) return;
       
       const href = link.getAttribute('href');
-      // Ignorar enlaces externos o anclas locales
       if (href.startsWith('http') || href.startsWith('#')) return;
       
-      // Solución definitiva para las pestañas de Administración en producción:
-      // Si el enlace es de administración y ya estamos en la página de administración (comprobado vía DOM)
+      // Solución definitiva para las pestañas de Administración
       if (document.querySelector('.admin-tabs') && href.startsWith('admin.html#')) {
         e.preventDefault();
-        
-        const hash = href.split('#')[1]; // ej. 'usuarios'
+        const hash = href.split('#')[1];
         const tabIdMap = {
-          'usuarios': 'tab-users',
-          'solicitudes': 'tab-requests',
-          'calendario': 'tab-calendar',
-          'notificaciones': 'tab-notif',
-          'respaldos': 'tab-backup'
+          'usuarios': 'tab-users', 'solicitudes': 'tab-requests',
+          'calendario': 'tab-calendar', 'notificaciones': 'tab-notif', 'respaldos': 'tab-backup'
         };
-        
-        // Emular exactamente el comportamiento de la barra interna superior
         const tabBtn = document.getElementById(tabIdMap[hash]);
-        if (tabBtn) {
-          tabBtn.click();
-        } else {
-          window.location.hash = '#' + hash;
-        }
+        if (tabBtn) tabBtn.click();
+        else window.location.hash = '#' + hash;
         
-        // Cerrar el menú lateral en móviles
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         if (sidebar) sidebar.classList.remove('is-open');
         if (overlay) overlay.classList.remove('is-visible');
-        
-        return; // Detener el router PJAX por completo
+        return;
       }
 
       const url = new URL(href, window.location.origin);
-      
-      // Normalizar rutas para ignorar diferencias en servidores de producción (ej. /admin vs /admin.html)
       const currentPath = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
       const targetPath = url.pathname.replace(/\.html$/, '').replace(/\/$/, '');
       
-      // Fallback para otros enlaces de la misma página
       if (currentPath === targetPath) {
         e.preventDefault();
-        if (url.hash && window.location.hash !== url.hash) {
-          window.location.hash = url.hash;
-        }
+        if (url.hash && window.location.hash !== url.hash) window.location.hash = url.hash;
         return;
       }
       
       e.preventDefault();
       
       try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Network response was not ok');
-        const html = await res.text();
+        const key = url.pathname + url.search;
+        let html;
+        
+        // --- USAR PREFETCH O FETCH NORMAL ---
+        if (_prefetchCache[key]) {
+           html = await _prefetchCache[key];
+        } else {
+           const res = await fetch(url);
+           if (!res.ok) throw new Error('Network error');
+           html = await res.text();
+        }
         
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         
-        // Extraer contenido principal
         const newPageContent = doc.querySelector('.page-content');
-        if (!newPageContent) {
-           window.location.href = href;
-           return;
-        }
-        
         const currentPageContent = document.querySelector('.page-content');
-        if (!currentPageContent) {
+        if (!newPageContent || !currentPageContent) {
            window.location.href = href;
            return;
         }
 
-        currentPageContent.innerHTML = newPageContent.innerHTML;
-        
-        // Reiniciar animaciones
-        currentPageContent.classList.remove('animate-fade-up');
-        void currentPageContent.offsetWidth; // trigger reflow
-        currentPageContent.classList.add('animate-fade-up');
-        
-        // Actualizar URL
-        history.pushState(null, '', url);
-        
-        // Actualizar título de la ventana y topbar
-        document.title = doc.querySelector('title')?.innerText || '';
-        const topbarTitle = doc.querySelector('.topbar__title');
-        const currentTopbarTitle = document.querySelector('.topbar__title');
-        if (topbarTitle && currentTopbarTitle) {
-          currentTopbarTitle.innerHTML = topbarTitle.innerHTML;
-        }
-        
-        // Actualizar activo en sidebar
-        document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
-           el.classList.remove('active');
-           el.removeAttribute('aria-current');
-        });
-        link.classList.add('active');
-        link.setAttribute('aria-current', 'page');
-        
-        // Extraer e inyectar CSS
-        const stylesheets = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
-        stylesheets.forEach(oldLink => {
-          if (!document.querySelector(`link[href="${oldLink.getAttribute('href')}"]`)) {
-            const newLink = document.createElement('link');
-            newLink.rel = 'stylesheet';
-            newLink.href = oldLink.href;
-            document.head.appendChild(newLink);
+        // --- FUNCIÓN DE ACTUALIZACIÓN DEL DOM ---
+        const performDOMUpdate = async () => {
+          currentPageContent.innerHTML = newPageContent.innerHTML;
+          
+          if (!document.startViewTransition) {
+            currentPageContent.classList.remove('animate-fade-up');
+            void currentPageContent.offsetWidth; // trigger reflow
+            currentPageContent.classList.add('animate-fade-up');
+          } else {
+            // View transition takes over, remove manual animation to avoid conflict
+            currentPageContent.classList.remove('animate-fade-up');
           }
-        });
+          
+          history.pushState(null, '', url);
+          
+          document.title = doc.querySelector('title')?.innerText || '';
+          const topbarTitle = doc.querySelector('.topbar__title');
+          const currentTopbarTitle = document.querySelector('.topbar__title');
+          if (topbarTitle && currentTopbarTitle) {
+            currentTopbarTitle.innerHTML = topbarTitle.innerHTML;
+          }
+          
+          document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
+             el.classList.remove('active');
+             el.removeAttribute('aria-current');
+          });
+          link.classList.add('active');
+          link.setAttribute('aria-current', 'page');
+          
+          // Inject CSS
+          const stylesheets = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
+          stylesheets.forEach(oldLink => {
+            if (!document.querySelector(`link[href="${oldLink.getAttribute('href')}"]`)) {
+              const newLink = document.createElement('link');
+              newLink.rel = 'stylesheet';
+              newLink.href = oldLink.href;
+              document.head.appendChild(newLink);
+            }
+          });
 
-        // Extraer e inyectar scripts (esperando a que carguen)
-        const scripts = Array.from(doc.querySelectorAll('script[src]'));
-        const scriptPromises = [];
-        
-        scripts.forEach(oldScript => {
-          if (!document.querySelector(`script[src="${oldScript.getAttribute('src')}"]`)) {
-            const promise = new Promise((resolve) => {
-              const newScript = document.createElement('script');
-              newScript.src = oldScript.src;
-              newScript.async = false;
-              newScript.onload = resolve;
-              newScript.onerror = resolve;
-              document.body.appendChild(newScript);
-            });
-            scriptPromises.push(promise);
+          // Inject Scripts
+          const scripts = Array.from(doc.querySelectorAll('script[src]'));
+          const scriptPromises = [];
+          scripts.forEach(oldScript => {
+            if (!document.querySelector(`script[src="${oldScript.getAttribute('src')}"]`)) {
+              const promise = new Promise((resolve) => {
+                const newScript = document.createElement('script');
+                newScript.src = oldScript.src;
+                newScript.async = false;
+                newScript.onload = resolve;
+                newScript.onerror = resolve;
+                document.body.appendChild(newScript);
+              });
+              scriptPromises.push(promise);
+            }
+          });
+          
+          if (scriptPromises.length > 0) {
+            await Promise.all(scriptPromises);
           }
-        });
-        
-        if (scriptPromises.length > 0) {
-          await Promise.all(scriptPromises);
+        };
+
+        // --- VIEW TRANSITIONS API ---
+        if (document.startViewTransition) {
+          const transition = document.startViewTransition(() => performDOMUpdate());
+          await transition.updateCallbackDone; 
+          document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
+        } else {
+          await performDOMUpdate();
+          document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
         }
-        
-        // Notificar a la app que la página cambió
-        const event = new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } });
-        document.dispatchEvent(event);
         
       } catch (err) {
         console.error('PJAX Error:', err);
-        window.location.href = href; // fallback nativo
+        window.location.href = href;
       }
     });
     
