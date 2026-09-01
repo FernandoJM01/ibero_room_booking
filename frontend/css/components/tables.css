@@ -139,6 +139,8 @@
 
 /* ── ESTADO VACÍO ── */
 .table-empty {
+  position: sticky;
+  left: 0;
   padding: var(--space-10) var(--space-6);
   text-align: center;
   color: var(--color-secondary-light);
@@ -156,6 +158,8 @@
 
 /* ── PIE DE TABLA ── */
 .table-footer {
+  position: sticky;
+  left: 0;
   padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-xs);
   color: var(--color-secondary-light);
@@ -213,7 +217,7 @@
   box-shadow: 0 0 0 3px var(--color-primary-bg);
 }
 
-.filter-input--search { min-width: 220px; }
+.filter-input--search { min-width: 120px; }
 .filter-input--date   { min-width: 140px; }
 .filter-select        { min-width: 130px; }
 
@@ -254,6 +258,50 @@
   flex: 1;
 }
 
+
+/* Responsive Filter Groups */
+.filter-group--search {
+  flex: 1;
+  min-width: 280px;
+}
+
+.filter-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-select--auto {
+  width: auto;
+}
+
+.filter-input--flex {
+  flex: 1;
+}
+
+.filter-group--actions {
+  justify-content: flex-end;
+  flex-direction: row;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+
+/* Export Button Group */
+.export-btn-group {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+.export-btn-group .btn {
+  flex-shrink: 0;
+}
+.export-btn-group .btn svg {
+  flex-shrink: 0;
+  min-width: 13px;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .data-table td,
@@ -263,8 +311,32 @@
   }
 
   .history-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    align-items: end;
+  }
+
+  .filter-group--search,
+  .filter-group--actions {
+    grid-column: 1 / -1;
+  }
+
+  .filter-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filter-group--actions {
     flex-direction: column;
-    gap: var(--space-2);
+    align-items: stretch;
+    justify-content: stretch;
+    margin-top: var(--space-2);
+  }
+
+  .filter-group--actions button {
+    width: 100%;
+    justify-content: center;
   }
 
   .filter-input--search,
@@ -272,5 +344,44 @@
   .filter-select {
     min-width: 0;
     width: 100%;
+  }
+
+
+}
+
+@media (max-width: 380px) {
+  .filter-search-row {
+    flex-direction: column;
+  }
+  .filter-select--auto {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1048px) {
+  .export-btn-group .btn:not(#btn-export-csv) {
+    font-size: 0;
+    gap: 0;
+    padding: var(--space-2);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1048px) {
+  .filter-group {
+    flex: 1;
+  }
+}
+
+@media (min-width: 381px) and (max-width: 640px) {
+  .filter-search-row {
+    flex-wrap: nowrap;
+  }
+  .filter-select--auto {
+    width: 40% !important;
+    flex: 0 0 40%;
+  }
+  .filter-input--search {
+    width: 60% !important;
+    flex: 1;
   }
 }

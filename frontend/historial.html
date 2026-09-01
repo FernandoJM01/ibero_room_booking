@@ -74,29 +74,29 @@
       <div class="history-toolbar" role="search" aria-label="Filtros de búsqueda">
         <div class="history-filters">
 
-          <div class="filter-group" style="flex:1;min-width:280px;">
+          <div class="filter-group filter-group--search">
             <label for="filter-search">Buscar por</label>
-            <div style="display: flex; gap: 8px;">
-              <select id="filter-field" class="filter-select" aria-label="Seleccionar campo de búsqueda" style="width: auto;">
+            <div class="filter-search-row">
+              <select id="filter-field" class="filter-select filter-select--auto" aria-label="Seleccionar campo de búsqueda">
                 <option value="all">Todos los campos</option>
                 <option value="responsible">Responsable</option>
                 <option value="area">Área</option>
                 <option value="creator">Creado por</option>
                 <option value="observations">Observaciones</option>
               </select>
-              <input type="search" id="filter-search" class="filter-input filter-input--search"
+              <input type="search" id="filter-search" class="filter-input filter-input--search filter-input--flex"
                      placeholder="Escribe para buscar..."
-                     aria-label="Término de búsqueda" style="flex: 1;" />
+                     aria-label="Término de búsqueda" />
             </div>
           </div>
 
-          <div class="filter-group">
+          <div class="filter-group filter-group--date">
             <label for="filter-date-from">Desde</label>
             <input type="date" id="filter-date-from" class="filter-input filter-input--date"
                    aria-label="Fecha desde" />
           </div>
 
-          <div class="filter-group">
+          <div class="filter-group filter-group--date">
             <label for="filter-date-to">Hasta</label>
             <input type="date" id="filter-date-to" class="filter-input filter-input--date"
                    aria-label="Fecha hasta" />
@@ -120,7 +120,7 @@
             </select>
           </div>
 
-          <div class="filter-group" style="justify-content:flex-end;flex-direction:row;gap:var(--space-2);align-items:flex-end;">
+          <div class="filter-group filter-group--actions">
             <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-filters"
                     aria-label="Limpiar filtros">
               Limpiar
