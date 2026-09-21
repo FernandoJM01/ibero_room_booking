@@ -19,7 +19,7 @@ system, not only the *what*.
 
 | #    | Title                                                                              | Status   |
 | ---- | ---------------------------------------------------------------------------------- | -------- |
-| 0001 | [Container orchestration with Dokploy](0001-container-orchestration-with-dokploy.md) | Proposed |
-| 0002 | [Reverse proxy routing with Traefik](0002-reverse-proxy-routing-with-traefik.md)     | Proposed |
-| 0003 | [Institutional network egress restrictions](0003-institutional-network-egress-restrictions.md) | Proposed |
-| 0004 | [Public exposure via Cloudflare Worker](0004-public-exposure-via-cloudflare-worker.md) | Proposed |
+| 0001 | [Container orchestration with Dokploy](0001-container-orchestration-with-dokploy.md) | Accepted |
+| 0002 | [Reverse proxy routing with Traefik](0002-reverse-proxy-routing-with-traefik.md)     | Accepted |
+| 0003 | [Institutional network egress restrictions](0003-institutional-network-egress-restrictions.md) | Accepted |
+| 0004 | [Public exposure via Cloudflare Worker](0004-public-exposure-via-cloudflare-worker.md) | Accepted |

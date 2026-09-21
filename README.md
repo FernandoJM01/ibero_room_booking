@@ -240,6 +240,7 @@ curl http://localhost:8080/api/health
 | --------------------------------------------------- | ------------------------------------------ |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)          | Production architecture and setup          |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md)                | Operations, troubleshooting, rollback      |
+| [`docs/ACCESS.md`](docs/ACCESS.md)                  | Accounts and access register               |
 | [`docs/adr/`](docs/adr/README.md)                   | Architecture Decision Records              |
 | [`docs/EMAIL_SYSTEM.md`](docs/EMAIL_SYSTEM.md)      | How email notifications work               |
 | [`docs/SMTP_ADMIN_GUIDE.md`](docs/SMTP_ADMIN_GUIDE.md) | Configuring SMTP                        |
