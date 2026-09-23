@@ -43,7 +43,7 @@ we do not batch everything into one large deploy.
 | 2 | Dashboard stops responding to clicks after creating one reservation | Bug | Yes — confirmed by live reproduction, precise cause found | Medium | Phase 3 — done, pending deploy |
 | 5 | Allow booking on some Saturdays | Feature | Yes — decision made (open by default) | Low | Phase 3 — done, pending deploy |
 | 6b | Recurrence UX: rename "Ocurrencias", add a "Semester" option | UX + feature | N/A — needs a design discussion | Medium | Phase 4 (discussion first) |
-| 7 | Remove the "Solicitudes de cambio" approval workflow; let any secretary edit/cancel, attributed in History | Workflow + authorization | Yes — **no schema change needed** | Medium | Phase 5 |
+| 7 | Remove the "Solicitudes de cambio" approval workflow; let any secretary edit/cancel, attributed in History | Workflow + authorization | Yes — no schema change needed | Medium | Phase 5 — done, pending deploy |
 
 ---
 
@@ -360,7 +360,14 @@ item where writing code first is more likely to waste time than save it.
 
 ---
 
-## Phase 5 — Workflow change (its own branch, careful rollout)
+## Phase 5 — completed (2026-09-23)
+
+Implemented on `feat/direct-reservation-edit`, verified live end to end
+(browser automation, a fresh non-owner/non-admin secretary account, and
+direct API checks). Not yet merged or deployed. Decisions from the
+discussion: fully flat permissions (no limit), and to build it now rather
+than after the professor's evaluation — with a database backup recommended
+before deploying (see Rollout, below).
 
 ### #7. Remove the "Solicitudes de cambio" approval step
 
@@ -393,51 +400,75 @@ super-admin override path:
   edits their booking) is already built and already runs, because it already
   runs for the super-admin case today.
 
-**What changes, concretely:**
-1. **Backend:** in `PUT /:id`, `DELETE /:id`, `DELETE /bulk`, drop the
-   ownership check for the `secretaria` role (keep `requireRole('secretaria')`
-   — academics still cannot edit/cancel). The existing
-   "notify the original creator when someone else changes it" emails already
-   fire correctly for this case (they were written generically, keyed off
-   `isOwner`, not off `isAdmin` specifically) — verify this while testing
-   rather than assuming.
-2. **Backend query:** `GET /api/reservations` and `GET /api/reservations/week`
-   currently join `creator_name` only. Add a second `LEFT JOIN users` for
-   `last_modified_by` so the frontend can show "última modificación por" —
-   this is a query change, not a schema change.
-3. **Frontend, History page:** show a "Modificado por" column/detail using
-   the new field, so the secretary can see who touched a reservation last —
-   this is literally what was asked for.
-4. **Frontend:** remove the "Solicitar cambio" entry points (the button in the
-   reservation detail popup, the History page's request UI) so the workflow
-   is no longer offered.
-5. **Do *not* delete the `modification_requests` table, its migration, or its
-   backend routes in this phase.** Leave the code in place but unreached.
-   This keeps the change reversible with a one-line revert if something is
-   missed, and avoids a destructive schema change under deadline pressure.
-   Proposing an actual `DROP TABLE` migration as a *separate*, later, unhurried
-   cleanup once the team is confident nothing depends on it (e.g. no pending
-   requests exist, and a term has passed without anyone asking for the old
-   approval flow back).
+**What was actually done, implemented and verified:**
+1. **Backend:** removed the ownership-check block in `PUT /:id`, `DELETE
+   /:id`, and `DELETE /bulk` (kept `requireRole('secretaria')` — academics
+   still cannot edit/cancel). **Correction to the plan's earlier assumption:**
+   the "notify the original creator" emails were *not* written generically —
+   they were gated on `req.user.isAdmin && !isOwner`, i.e. admin-only. Changed
+   both gates to `!isOwner` so the creator is notified whenever *anyone else*
+   changes their reservation, admin or peer secretary. Also found and fixed a
+   related gap while touching this code: neither cancel path (`DELETE /:id`,
+   `DELETE /bulk`) ever set `last_modified_by` — only `PUT` did — so a
+   cancellation's attribution existed only in `audit_log`, not on the row
+   itself. Both now set it.
+2. **Backend query:** added `LEFT JOIN users lm ON lm.id = r.last_modified_by`
+   and `lm.name AS last_modified_by_name` to all three read endpoints (`GET /`,
+   `GET /week`, `GET /:id`), not just the two originally scoped — the
+   single-reservation endpoint had the same shape and it cost nothing extra to
+   include.
+3. **Frontend:** normalized the new field as `lastModifiedByName`
+   ([`api.js`](../../frontend/js/core/api.js)). In the History table, added it
+   as a small inline line under "Creado por" — **only when it differs from the
+   creator** — rather than a new column, to avoid crowding an already-tight
+   table. Removed every reachable "Solicitar cambio" entry point: the History
+   row-edit gate, the calendar detail popup (`dashboard.js`), and the
+   right-click context menu's copy/cut gate (`dashboard.js`) — the last one
+   wasn't in the original plan's list but has the identical pattern.
+4. **Left three client-side fallback branches** (in `dashboard.js`, guarding
+   drag-to-reschedule and cut/paste-move) that open
+   `ModificationRequestModal` on an HTTP 403. They're now permanently
+   unreachable, since the backend never returns 403 for this anymore, but
+   harmless to leave — not touched, to keep this change's diff focused on
+   actual entry points a user can click.
+5. **`modification_requests`'s table, migration, backend routes, and the admin
+   "Solicitudes" approval screen were left untouched**, exactly as planned —
+   dormant for any legacy pending requests, but nothing can create new ones
+   anymore.
+6. **Small wording fix in passing:** the notification email subject/body said
+   "... por administración" ("... by administration") unconditionally; since
+   it now fires for peer secretaries too, reworded to be role-neutral
+   ([`mailer.js`](../../backend/utils/mailer.js)).
 
-**Open question to confirm before building:** should *any* secretary be able
-to edit/cancel *any* reservation (fully flat), or should there still be some
-limit (e.g., not touching another department's reservation without at least a
-notification, which already happens via email)? The request reads as "fully
-flat, just log who did it," and that's what this plan implements — flagging
-it explicitly in case that's not quite right.
+**Decision from the discussion:** fully flat permissions — any secretary can
+edit or cancel any reservation, with no additional limit.
 
-**Rollout:**
-1. Build on `fix/direct-reservation-edit`, test locally against a copy of
-   production data if practical, or against fresh seed data otherwise.
-2. **Backup the production database first**
-   ([RUNBOOK](../RUNBOOK.md#backup-the-database)) — this phase changes who
-   can write to `reservations`, which is worth being able to undo instantly
-   even though no schema changes.
-3. Deploy, then have the secretary who reported this test it directly, before
-   telling the rest of the team it's live.
-4. Watch `audit_log` and the notification emails for a few days to confirm
-   attribution is landing correctly.
+**Verified live:**
+- Direct API check: secretary A creates, secretary B (a fresh, non-admin,
+  non-owner account) edits via `PUT` and cancels via `DELETE` — both succeed
+  (previously 403). Response shows `last_modified_by` correctly set to B while
+  `created_by` stays A; `GET` returns `creator_name` and
+  `last_modified_by_name` as distinct values.
+- Browser, History page: an unrelated secretary sees "Editar" (never
+  "Solicitar cambio") on every active row regardless of who created it; after
+  editing a reservation she didn't create, the row shows "Modificado por
+  \<her name\>" under the original creator's name on next load.
+- Browser, Dashboard calendar popup: same secretary, clicking a reservation
+  she doesn't own shows "Editar"/"Cancelar", not "Solicitar cambio".
+- Mailer: the creator-notification email fired (logged; SMTP auth fails in
+  local dev as expected, unrelated to this change).
+- All test accounts and data created during verification were removed
+  afterward.
+
+**Rollout, still to do (yours, not mine):**
+1. **Backup the production database first**
+   ([RUNBOOK](../RUNBOOK.md#backup-the-database)) — this phase changes who can
+   write to `reservations`, worth being able to undo instantly even though
+   there's no schema change.
+2. Merge and deploy, then have the secretary who reported this test it
+   directly before telling the rest of the team it's live.
+3. Watch `audit_log` and the notification emails for a few days to confirm
+   attribution keeps landing correctly.
 
 ---
 

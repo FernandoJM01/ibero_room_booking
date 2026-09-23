@@ -222,24 +222,13 @@ const init = async () => {
       });
     });
 
-    // Wire individual edit / request change
+    // Wire individual edit — any secretaria may edit any reservation now.
+    // See docs/changes/2026-09-22-secretary-feedback.md #7.
     tableBody.querySelectorAll('.row-edit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const r = Store.getState().reservations.find(res => res.id === btn.dataset.id);
         if (!r) return;
-        const isOwner      = r.created_by === user?.id;
-        const isSuperAdmin = !!user?.isAdmin;
-        if (isSuperAdmin || isOwner) {
-          ReservationModal.open({ editReservation: r, onSaved: () => _renderTable() });
-        } else {
-          // Open the fully decoupled, modern modification request modal designed exclusively for History table
-          if (typeof HistoryModificationRequestModal !== 'undefined') {
-            HistoryModificationRequestModal.open({ reservation: r, onSent: () => _renderTable() });
-          } else {
-            // Fallback in case component isn't loaded
-            ModificationRequestModal.open({ reservation: r, anchorRect: null });
-          }
-        }
+        ReservationModal.open({ editReservation: r, onSaved: () => _renderTable() });
       });
     });
 
@@ -274,17 +263,14 @@ const init = async () => {
          </td>`
       : ``;
 
-    const isOwner      = isSecretary && r.created_by === user?.id;
-    const isSuperAdmin = !!user?.isAdmin;
-    const canModify    = isSuperAdmin || isOwner;
+    // Any secretaria may edit/cancel any reservation now — the "Solicitudes
+    // de cambio" approval step was removed. See
+    // docs/changes/2026-09-22-secretary-feedback.md #7.
+    const canModify = isSecretary;
 
-    const editLabel = canModify ? 'Editar' : 'Solicitar cambio';
-    const editIcon  = canModify
-      ? `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-         <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>`
-      : `<circle cx="12" cy="12" r="10"/>
-         <line x1="12" y1="8" x2="12" y2="12"/>
-         <line x1="12" y1="16" x2="12.01" y2="16"/>`;
+    const editLabel = 'Editar';
+    const editIcon  = `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+         <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>`;
 
     const actions = isSecretary && isActive
       ? `<div class="row-actions" style="display:flex; gap:6px; justify-content:flex-end;">
@@ -321,12 +307,22 @@ const init = async () => {
         </div>`;
     }
 
+    // Show who last touched it only when it differs from who created it —
+    // any secretaria can now edit/cancel any reservation (no more approval
+    // step), so this is the visible trail of who actually made a change.
+    // See docs/changes/2026-09-22-secretary-feedback.md #7.
+    const modifiedByHTML = (r.lastModifiedByName && r.lastModifiedByName !== r.creatorName)
+      ? `<div style="font-size:var(--font-size-xs);color:var(--color-secondary-light);margin-top:2px;">
+           Modificado por ${Utils.escapeHTML(r.lastModifiedByName)}
+         </div>`
+      : '';
+
     return `
       <tr class="${rowCls}" data-id="${r.id}">
         ${checkCell}
         <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
         <td>${responsibleHTML}</td>
-        <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
+        <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}${modifiedByHTML}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>
         <td style="white-space:nowrap;">${r.startTime}–${r.endTime}</td>
         <td>${statusBadge}</td>

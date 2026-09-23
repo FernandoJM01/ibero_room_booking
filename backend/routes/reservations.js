@@ -44,10 +44,11 @@ router.get('/', async (req, res) => {
 
   try {
     let query = `
-      SELECT r.*, u.name AS creator_name,
+      SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
              ec.email AS external_email, ec.organization AS external_organization
       FROM reservations r
-      LEFT JOIN users u ON u.id = r.created_by
+      LEFT JOIN users u  ON u.id  = r.created_by
+      LEFT JOIN users lm ON lm.id = r.last_modified_by
       LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
       WHERE 1=1`;
     const params = [];
@@ -113,10 +114,11 @@ router.get('/week', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT r.*, u.name AS creator_name,
+      `SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
               ec.email AS external_email, ec.organization AS external_organization
        FROM reservations r
-       LEFT JOIN users u ON u.id = r.created_by
+       LEFT JOIN users u  ON u.id  = r.created_by
+       LEFT JOIN users lm ON lm.id = r.last_modified_by
        LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
        WHERE r.start_time >= $1 AND r.start_time < $2
        ORDER BY r.start_time ASC`,
@@ -280,10 +282,11 @@ router.get('/:id', async (req, res) => {
 
   try {
     const result = await pool.query(`
-      SELECT r.*, u.name AS creator_name,
+      SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
              ec.email AS external_email, ec.organization AS external_organization
       FROM reservations r
-      LEFT JOIN users u ON u.id = r.created_by
+      LEFT JOIN users u  ON u.id  = r.created_by
+      LEFT JOIN users lm ON lm.id = r.last_modified_by
       LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
       WHERE r.id = $1
     `, [id]);
@@ -415,11 +418,13 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       return res.status(404).json({ error: 'Reservation not found' });
     }
 
-    // Ownership: only super-admin may edit another secretary's reservation
+    // Any secretaria may edit any reservation (the "Solicitudes de cambio"
+    // approval workflow was removed at the secretary's request — it stopped
+    // covering for a sick/unavailable colleague from blocking work). Every
+    // edit is still attributed via last_modified_by/audit_log, and the
+    // original creator is notified below when someone else changes it.
+    // See docs/changes/2026-09-22-secretary-feedback.md #7.
     const isOwner = existing.rows[0].created_by === req.user.id;
-    if (!req.user.isAdmin && !isOwner) {
-      return res.status(403).json({ error: 'No puedes modificar una reservación de otra secretaria' });
-    }
 
     // Look up responsible entity if provided
     let responsible = null;
@@ -522,8 +527,10 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       }
     }
 
-    // Notify creating secretary when a super-admin modifies their reservation
-    if (req.user.isAdmin && !isOwner && before.created_by) {
+    // Notify the creating secretary whenever someone else modifies their
+    // reservation (used to be admin-only; now any secretary can edit any
+    // reservation, so any non-owner edit should notify the creator).
+    if (!isOwner && before.created_by) {
       const creatorQ = await pool.query('SELECT email FROM users WHERE id = $1', [before.created_by]);
       if (creatorQ.rows[0]?.email) {
         const { subject, html } = reservationAdminModifiedEmail(after, req.user.name, changes);
@@ -549,16 +556,15 @@ router.delete('/:id', requireRole('secretaria'), async (req, res) => {
       return res.status(404).json({ error: 'Reservation not found' });
     }
 
+    // Any secretaria may cancel any reservation — see the note in PUT /:id
+    // above. See docs/changes/2026-09-22-secretary-feedback.md #7.
     const isOwner = existing.rows[0].created_by === req.user.id;
-    if (!req.user.isAdmin && !isOwner) {
-      return res.status(403).json({ error: 'No puedes cancelar una reservación de otra secretaria' });
-    }
 
     const result = await pool.query(
-      `UPDATE reservations SET status = 'cancelled', updated_at = NOW()
+      `UPDATE reservations SET status = 'cancelled', last_modified_by = $2, updated_at = NOW()
        WHERE id = $1
        RETURNING *`,
-      [id]
+      [id, req.user.id]
     );
 
     // Log to audit
@@ -585,8 +591,9 @@ router.delete('/:id', requireRole('secretaria'), async (req, res) => {
       sendEmail(respEmail, subject, html);
     }
 
-    // Notify creating secretary when super-admin cancels their reservation
-    if (req.user.isAdmin && !isOwner && cancelled.created_by) {
+    // Notify the creating secretary whenever someone else cancels their
+    // reservation (used to be admin-only; see the note in PUT /:id above).
+    if (!isOwner && cancelled.created_by) {
       const creatorQ = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.created_by]);
       if (creatorQ.rows[0]?.email) {
         const { subject, html } = reservationAdminCancelledEmail(cancelled, req.user.name);
@@ -611,22 +618,13 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
   }
 
   try {
-    // Ownership check for non-admins
-    if (!req.user.isAdmin) {
-      const ownerCheck = await pool.query(
-        `SELECT id FROM reservations WHERE id = ANY($1::uuid[]) AND created_by != $2 LIMIT 1`,
-        [ids, req.user.id]
-      );
-      if (ownerCheck.rows.length > 0) {
-        return res.status(403).json({ error: 'No puedes cancelar reservaciones de otras secretarias' });
-      }
-    }
-
+    // Any secretaria may bulk-cancel any reservation — see the note in
+    // PUT /:id above. See docs/changes/2026-09-22-secretary-feedback.md #7.
     const result = await pool.query(
-      `UPDATE reservations SET status = 'cancelled', updated_at = NOW()
+      `UPDATE reservations SET status = 'cancelled', last_modified_by = $2, updated_at = NOW()
        WHERE id = ANY($1::uuid[])
        RETURNING *`,
-      [ids]
+      [ids, req.user.id]
     );
 
     // Log to audit

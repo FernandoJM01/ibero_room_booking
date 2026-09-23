@@ -194,25 +194,30 @@ function accountActivatedEmail(user) {
   };
 }
 
-function reservationAdminModifiedEmail(reservation, adminName, changes = []) {
+// NOTE: these fire whenever anyone OTHER than the original creator modifies
+// or cancels a reservation — not only super admins (any secretaria can now
+// edit/cancel any reservation; see
+// docs/changes/2026-09-22-secretary-feedback.md #7). Wording is deliberately
+// role-neutral: `actorName` may be a super admin or a peer secretaria.
+function reservationAdminModifiedEmail(reservation, actorName, changes = []) {
   const changesHtml = changes.length
     ? `<p style="font-size:13px;color:#555;">Campos modificados: <strong>${_esc(changes.join(', '))}</strong>.</p>`
     : '';
   return {
-    subject: `Tu reservación fue modificada por administración — Sala de Juntas Ibero`,
-    html: _layout('#e65100', 'Reservación modificada por administración',
-      `<p>El administrador <strong>${_esc(adminName)}</strong> modificó una reservación que registraste:</p>
+    subject: `Tu reservación fue modificada — Sala de Juntas Ibero`,
+    html: _layout('#e65100', 'Reservación modificada',
+      `<p><strong>${_esc(actorName)}</strong> modificó una reservación que registraste:</p>
        ${_reservationTable(reservation, true)}
        ${changesHtml}
        <p style="font-size:13px;color:#555;">Si tienes dudas, contacta a la administración del sistema.</p>`),
   };
 }
 
-function reservationAdminCancelledEmail(reservation, adminName) {
+function reservationAdminCancelledEmail(reservation, actorName) {
   return {
-    subject: `Tu reservación fue cancelada por administración — Sala de Juntas Ibero`,
-    html: _layout('#dc3545', 'Reservación cancelada por administración',
-      `<p>El administrador <strong>${_esc(adminName)}</strong> canceló una reservación que registraste:</p>
+    subject: `Tu reservación fue cancelada — Sala de Juntas Ibero`,
+    html: _layout('#dc3545', 'Reservación cancelada',
+      `<p><strong>${_esc(actorName)}</strong> canceló una reservación que registraste:</p>
        ${_reservationTable(reservation, false)}
        <p style="font-size:13px;color:#555;">Si tienes dudas, contacta a la administración del sistema.</p>`),
   };

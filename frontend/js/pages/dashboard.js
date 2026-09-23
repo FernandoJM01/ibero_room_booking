@@ -185,17 +185,13 @@ function _onReservationClick(id, event) {
     ? `<span class="badge badge-error" style="font-size:10px;">Cancelada</span>`
     : `<span class="badge badge-success" style="font-size:10px;">Activa</span>`;
 
-  const isOwner      = r.created_by === user?.id;
-  const isSuperAdmin = !!user?.isAdmin;
-  const canEdit      = isSuperAdmin || isOwner;
-
+  // Any secretaria may edit/cancel any reservation now — the "Solicitudes
+  // de cambio" approval step was removed. See
+  // docs/changes/2026-09-22-secretary-feedback.md #7.
   const actions = isSecretary && r.status === 'active' ? `
     <div class="cal-popup__actions">
-      ${canEdit
-        ? `<button class="btn btn-secondary btn-sm" id="popup-edit"   data-id="${r.id}">Editar</button>
-           <button class="btn btn-danger btn-sm"    id="popup-cancel" data-id="${r.id}">Cancelar</button>`
-        : `<button class="btn btn-secondary btn-sm" id="popup-request" data-id="${r.id}">Solicitar cambio</button>`
-      }
+      <button class="btn btn-secondary btn-sm" id="popup-edit"   data-id="${r.id}">Editar</button>
+      <button class="btn btn-danger btn-sm"    id="popup-cancel" data-id="${r.id}">Cancelar</button>
     </div>` : '';
 
   popup.innerHTML = `
@@ -291,12 +287,8 @@ function _onReservationClick(id, event) {
     });
   });
 
-  document.getElementById('popup-request')?.addEventListener('click', () => {
-    const popupEl = document.getElementById('cal-popup');
-    const anchorRect = popupEl?.getBoundingClientRect() ?? null;
-    _closePopup();
-    ModificationRequestModal.open({ reservation: r, anchorRect });
-  });
+  // "Solicitar cambio" ("popup-request") is no longer rendered — see the
+  // note above where `actions` is built.
 
   const cancelBtn = document.getElementById('popup-cancel');
   cancelBtn?.addEventListener('click', () => {
@@ -761,16 +753,13 @@ function _openReservationContextMenu(id, x, y) {
   _closeWeekContextMenu();
   document.getElementById('holiday-popover')?.remove();
 
-  const currentUser  = Store.getUser();
-  const r            = Store.getState().reservations.find(res => res.id === id);
-  const isOwner      = r?.created_by === currentUser?.id;
-  const isSuperAdmin = !!currentUser?.isAdmin;
-  const canModify    = isSuperAdmin || isOwner;
-
+  // Any secretaria may copy/cut (and thereby move) any reservation now —
+  // the "Solicitudes de cambio" approval step was removed. See
+  // docs/changes/2026-09-22-secretary-feedback.md #7.
   const menu = document.createElement('div');
   menu.id        = 'wk-ctx-menu';
   menu.className = 'wk-ctx-menu';
-  menu.innerHTML = canModify ? `
+  menu.innerHTML = `
     <button class="wk-ctx-menu__item" id="wk-ctx-copy">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -788,15 +777,6 @@ function _openReservationContextMenu(id, x, y) {
         <path d="M10.36 14.36L6 20M15 4l5 7.36"/>
       </svg>
       Cortar reservación
-    </button>` : `
-    <button class="wk-ctx-menu__item" id="wk-ctx-request">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      Solicitar cambio de horario
     </button>`;
 
   document.body.appendChild(menu);
@@ -824,13 +804,6 @@ function _openReservationContextMenu(id, x, y) {
   document.getElementById('wk-ctx-cut')?.addEventListener('click', () => {
     close();
     _cutReservation(id);
-  });
-  document.getElementById('wk-ctx-request')?.addEventListener('click', (e) => {
-    const menuEl = document.getElementById('wk-ctx-menu');
-    const anchorRect = menuEl?.getBoundingClientRect() ?? null;
-    close();
-    const res = Store.getState().reservations.find(res => res.id === id);
-    if (res) ModificationRequestModal.open({ reservation: res, anchorRect });
   });
 }
 

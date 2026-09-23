@@ -80,6 +80,7 @@ const API = (() => {
       endTime:          end.time,
       responsible:      r.responsible_name,
       creatorName:      r.creator_name ?? null,
+      lastModifiedByName: r.last_modified_by_name ?? null,
       externalEmail:    r.external_email ?? null,
       externalOrg:      r.external_organization ?? null,
       isRecurring:      r.is_recurring,
