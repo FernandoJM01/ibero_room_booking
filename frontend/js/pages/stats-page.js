@@ -28,6 +28,16 @@ const init = async () => {
     Toast.show('Error cargando datos', 'error');
   }
 
+  // Role badge in the topbar — set on every init() because the SPA router
+  // replaces .topbar__actions on each navigation (see sidebar.js), so a
+  // stale badge from the previous page must not be left behind.
+  const badge = document.getElementById('topbar-role-badge');
+  if (badge) {
+    const isSuperAdmin = !!user.isAdmin;
+    badge.textContent = isSuperAdmin ? 'Super Admin' : 'Secretaria';
+    badge.className   = `badge ${isSuperAdmin ? 'badge-warning' : 'badge-primary'} topbar__badge-role`;
+  }
+
   Sidebar.init('estadisticas');
   Auth.startInactivityWatcher();
 

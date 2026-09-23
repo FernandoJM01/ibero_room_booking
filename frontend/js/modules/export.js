@@ -18,7 +18,7 @@ const Export = (() => {
       Responsable:  r.responsible,
       Tipo:         r.externalEmail ? 'Externo' : 'Interno',
       'Creado por': r.creatorName ?? '—',
-      'Área':       r.area,
+      'Nombre de la junta': r.area,
       'Hora inicio':r.startTime,
       'Hora fin':   r.endTime,
       Observaciones:r.observations ?? '',
@@ -68,7 +68,7 @@ const Export = (() => {
     doc.setTextColor(0, 0, 0);
 
     // Auto-table
-    const head = [['Fecha', 'Responsable', 'Tipo', 'Creado por', 'Área / Dpto.', 'Inicio', 'Fin']];
+    const head = [['Fecha', 'Responsable', 'Tipo', 'Creado por', 'Nombre de la junta', 'Inicio', 'Fin']];
     const body = reservations.map(r => [
       r.date,
       r.responsible,
@@ -99,7 +99,7 @@ const Export = (() => {
           2: { cellWidth: 35 },  // Tipo/Correo
           3: { cellWidth: 30 },  // Depto Ext
           4: { cellWidth: 25 },  // Creado por
-          5: { cellWidth: 45 },  // Área
+          5: { cellWidth: 45 },  // Nombre de la junta
           6: { cellWidth: 12 },  // Inicio
           7: { cellWidth: 12 },  // Fin
         },
@@ -191,7 +191,7 @@ const Export = (() => {
       { wch: 30 },  // Correo (Ext)
       { wch: 30 },  // Depto (Ext)
       { wch: 30 },  // Creado por
-      { wch: 35 },  // Área
+      { wch: 35 },  // Nombre de la junta
       { wch: 12 },  // Hora inicio
       { wch: 12 },  // Hora fin
       { wch: 40 },  // Observaciones

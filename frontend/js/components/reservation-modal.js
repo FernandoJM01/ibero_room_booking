@@ -346,10 +346,10 @@ const ReservationModal = (() => {
 
             <div class="rmodal__field">
               <label for="rmodal-area">
-                Área <span class="rmodal__required">*</span>
+                Nombre de la junta <span class="rmodal__required">*</span>
               </label>
               <input type="text" id="rmodal-area" class="form-input"
-                     placeholder="Ej: Coordinación de Posgrado" maxlength="200" />
+                     placeholder="Ej: Revisión de presupuesto 2027" maxlength="200" />
             </div>
 
             <div class="rmodal__field">
@@ -497,9 +497,10 @@ const ReservationModal = (() => {
         close();
       })
     );
-    _overlay.addEventListener('click', (e) => {
-      if (e.target === _overlay && !_newUserPanelOpen()) close();
-    });
+    // Intentionally no click-outside-to-close: a secretary reported losing
+    // form data from an accidental outside click. Closing is only via the
+    // "X" / "Cancelar" buttons above, or after a successful save.
+    // See docs/changes/2026-09-22-secretary-feedback.md #4.
 
     const onKey = (e) => {
       if (e.key === 'Escape') {

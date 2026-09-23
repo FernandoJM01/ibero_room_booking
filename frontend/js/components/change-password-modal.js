@@ -54,9 +54,7 @@ const ChangePasswordModal = (() => {
 
     // Event listeners
     document.getElementById('cp-cancel-btn').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close();
-    });
+    // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
 
     const form = document.getElementById('change-password-form');
     const errorDiv = document.getElementById('cp-error');

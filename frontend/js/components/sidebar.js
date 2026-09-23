@@ -337,7 +337,22 @@ const Sidebar = (() => {
           if (topbarTitle && currentTopbarTitle) {
             currentTopbarTitle.innerHTML = topbarTitle.innerHTML;
           }
-          
+
+          // The topbar's per-page controls (role badge, and page-specific
+          // buttons such as History's export group or Dashboard's tutorial
+          // button) live outside .page-content, so they were never replaced
+          // by the swap above — the destination page's buttons never
+          // appeared, or a previous page's buttons stuck around. Every
+          // page's own init() (run via SPA:Navigated below) re-populates the
+          // role badge and re-attaches its own button listeners, so it's
+          // safe to replace this region on every navigation.
+          // See docs/changes/2026-09-22-secretary-feedback.md #3.
+          const topbarActions = doc.querySelector('.topbar__actions');
+          const currentTopbarActions = document.querySelector('.topbar__actions');
+          if (topbarActions && currentTopbarActions) {
+            currentTopbarActions.innerHTML = topbarActions.innerHTML;
+          }
+
           document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
              el.classList.remove('active');
              el.removeAttribute('aria-current');
@@ -381,7 +396,15 @@ const Sidebar = (() => {
         // --- VIEW TRANSITIONS API ---
         if (document.startViewTransition) {
           const transition = document.startViewTransition(() => performDOMUpdate());
-          await transition.updateCallbackDone; 
+          // The visual transition itself (ready/finished) can be skipped or
+          // aborted by the browser for reasons unrelated to our DOM update
+          // (e.g. a transition already in flight) — that only affects the
+          // animation, not whether performDOMUpdate ran, so we only await
+          // updateCallbackDone and swallow the other two to avoid noisy
+          // unhandled-rejection warnings.
+          transition.ready.catch(() => {});
+          transition.finished.catch(() => {});
+          await transition.updateCallbackDone;
           refreshBadge();
           document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
         } else {

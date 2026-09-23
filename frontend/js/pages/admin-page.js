@@ -121,9 +121,7 @@ const init = async () => {
 
     closeBtn.addEventListener('click', closeModal);
     acceptBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) closeModal();
-    });
+    // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
   }
 
   /* ════════════════════════════════════════════════════════
@@ -417,7 +415,7 @@ const init = async () => {
     const close = () => overlay.remove();
     overlay.querySelector('#user-modal-close')?.addEventListener('click', close);
     overlay.querySelector('#user-modal-cancel')?.addEventListener('click', close);
-    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
     document.addEventListener('keydown', function esc(e) {
       if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
     });

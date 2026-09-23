@@ -164,10 +164,12 @@ const Recurring = (() => {
     }
 
     if (savedCount > 0) {
-      Notifications.onReservationCreated({
-        ...savedInstances[0],
-        _batchCount: savedCount,
-      });
+      // NOTE: this used to call Notifications.onReservationCreated(...), a
+      // method that no longer exists on the Notifications module (it now
+      // only exposes getLog()). That call threw *after* every instance was
+      // already saved, which made the UI show an error and skip the
+      // caller's onSaved/close — even though the whole series had been
+      // created successfully. See docs/changes/2026-09-22-secretary-feedback.md #6a.
       Store.persist();
     }
 
