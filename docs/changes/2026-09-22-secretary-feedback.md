@@ -35,7 +35,7 @@ we do not batch everything into one large deploy.
 
 | # | Item (as reported) | Type | Root cause found? | Risk | Phase |
 |---|---|---|---|---|---|
-| 0 | Any secretary can create a super-admin account | Security | Yes — confirmed in code review | High impact, low effort | **Phase 1** |
+| 0 | Any secretary can create a super-admin account | Security | Yes — confirmed in code review | High impact, low effort | **Phase 1 — done, pending deploy** |
 | 1 | "Área" label is confusing on the reservation form | UX copy | Yes — needs one product decision first | Low | Phase 2 |
 | 3 | Export to PDF/CSV/Excel "disappears" in History | Bug | Yes — confirmed | Low | Phase 2 |
 | 4 | Clicking outside a modal closes it and loses work | UX | Yes — confirmed, 2 components | Low | Phase 2 |
