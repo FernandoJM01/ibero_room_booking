@@ -242,6 +242,7 @@ curl http://localhost:8080/api/health
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md)                | Operations, troubleshooting, rollback      |
 | [`docs/ACCESS.md`](docs/ACCESS.md)                  | Accounts and access register               |
 | [`docs/adr/`](docs/adr/README.md)                   | Architecture Decision Records              |
+| [`docs/changes/`](docs/changes)                     | Change request plans (bug fixes, features) |
 | [`docs/EMAIL_SYSTEM.md`](docs/EMAIL_SYSTEM.md)      | How email notifications work               |
 | [`docs/SMTP_ADMIN_GUIDE.md`](docs/SMTP_ADMIN_GUIDE.md) | Configuring SMTP                        |
 | [`docs/notes/`](docs/notes)                         | Historical design and status notes         |
