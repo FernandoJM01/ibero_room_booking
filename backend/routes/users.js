@@ -61,12 +61,17 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Security: only an existing super admin may grant super-admin on the
+    // user they're creating. A plain secretaria's is_admin request is ignored
+    // (this route is open to any secretaria — see requireRole above).
+    const grantIsAdmin = req.user.isAdmin && !!is_admin;
+
     // Create user
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role, is_admin, active)
        VALUES ($1, $2, $3, $4, $5, true)
        RETURNING id, name, email, role, is_admin, active, created_at`,
-      [name, email, passwordHash, role, is_admin || false]
+      [name, email, passwordHash, role, grantIsAdmin]
     );
 
     // Log to audit
