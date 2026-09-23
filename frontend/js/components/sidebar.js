@@ -11,14 +11,14 @@ const Sidebar = (() => {
     {
       label: 'Principal',
       items: [
-        { id: 'dashboard', href: 'dashboard.html', label: 'Dashboard', icon: 'grid' },
+        { id: 'dashboard', href: 'dashboard.html', label: 'Reservar', icon: 'grid' },
       ]
     },
     {
       label: 'Gestión',
       items: [
-        { id: 'historial',    href: 'historial.html',    label: 'Historial',    icon: 'file-text'     },
-        { id: 'estadisticas', href: 'estadisticas.html', label: 'Estadísticas', icon: 'bar-chart-2'   },
+        { id: 'historial', href: 'historial.html', label: 'Historial', icon: 'file-text' },
+        { id: 'estadisticas', href: 'estadisticas.html', label: 'Estadísticas', icon: 'bar-chart-2' },
         // { id: 'ai-panel',     href: 'ai-panel.html',     label: 'Asistente IA', icon: 'message-square' },
       ]
     },
@@ -26,12 +26,12 @@ const Sidebar = (() => {
       label: 'Administración',
       items: [
         ...(isAdmin ? [
-          { id: 'admin-users',     href: 'admin.html#usuarios',        label: 'Usuarios',          icon: 'users'    },
+          { id: 'admin-users', href: 'admin.html#usuarios', label: 'Usuarios', icon: 'users' },
         ] : []),
-        { id: 'admin-requests',  href: 'admin.html#solicitudes',     label: 'Solicitudes',       icon: 'inbox'    },
-        { id: 'admin-config',  href: 'admin.html#calendario',    label: 'Festivos / Cierres', icon: 'settings' },
-        { id: 'admin-notif',   href: 'admin.html#notificaciones', label: 'Notificaciones',    icon: 'bell'     },
-        { id: 'admin-backup',  href: 'admin.html#respaldos',     label: 'Respaldos',         icon: 'download' },
+        { id: 'admin-requests', href: 'admin.html#solicitudes', label: 'Solicitudes', icon: 'inbox' },
+        { id: 'admin-config', href: 'admin.html#calendario', label: 'Festivos / Cierres', icon: 'settings' },
+        { id: 'admin-notif', href: 'admin.html#notificaciones', label: 'Notificaciones', icon: 'bell' },
+        { id: 'admin-backup', href: 'admin.html#respaldos', label: 'Respaldos', icon: 'download' },
       ]
     }
   ];
@@ -41,8 +41,8 @@ const Sidebar = (() => {
       {
         label: 'Principal',
         items: [
-          { id: 'calendar',  href: 'calendar.html',  label: 'Calendario', icon: 'calendar'   },
-          { id: 'historial', href: 'historial.html', label: 'Historial',  icon: 'file-text'  },
+          { id: 'calendar', href: 'calendar.html', label: 'Calendario', icon: 'calendar' },
+          { id: 'historial', href: 'historial.html', label: 'Historial', icon: 'file-text' },
         ]
       }
     ]
@@ -58,10 +58,10 @@ const Sidebar = (() => {
     'message-square': `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
     users: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
     settings: `<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M21 12h-2M5 12H3M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93M12 19v2M12 3v2"/>`,
-    'log-out':  `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
-    download:   `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
-    bell:       `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
-    inbox:      `<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>`,
+    'log-out': `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
+    download: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
+    bell: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
+    inbox: `<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>`,
   };
 
   const _icon = (name) =>
@@ -72,10 +72,10 @@ const Sidebar = (() => {
 
   /* ── RENDER ── */
   const _buildHTML = (user, activeId) => {
-    const role     = user?.role || 'academico';
-    const isAdmin  = !!user?.isAdmin;
+    const role = user?.role || 'academico';
+    const isAdmin = !!user?.isAdmin;
     const sections = role === 'secretaria' ? _buildSecretariaNav(isAdmin) : (NAV[role] || NAV.academico);
-    const initials  = (user?.name || '?').charAt(0).toUpperCase();
+    const initials = (user?.name || '?').charAt(0).toUpperCase();
     const roleLabel = isAdmin ? 'Super Admin' : (role === 'secretaria' ? 'Secretaria' : 'Académico');
 
     const navHTML = sections.map(section => `
@@ -135,7 +135,7 @@ const Sidebar = (() => {
    * @param {string} [mountId] — ID del elemento contenedor (default: 'sidebar')
    */
   const init = (activeId, mountId = 'sidebar') => {
-    const user    = Store.getUser();
+    const user = Store.getUser();
     const mountEl = document.getElementById(mountId);
     if (!mountEl) return;
 
@@ -173,7 +173,7 @@ const Sidebar = (() => {
     // Mobile toggle
     _initMobileToggle(mountId);
     _initPJAX(mountId);
-    
+
     // Refresh admin requests badge
     refreshBadge();
   };
@@ -184,11 +184,11 @@ const Sidebar = (() => {
     if (_mobileToggleInit) return;
     _mobileToggleInit = true;
     const toggleBtn = document.getElementById('sidebar-toggle');
-    const sidebar   = document.getElementById(sidebarId);
-    const overlay   = document.getElementById('sidebar-overlay');
+    const sidebar = document.getElementById(sidebarId);
+    const overlay = document.getElementById('sidebar-overlay');
     if (!toggleBtn || !sidebar) return;
 
-    const open  = () => {
+    const open = () => {
       sidebar.classList.add('is-open');
       overlay?.classList.add('is-visible');
       toggleBtn.setAttribute('aria-expanded', 'true');
@@ -234,16 +234,16 @@ const Sidebar = (() => {
     document.addEventListener('mouseover', (e) => {
       const link = e.target.closest('.sidebar__nav .nav-item');
       if (!link) return;
-      
+
       const href = link.getAttribute('href');
       if (!href || href.startsWith('http') || href.startsWith('#')) return;
-      
+
       // No prefetch para sub-pestañas de admin si ya estamos en admin
       if (document.querySelector('.admin-tabs') && href.startsWith('admin.html#')) return;
-      
+
       const url = new URL(href, window.location.origin);
       const key = url.pathname + url.search;
-      
+
       if (!_prefetchCache[key]) {
         _prefetchCache[key] = fetch(url).then(r => {
           if (!r.ok) throw new Error('Prefetch failed');
@@ -258,10 +258,10 @@ const Sidebar = (() => {
     document.addEventListener('click', async (e) => {
       const link = e.target.closest('.sidebar__nav .nav-item');
       if (!link) return;
-      
+
       const href = link.getAttribute('href');
       if (href.startsWith('http') || href.startsWith('#')) return;
-      
+
       // Solución definitiva para las pestañas de Administración
       if (document.querySelector('.admin-tabs') && href.startsWith('admin.html#')) {
         e.preventDefault();
@@ -273,7 +273,7 @@ const Sidebar = (() => {
         const tabBtn = document.getElementById(tabIdMap[hash]);
         if (tabBtn) tabBtn.click();
         else window.location.hash = '#' + hash;
-        
+
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         if (sidebar) sidebar.classList.remove('is-open');
@@ -284,42 +284,42 @@ const Sidebar = (() => {
       const url = new URL(href, window.location.origin);
       const currentPath = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
       const targetPath = url.pathname.replace(/\.html$/, '').replace(/\/$/, '');
-      
+
       if (currentPath === targetPath) {
         e.preventDefault();
         if (url.hash && window.location.hash !== url.hash) window.location.hash = url.hash;
         return;
       }
-      
+
       e.preventDefault();
-      
+
       try {
         const key = url.pathname + url.search;
         let html;
-        
+
         // --- USAR PREFETCH O FETCH NORMAL ---
         if (_prefetchCache[key]) {
-           html = await _prefetchCache[key];
+          html = await _prefetchCache[key];
         } else {
-           const res = await fetch(url);
-           if (!res.ok) throw new Error('Network error');
-           html = await res.text();
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('Network error');
+          html = await res.text();
         }
-        
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        
+
         const newPageContent = doc.querySelector('.page-content');
         const currentPageContent = document.querySelector('.page-content');
         if (!newPageContent || !currentPageContent) {
-           window.location.href = href;
-           return;
+          window.location.href = href;
+          return;
         }
 
         // --- FUNCIÓN DE ACTUALIZACIÓN DEL DOM ---
         const performDOMUpdate = async () => {
           currentPageContent.innerHTML = newPageContent.innerHTML;
-          
+
           if (!document.startViewTransition) {
             currentPageContent.classList.remove('animate-fade-up');
             void currentPageContent.offsetWidth; // trigger reflow
@@ -328,9 +328,9 @@ const Sidebar = (() => {
             // View transition takes over, remove manual animation to avoid conflict
             currentPageContent.classList.remove('animate-fade-up');
           }
-          
+
           history.pushState(null, '', url);
-          
+
           document.title = doc.querySelector('title')?.innerText || '';
           const topbarTitle = doc.querySelector('.topbar__title');
           const currentTopbarTitle = document.querySelector('.topbar__title');
@@ -354,12 +354,12 @@ const Sidebar = (() => {
           }
 
           document.querySelectorAll('.sidebar__nav .nav-item').forEach(el => {
-             el.classList.remove('active');
-             el.removeAttribute('aria-current');
+            el.classList.remove('active');
+            el.removeAttribute('aria-current');
           });
           link.classList.add('active');
           link.setAttribute('aria-current', 'page');
-          
+
           // Inject CSS
           const stylesheets = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
           stylesheets.forEach(oldLink => {
@@ -387,7 +387,7 @@ const Sidebar = (() => {
               scriptPromises.push(promise);
             }
           });
-          
+
           if (scriptPromises.length > 0) {
             await Promise.all(scriptPromises);
           }
@@ -402,8 +402,8 @@ const Sidebar = (() => {
           // animation, not whether performDOMUpdate ran, so we only await
           // updateCallbackDone and swallow the other two to avoid noisy
           // unhandled-rejection warnings.
-          transition.ready.catch(() => {});
-          transition.finished.catch(() => {});
+          transition.ready.catch(() => { });
+          transition.finished.catch(() => { });
           await transition.updateCallbackDone;
           refreshBadge();
           document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
@@ -412,13 +412,13 @@ const Sidebar = (() => {
           refreshBadge();
           document.dispatchEvent(new CustomEvent('SPA:Navigated', { detail: { href: url.pathname } }));
         }
-        
+
       } catch (err) {
         console.error('PJAX Error:', err);
         window.location.href = href;
       }
     });
-    
+
     window.addEventListener('popstate', () => {
       window.location.reload();
     });
@@ -432,7 +432,7 @@ const Sidebar = (() => {
       if (typeof API === 'undefined' || !API.getModificationRequests) return;
       const requests = await API.getModificationRequests('pending');
       const count = Array.isArray(requests) ? requests.length : 0;
-      
+
       const navItem = document.getElementById('sidebar-nav-admin-requests');
       if (navItem) {
         let badge = navItem.querySelector('.nav-item__badge');
