@@ -42,8 +42,8 @@ we do not batch everything into one large deploy.
 | 6a | Recurring reservations: error shown even though rows were created, calendar doesn't refresh | Bug | Yes — confirmed, dead function call | Low | Phase 2 — done, pending deploy |
 | 2 | Dashboard stops responding to clicks after creating one reservation | Bug | Yes — confirmed by live reproduction, precise cause found | Medium | Phase 3 — done, pending deploy |
 | 5 | Allow booking on some Saturdays | Feature | Yes — decision made (open by default) | Low | Phase 3 — done, pending deploy |
-| 6b | Recurrence UX: rename "Ocurrencias", add a "Semester" option | UX + feature | N/A — needs a design discussion | Medium | Phase 4 (discussion first) |
-| 7 | Remove the "Solicitudes de cambio" approval workflow; let any secretary edit/cancel, attributed in History | Workflow + authorization | Yes — no schema change needed | Medium | Phase 5 — done, pending deploy |
+| 6b | Recurrence UX: rename "Ocurrencias", add a "Semester" option | UX + feature | Yes — discussed and implemented | Medium | Phase 4 — done, pending deploy |
+| 7 | Remove the "Solicitudes de cambio" approval workflow; let any secretary edit/cancel, attributed in History | Workflow + authorization | Yes — **no schema change needed** | Medium | Phase 5 — done, pending deploy |
 
 ---
 
@@ -331,32 +331,72 @@ clickable in month view (renders as a real `button`, not a disabled
 
 ---
 
-## Phase 4 — Needs a short design discussion before any code
+## Phase 4 — completed (2026-09-23)
+
+Implemented on `feat/recurrence-end-mode-and-semester` (branched from
+`main`, independent of phase 5), verified live via browser automation. Not
+yet merged or deployed.
 
 ### #6b. Recurrence UX: "Ocurrencias" wording, add a "Semester" option
 
-Not a bug — a product decision, exactly as flagged in the request. Suggest a
-15–20 minute conversation with the secretary covering:
+**What was actually confusing, explained (the secretary's own question was
+answered before coding):** "Ocurrencias" and "Hasta" were never alternatives —
+both acted as independent caps on the same series at the same time, and
+whichever was stricter won *silently*. Setting Ocurrencias=4 with Hasta next
+week didn't give you 4 reservations if the date came first; it gave you
+whatever fit before the date, with no explanation. That's the whole bug: two
+caps fighting, invisibly. Confirmed by reading
+[`recurring.js`](../../frontend/js/modules/recurring.js)'s generation loop,
+which stops on `generated >= count OR date > endDate`, whichever trips first.
 
-1. **"Ocurrencias" rewording.** Candidates: "Número de repeticiones" or
-   "¿Cuántas veces se repite?". Confirm which reads clearest to her.
-2. **Semester recurrence.** Since semester start/end dates change every year,
-   a fixed "Semestre" option in the dropdown (like today's Semanal/Quincenal/
-   Mensual) would need re-entering dates every term anyway. Two shapes to
-   choose between in the discussion:
-   - **A configurable "current semester" range**, set once per term by a
-     super admin (two dates, stored somewhere an admin can edit — a small new
-     settings entry), that the recurrence form then offers as a one-click
-     "hasta fin de semestre" end-date shortcut. Reuses the existing end-date
-     field; low effort.
-   - **A fully custom end-date picker**, already partially possible today via
-     the existing `endDate` field in the recurrence form — if the real ask is
-     just "let me type an end date instead of a count," this may already be
-     closer to solved than it looks, and the fix is making that option more
-     discoverable in the UI rather than building something new.
+**Fix:** made "Terminar" ("Terminar" here really is what the previous
+`(opcional)` framing lacked — a name for what these fields collectively do)
+a single mutually-exclusive choice instead of two competing fields:
+- **"Después de un número de repeticiones"** (default) — shows the count
+  field, renamed from "Ocurrencias" to **"Número de repeticiones"**.
+- **"En una fecha específica"** — shows the date field (the old "Hasta"),
+  hides the count field, and this is where the semester shortcut lives.
 
-**Do not start building until this conversation happens** — this is the one
-item where writing code first is more likely to waste time than save it.
+Only one field is ever sent to `Recurring.generate()`: when the mode is
+"date," the count is forced to the module's max (52) so it can never be the
+limiting factor; when the mode is "count," the date is forced to `null`. Only
+one cap can ever apply — the whole class of bug is now structurally
+impossible, not just less likely.
+
+**Semester feature (decision: Option A, configurable range):**
+- New table `app_settings` (migration
+  [`007_app_settings.sql`](../../backend/db/migrations/007_app_settings.sql)) —
+  a small key/value store, not specific to semesters, in case other global
+  settings are needed later. No existing table touched.
+- New route [`backend/routes/settings.js`](../../backend/routes/settings.js):
+  `GET /api/settings` (any secretaria) and `PUT /api/settings` (super admin
+  only, enforced server-side), restricted to an explicit key allowlist
+  (`semester_start`, `semester_end`) so it can't be used to write arbitrary
+  settings.
+- New "Semestre actual" panel in Administración → Festivos/Cierres
+  ([`admin.html`](../../frontend/admin.html),
+  [`admin-page.js`](../../frontend/js/pages/admin-page.js)): a super admin
+  sets the two dates once per term; every other secretaria sees the current
+  range read-only.
+- The recurrence form's "En una fecha específica" mode shows a **"Usar fin de
+  semestre"** button that fetches the setting and fills the date field.
+
+**Verified live** (browser automation, local dev stack):
+- Backend: `GET /api/settings` works for a plain secretary; `PUT` returns 403
+  for a plain secretary and succeeds for the super admin; an unlisted key in
+  the request body is silently dropped, not stored.
+- Admin UI: a plain secretary sees "Rango vigente: 01/08/2026 – 15/12/2026"
+  read-only; the super admin sees the same as an editable form, saves a
+  change, and gets a confirmation toast.
+- Recurrence form: toggling "Terminar" correctly shows/hides the right field;
+  "Usar fin de semestre" correctly fills the date from the saved setting;
+  saving in date mode produced exactly the reservations that fit before the
+  date (6 weekly instances up to the configured end), not an arbitrarily
+  short count — the reported bug, reproduced fixed. Switching back to count
+  mode after having set a date correctly ignored the leftover date value
+  (produced exactly 3 daily instances, no regression).
+- All test data (reservations, the temporary semester setting) removed
+  afterward.
 
 ---
 

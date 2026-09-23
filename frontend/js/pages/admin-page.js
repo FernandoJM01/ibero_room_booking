@@ -189,7 +189,7 @@ const init = async () => {
 
     // Lazy-init section content
     if (tab.id === 'tab-users')     _initUsersSection();
-    if (tab.id === 'tab-calendar')  _initCalendarSection();
+    if (tab.id === 'tab-calendar') { _initCalendarSection(); _initSemesterSettings(); }
     if (tab.id === 'tab-notif') { _initSmtpDiagnostics(); _renderNotifLog(); }
     if (tab.id === 'tab-backup')    _initBackupSection();
   }
@@ -747,6 +747,82 @@ const init = async () => {
   /* ════════════════════════════════════════════════════════
      SECTION: NOTIFICATIONS LOG (HU-23-25) & SMTP
   ════════════════════════════════════════════════════════ */
+
+  /* ── SEMESTRE ACTUAL ──
+     Small key/value settings used by the recurring-reservation form's
+     "Usar fin de semestre" shortcut. Any secretaria can see the current
+     range; only Super Admin can change it (enforced server-side too).
+     See docs/changes/2026-09-22-secretary-feedback.md #6b. */
+  async function _initSemesterSettings() {
+    const body = document.getElementById('semester-settings-body');
+    if (!body) return;
+
+    let settings = {};
+    try {
+      settings = await API.getSettings();
+    } catch (err) {
+      console.error('Error loading settings:', err);
+      body.innerHTML = '<div class="notif-empty">No se pudo cargar la configuración.</div>';
+      return;
+    }
+
+    const start = settings.semester_start || '';
+    const end   = settings.semester_end   || '';
+
+    const rangeLabel = (start && end)
+      ? `${Utils.formatDateShort(start)} – ${Utils.formatDateShort(end)}`
+      : 'No configurado';
+
+    if (!isSuperAdmin) {
+      body.innerHTML = `
+        <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);">
+          Rango vigente: <strong style="color:var(--text-main);">${Utils.escapeHTML(rangeLabel)}</strong>
+        </p>
+        <p style="color:var(--color-secondary-light);font-size:var(--font-size-xs);margin-top:var(--space-2);">
+          Solo un Super Administrador puede cambiar estas fechas.
+        </p>`;
+      return;
+    }
+
+    body.innerHTML = `
+      <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-3);">
+        Se usa para el atajo "Usar fin de semestre" al crear reservaciones
+        recurrentes. Actualízalo una vez por periodo.
+      </p>
+      <form id="semester-settings-form">
+        <div class="form-group">
+          <label for="semester-start">Inicio del semestre</label>
+          <input type="date" id="semester-start" value="${Utils.escapeHTML(start)}" required />
+        </div>
+        <div class="form-group">
+          <label for="semester-end">Fin del semestre</label>
+          <input type="date" id="semester-end" value="${Utils.escapeHTML(end)}" required />
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-save-semester">Guardar</button>
+      </form>`;
+
+    document.getElementById('semester-settings-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const semester_start = document.getElementById('semester-start').value;
+      const semester_end   = document.getElementById('semester-end').value;
+      if (!semester_start || !semester_end) return;
+      if (semester_end < semester_start) {
+        Toast?.show('La fecha de fin debe ser posterior a la de inicio.', 'warning');
+        return;
+      }
+      const btn = document.getElementById('btn-save-semester');
+      btn.disabled = true;
+      try {
+        await API.updateSettings({ semester_start, semester_end });
+        Toast?.show('Rango de semestre actualizado.', 'success');
+      } catch (err) {
+        console.error('Error saving settings:', err);
+        Toast?.show('No se pudo guardar. Intenta de nuevo.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
 
   async function _initSmtpDiagnostics() {
     const body = document.getElementById('smtp-config-body');

@@ -374,26 +374,46 @@ const ReservationModal = (() => {
               <span>Reservación recurrente</span>
             </label>
             <div id="rmodal-recur-panel" class="rmodal__recur-panel hidden">
-              <div class="rmodal__recur-grid">
-                <div class="rmodal__field">
-                  <label for="rmodal-recur-freq">Frecuencia</label>
-                  <select id="rmodal-recur-freq" class="form-select">
-                    <option value="daily">Diaria</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="biweekly">Quincenal</option>
-                    <option value="monthly">Mensual</option>
-                  </select>
-                </div>
-                <div class="rmodal__field">
-                  <label for="rmodal-recur-count">Ocurrencias</label>
-                  <input type="number" id="rmodal-recur-count" class="form-input"
-                         min="2" max="52" value="4" />
+              <div class="rmodal__field">
+                <label for="rmodal-recur-freq">Frecuencia</label>
+                <select id="rmodal-recur-freq" class="form-select">
+                  <option value="daily">Diaria</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="biweekly">Quincenal</option>
+                  <option value="monthly">Mensual</option>
+                </select>
+              </div>
+
+              <!-- Termina después de N repeticiones, o en una fecha —
+                   mutuamente exclusivo, nunca ambos a la vez. Antes eran dos
+                   campos independientes que competían silenciosamente (el
+                   que se cumplía primero cortaba la serie sin avisar).
+                   See docs/changes/2026-09-22-secretary-feedback.md #6b. -->
+              <div class="rmodal__field">
+                <label>Terminar</label>
+                <div class="rmodal__radio-group" role="radiogroup" aria-label="Cuándo termina la serie"
+                     style="flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+                  <label><input type="radio" name="rmodal-recur-end-mode" value="count" checked /> Después de un número de repeticiones</label>
+                  <label><input type="radio" name="rmodal-recur-end-mode" value="date" /> En una fecha específica</label>
                 </div>
               </div>
-              <div class="rmodal__field">
-                <label for="rmodal-recur-end">Hasta (opcional)</label>
-                <input type="date" id="rmodal-recur-end" class="form-input"
-                       min="${_intervals[0].date}" />
+
+              <div class="rmodal__field" id="rmodal-recur-count-field">
+                <label for="rmodal-recur-count">Número de repeticiones</label>
+                <input type="number" id="rmodal-recur-count" class="form-input"
+                       min="2" max="52" value="4" />
+              </div>
+
+              <div class="rmodal__field hidden" id="rmodal-recur-date-field">
+                <label for="rmodal-recur-end">Fecha final</label>
+                <div style="display:flex;gap:var(--space-2);">
+                  <input type="date" id="rmodal-recur-end" class="form-input" style="flex:1;"
+                         min="${_intervals[0].date}" />
+                  <button type="button" class="btn btn-secondary btn-sm" id="rmodal-recur-semester-btn"
+                          title="Llenar con la fecha de fin del semestre actual">
+                    Usar fin de semestre
+                  </button>
+                </div>
               </div>
             </div>
           </div>` : ''}
@@ -599,6 +619,38 @@ const ReservationModal = (() => {
     const recurPanel = _overlay.querySelector('#rmodal-recur-panel');
     recurChk?.addEventListener('change', () => {
       recurPanel?.classList.toggle('hidden', !recurChk.checked);
+    });
+
+    // "Terminar" mode: count vs. date are mutually exclusive, so only one
+    // field is ever visible/active. See docs/changes/2026-09-22-secretary-feedback.md #6b.
+    const countField = _overlay.querySelector('#rmodal-recur-count-field');
+    const dateField   = _overlay.querySelector('#rmodal-recur-date-field');
+    _overlay.querySelectorAll('input[name="rmodal-recur-end-mode"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isDate = radio.value === 'date' && radio.checked;
+        if (!radio.checked) return;
+        countField?.classList.toggle('hidden', isDate);
+        dateField?.classList.toggle('hidden', !isDate);
+      });
+    });
+
+    _overlay.querySelector('#rmodal-recur-semester-btn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const dateInput = _overlay.querySelector('#rmodal-recur-end');
+      btn.disabled = true;
+      try {
+        const settings = await API.getSettings();
+        if (!settings.semester_end) {
+          Toast?.show('El fin de semestre no está configurado (Festivos / Cierres, en Administración).', 'warning');
+          return;
+        }
+        if (dateInput) dateInput.value = settings.semester_end;
+      } catch (err) {
+        console.error('Error loading semester settings:', err);
+        Toast?.show('No se pudo cargar la fecha de fin de semestre.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     _overlay.querySelector('#rmodal-save')?.addEventListener('click', _save);
@@ -848,10 +900,28 @@ const ReservationModal = (() => {
   const _saveRecurring = async (payload) => {
     const iv      = _intervals[0];
     const freq    = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
-    const rawCnt  = parseInt(_overlay.querySelector('#rmodal-recur-count')?.value ?? '4', 10);
-    const count   = Math.min(Math.max(isNaN(rawCnt) ? 4 : rawCnt, 2), 52);
-    const endDate = _overlay.querySelector('#rmodal-recur-end')?.value || null;
     const errEl   = _overlay.querySelector('#rmodal-error');
+
+    // "Terminar" is mutually exclusive: either a repetition count or an end
+    // date caps the series, never both at once — see the note where these
+    // radios are wired. See docs/changes/2026-09-22-secretary-feedback.md #6b.
+    const MAX_RECUR_INSTANCES = 52;
+    const endMode = _overlay.querySelector('input[name="rmodal-recur-end-mode"]:checked')?.value ?? 'count';
+
+    let count, endDate;
+    if (endMode === 'date') {
+      endDate = _overlay.querySelector('#rmodal-recur-end')?.value || null;
+      if (!endDate) {
+        errEl.textContent = 'Elige una fecha final, o usa "Usar fin de semestre".';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      count = MAX_RECUR_INSTANCES; // the date is the only real cap
+    } else {
+      const rawCnt = parseInt(_overlay.querySelector('#rmodal-recur-count')?.value ?? '4', 10);
+      count   = Math.min(Math.max(isNaN(rawCnt) ? 4 : rawCnt, 2), MAX_RECUR_INSTANCES);
+      endDate = null; // the count is the only real cap
+    }
 
     const { group, instances, skipped } = Recurring.generate({
       date: iv.date, startTime: iv.startTime, endTime: iv.endTime,

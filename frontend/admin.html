@@ -282,6 +282,28 @@
             </div>
 
           </div><!-- /.admin-layout -->
+
+          <!-- Panel: Semestre actual (usado por el atajo "Usar fin de
+               semestre" en reservaciones recurrentes). Solo Super Admin
+               puede editarlo; cualquier secretaria puede ver el rango.
+               See docs/changes/2026-09-22-secretary-feedback.md #6b. -->
+          <div class="admin-panel" style="margin-top:var(--space-5); max-width: 480px;">
+            <div class="admin-panel__header">
+              <svg class="admin-panel__icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+                <path d="M9 16l2 2 4-4" />
+              </svg>
+              <h2 class="admin-panel__title">Semestre actual</h2>
+            </div>
+            <div class="admin-panel__body" id="semester-settings-body">
+              <div class="notif-empty">Cargando…</div>
+            </div>
+          </div>
         </div>
 
         <!-- ══════════════════════════════════════════

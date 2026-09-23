@@ -221,6 +221,14 @@ const API = (() => {
   const rejectModificationRequest = (id, reason) =>
     _request('PATCH', `/modification-requests/${id}/reject`, { reason });
 
+  // Settings (small key/value store — currently the semester date range).
+  // See docs/changes/2026-09-22-secretary-feedback.md #6b.
+  const getSettings = () =>
+    _request('GET', '/settings');
+
+  const updateSettings = (data) =>
+    _request('PUT', '/settings', data);
+
   // Diagnostics
   const getSmtpConfig = () =>
     _request('GET', '/diagnostics/smtp');
@@ -266,5 +274,7 @@ const API = (() => {
     getSmtpConfig,
     testSmtp,
     getNotificationLog,
+    getSettings,
+    updateSettings,
   };
 })();

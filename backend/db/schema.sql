@@ -109,6 +109,15 @@ CREATE TABLE backups (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- App settings: small key/value store for global config (e.g. the current
+-- semester's date range). See migration 007.
+CREATE TABLE app_settings (
+  key         VARCHAR(100) PRIMARY KEY,
+  value       TEXT,
+  updated_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes for common queries
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_reset_token ON users(reset_token_hash) WHERE reset_token_hash IS NOT NULL;
