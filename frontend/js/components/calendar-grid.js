@@ -105,7 +105,11 @@ const CalendarGrid = (() => {
     const isClosed  = special?.type === 'closure';
     const isEvento  = special?.type === 'evento';
     const dayOfWeek = new Date(year, month, d).getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    // Only Sunday is closed by default now — some Saturdays the university
+    // is open. A secretary marks the Saturdays that are NOT worked as a
+    // closure via Festivos/Cierres, same as any other closed date.
+    // See docs/changes/2026-09-22-secretary-feedback.md #5.
+    const isWeekend = dayOfWeek === 0;
     const isToday   = dateStr === todayStr;
     const isClickable = editable && !isHoliday && !isClosed && !isWeekend;
 

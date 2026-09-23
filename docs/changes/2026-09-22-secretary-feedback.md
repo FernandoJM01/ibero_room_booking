@@ -40,8 +40,8 @@ we do not batch everything into one large deploy.
 | 3 | Export to PDF/CSV/Excel "disappears" in History | Bug | Yes — confirmed | Low | Phase 2 — done, pending deploy |
 | 4 | Clicking outside a modal closes it and loses work | UX | Yes — confirmed, 2 components | Low | Phase 2 — done, pending deploy |
 | 6a | Recurring reservations: error shown even though rows were created, calendar doesn't refresh | Bug | Yes — confirmed, dead function call | Low | Phase 2 — done, pending deploy |
-| 2 | Dashboard stops responding to clicks after creating one reservation | Bug | Hypothesis only, needs live reproduction | Medium | Phase 3 |
-| 5 | Allow booking on some Saturdays | Feature | Yes — current rule found, needs a product decision | Medium | Phase 3 |
+| 2 | Dashboard stops responding to clicks after creating one reservation | Bug | Yes — confirmed by live reproduction, precise cause found | Medium | Phase 3 — done, pending deploy |
+| 5 | Allow booking on some Saturdays | Feature | Yes — decision made (open by default) | Low | Phase 3 — done, pending deploy |
 | 6b | Recurrence UX: rename "Ocurrencias", add a "Semester" option | UX + feature | N/A — needs a design discussion | Medium | Phase 4 (discussion first) |
 | 7 | Remove the "Solicitudes de cambio" approval workflow; let any secretary edit/cancel, attributed in History | Workflow + authorization | Yes — **no schema change needed** | Medium | Phase 5 |
 
@@ -246,83 +246,88 @@ small.
 
 ---
 
-## Phase 3 — Medium-risk, needs live reproduction
+## Phase 3 — completed (2026-09-23)
 
-These two need to be reproduced with the app running before writing the fix,
-because the evidence is not as conclusive as Phase 2's.
+Both items reproduced live (browser automation against the local dev stack),
+fixed, and re-verified. Committed on `fix/phase-3-calendar-and-saturdays`. Not
+yet merged or deployed.
 
 ### #2. Dashboard stops responding to clicks after one reservation
 
-**Working hypothesis (not yet confirmed by running the app):** in
-[`calendar-week.js`](../../frontend/js/components/calendar-week.js:610-615),
-the selection listeners (`mousedown`, `mousemove` on the container, `mouseup`
-on `document`) are attached inside the function that runs on every
-`Calendar.renderWeek()` call, and nothing removes the *previous* set of
-listeners first. Creating a reservation triggers a re-render (to show the new
-block), which re-attaches a second copy of each listener onto the same
-long-lived container node. Two `mousedown` handlers firing on the same click
-can each toggle internal selection state, net effect being that the drag
-gesture that used to start a selection stops registering — which matches
-"nothing gets selected until I refresh the page" (a refresh discards the
-duplicated listeners along with everything else).
+**The original hypothesis above was directionally right (a listener problem)
+but wrong on the mechanism.** Live reproduction showed the trigger isn't
+"creating a reservation" specifically — repeating that in place, without ever
+navigating away, worked fine every time. The real trigger is **any SPA
+navigation away from the page and back** (e.g. Dashboard → Historial →
+Dashboard), which is a very ordinary thing for a secretary to do between
+bookings.
 
-**This needs confirmation before fixing**, not just a fix: reproduce it with
-DevTools open, count listeners on the container after 1 vs. 2 reservations
-(`getEventListeners(container)` in the console), and confirm the hypothesis
-before touching code. If confirmed, the fix is to store references to the
-bound handler functions and call `removeEventListener` for each before
-`render()` re-attaches them (or switch to binding these listeners once, at
-`init()`, on a container element that is never replaced — the more durable
-fix, but slightly bigger).
+**Confirmed root cause:** [`calendar-week.js`](../../frontend/js/components/calendar-week.js)
+had *three* separate "wire the listeners once" guards
+(`_selectionWired`, `_blockDragWired`, `_resizeWired`), each a plain boolean —
+literally commented "idempotente: evita registrar listeners duplicados al
+re-renderizar." That's the right goal, but the guard is global-forever, not
+per-container. The SPA router (`sidebar.js`) replaces `.page-content` on every
+navigation, so `#calendar-body` is a **new DOM element** each time the page is
+revisited. The first time the app ever renders the week view, the guard
+correctly wires the listeners once. Every render after that — including after
+any navigation away and back — sees the boolean already `true` and skips
+wiring the *new* container entirely. The old, wired container is detached and
+inert; the new, visible one has no listeners. A hard refresh "fixes" it only
+because it resets the boolean along with everything else.
 
-**Also check while reproducing:** whether this is the same underlying issue as
-#3/#6a's script-re-execution problem, or genuinely a separate listener-leak
-bug. They look different (this one is about listeners on a node that persists
-across renders, not about scripts never loading), but confirm rather than
-assume.
+Confirmed with `EventTarget.prototype.addEventListener` instrumentation:
+`mousedown` was registered on `#calendar-body` on the first render and *never
+again* on any subsequent one, matching the failure exactly. A dispatched
+native `mousedown`/`mousemove`/`mouseup` sequence on the live, visible cell
+produced no reaction and no error — ruling out a coordinate/automation
+artifact.
 
-**Verification:** create three reservations in a row via drag-select in week
-view, with no manual page refresh between them; each one must be selectable
-and creatable normally.
+This is the same class of bug as #3 (a stale assumption that a DOM node
+persists across SPA navigations), but a different concrete mechanism — #3 was
+about which region gets swapped; this is about listener-wiring guards outliving
+the element they were wired to.
+
+**Fix:** changed all three guards from a boolean to "which container is
+currently wired" (`=== container` identity check instead of a boolean), so a
+genuinely new container gets wired, while a redundant call on the *same*
+still-live container remains a no-op. This incidentally also fixes
+drag-to-reschedule and resize-by-drag, which had the identical bug — not
+reported by the secretary, but structurally guaranteed to be equally broken
+after any navigation.
+
+**Verified live:** created a reservation, navigated to Historial and back, and
+confirmed drag-select worked (previously failed here). Repeated a second full
+navigation cycle (Dashboard → Estadísticas → Dashboard) and confirmed the
+listener re-attaches to the current container both times, with a successful
+drag-select each time.
 
 ### #5. Allow booking some Saturdays
 
-**Current rule, confirmed:** both
-[`calendar-grid.js:108`](../../frontend/js/components/calendar-grid.js:108)
-and
-[`calendar-week.js:242`](../../frontend/js/components/calendar-week.js:242)
-treat Saturday and Sunday identically as always-blocked
-(`dayOfWeek === 0 || dayOfWeek === 6`). This is **frontend-only** — no
-backend route rejects a Saturday date, so relaxing the frontend rule is
-suf­ficient; nothing in the API needs to change for this to work.
+**Decision:** open by default, close specific Saturdays via the existing
+"Festivos / Cierres" closure mechanism — no schema change. (The alternative,
+closed-by-default with a new `calendar_events` type for exceptions, was
+available but not chosen.)
 
-**Decision needed:** the request is "some Saturdays," not "all Saturdays," so
-a blanket toggle isn't quite right. Two reasonable designs:
+**Confirmed, frontend-only, no backend change needed** (verified earlier: no
+route rejects a Saturday date). Changed the weekend check from
+`dayOfWeek === 0 || dayOfWeek === 6` to `dayOfWeek === 0` (Sunday only) in
+every place it appeared:
+[`calendar-grid.js`](../../frontend/js/components/calendar-grid.js) (month
+view), [`calendar-week.js`](../../frontend/js/components/calendar-week.js)
+(week view, both the click-blocking and the closure-skip during recurring
+generation), [`recurring.js`](../../frontend/js/modules/recurring.js) (skip
+logic when generating recurring instances), and
+[`mini-calendar.js`](../../frontend/js/components/mini-calendar.js) (sidebar
+widget's grey-out styling only, for visual consistency). A closure entry on a
+specific Saturday still disables just that date, through the same mechanism
+already used for any other closed day — verified by inspecting how
+`holidaySet`/`_disabledKeys` are built (they don't care which weekday a
+closure falls on).
 
-- **Option A (recommended, smaller):** keep Saturdays closed by default, and
-  let a secretary open a *specific* Saturday the same way holidays/closures
-  are already managed today — reuse the existing `calendar_events` mechanism
-  with one more type (e.g. `special_opening`) that, when present for a date,
-  makes that Saturday bookable. This mirrors how the `evento` type already
-  works for the opposite case (tagging a day without blocking it). Small
-  schema touch: extend the `calendar_events.type` check constraint via a new
-  migration file, plus the small frontend/backend logic to treat that type as
-  "opens this Saturday" instead of "closes this day."
-- **Option B (simpler, less flexible):** just remove Saturday from the
-  hardcoded block entirely, leaving only Sunday closed, and rely on the
-  existing "cierre institucional" (closure) mechanism to close specific
-  Saturdays the university doesn't work, instead of opening specific ones.
-  Zero schema change, one-line-per-file fix, but changes the *default* for
-  every Saturday, which may not be what's wanted.
-
-Confirm which default the secretary wants (closed-by-default-with-exceptions,
-or open-by-default-with-exceptions) before coding — this is a five-minute
-question, not a design meeting.
-
-**Verification:** whichever option, confirm a regular Saturday and Sunday
-behave as expected, an explicitly-opened (or explicitly-closed) Saturday
-behaves as expected, and the admin UI for managing holidays/closures still
-works for weekdays.
+**Verified live:** Saturday is now selectable via drag in week view and
+clickable in month view (renders as a real `button`, not a disabled
+`gridcell`); Sunday still correctly blocked in both views.
 
 ---
 

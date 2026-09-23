@@ -28,13 +28,15 @@ const CalendarWeek = (() => {
   let _reservationMap     = new Map(); // id -> reservation (para drag-to-reschedule)
   let _onBlockDropCb      = null;
   let _blockDrag          = null;      // {id, reservation, origEl, startX, startY, active, ghostEl, dropDate, dropHour, dropSlotEl}
-  let _blockDragWired     = false;
+  // Holds the container element these listeners are currently bound to, not
+  // just a boolean — see the note above _wireSelection for why.
+  let _blockDragWiredOn   = null;
   let _blockDragWasActive = false;
 
   /* ── ESTADO INTERNO DE REDIMENSIONADO ── */
   let _onBlockResizeCb = null;
   let _resizeDrag      = null;   // {id, reservation, origEl, startY, origEndMin, active, newEndMin}
-  let _resizeWired     = false;
+  let _resizeWiredOn   = null;   // container these listeners are bound to
 
   /* ── ESTADO INTERNO DE AUTO-SCROLL ── */
   let _autoScrollRaf   = null;
@@ -183,7 +185,12 @@ const CalendarWeek = (() => {
         iso:       Utils.dateToISO(d),
         day:       d.getDate(),
         abbr,
-        isWeekend: i >= 5,
+        // Only Sunday (i=6, week starts Monday at i=0) is closed by
+        // default — some Saturdays the university is open. A secretary
+        // marks the Saturdays that are NOT worked as a closure via
+        // Festivos/Cierres, same as any other closed date.
+        // See docs/changes/2026-09-22-secretary-feedback.md #5.
+        isWeekend: i === 6,
       };
     });
   };
@@ -371,17 +378,23 @@ const CalendarWeek = (() => {
   /* ── ARRASTRE DE BLOQUES DE RESERVACIÓN (drag-to-reschedule) ── */
 
   const _wireBlockDrag = (container) => {
-    if (_blockDragWired) return;
+    // Guard by *which* container is wired, not just whether wiring ever
+    // happened: the SPA router (sidebar.js) replaces .page-content on every
+    // navigation, so #calendar-body is a brand-new element each time a page
+    // is revisited. A plain "already wired" boolean would permanently skip
+    // wiring the new element after the first navigation away and back,
+    // leaving drag-to-reschedule dead for the rest of the browser session.
+    if (_blockDragWiredOn === container) return;
     container.addEventListener('pointerdown', _onBlockPointerDown);
-    _blockDragWired = true;
+    _blockDragWiredOn = container;
   };
 
   /* ── REDIMENSIONADO DE BLOQUES (arrastrar borde inferior) ── */
 
   const _wireBlockResize = (container) => {
-    if (_resizeWired) return;
+    if (_resizeWiredOn === container) return; // see _wireBlockDrag
     container.addEventListener('pointerdown', _onResizePointerDown);
-    _resizeWired = true;
+    _resizeWiredOn = container;
   };
 
   const _onResizePointerDown = (e) => {
@@ -602,18 +615,26 @@ const CalendarWeek = (() => {
   };
 
   /* ── SELECCIÓN MULTI-HORA ──
-     Idempotente: evita registrar listeners duplicados al re-renderizar.
+     Idempotente por contenedor: evita registrar listeners duplicados si
+     render() se llama varias veces sobre el MISMO elemento contenedor, pero
+     re-conecta si el contenedor es uno nuevo. El router SPA (sidebar.js)
+     reemplaza .page-content en cada navegación, así que #calendar-body es
+     un elemento distinto cada vez que se vuelve a esta página; un simple
+     booleano "ya conectado" deja de conectar el elemento nuevo para siempre
+     después de la primera navegación, dejando la selección por arrastre
+     muerta el resto de la sesión del navegador. Ver
+     docs/changes/2026-09-22-secretary-feedback.md #2.
    */
-  let _selectionWired = false;
+  let _selectionWiredOn = null; // el elemento contenedor actualmente conectado
   const _wireSelection = (container) => {
-    if (_selectionWired) return;
+    if (_selectionWiredOn === container) return;
     container.addEventListener('mousedown', _onMouseDown);
     container.addEventListener('mousemove', _onMouseMove);
     document.addEventListener('mouseup',    _onMouseUp);
     container.addEventListener('keydown',   _onKeyDown);
     container.addEventListener('dblclick',  _onDoubleClick);
     container.addEventListener('wheel',     _onWheel, { passive: false });
-    _selectionWired = true;
+    _selectionWiredOn = container;
   };
 
   const _onWheel = (e) => {

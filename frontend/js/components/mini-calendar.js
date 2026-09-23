@@ -98,7 +98,10 @@ const MiniCalendar = (() => {
       const isToday    = iso === today;
       const isSelected = iso === _highlight;
       const isHoliday  = holidaySet.has(iso);
-      const isWeekend  = dow >= 5;
+      // Only Sunday (dow=6) is greyed out by default — Saturday is now a
+      // normal day, closed only via an explicit closure like any other.
+      // See docs/changes/2026-09-22-secretary-feedback.md #5.
+      const isWeekend  = dow === 6;
 
       const cls = [
         'mini-cal__day',

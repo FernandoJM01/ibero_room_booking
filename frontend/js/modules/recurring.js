@@ -57,8 +57,12 @@ const Recurring = (() => {
 
       if (endDate && dateStr > endDate) break;
 
+      // Only Sunday is skipped unconditionally — some Saturdays the
+      // university is open. A closed Saturday is still skipped below via
+      // holidaySet, same as any other closure.
+      // See docs/changes/2026-09-22-secretary-feedback.md #5.
       const dow = current.getDay();
-      if (dow === 0 || dow === 6) {
+      if (dow === 0) {
         skipped.push({ date: dateStr, reason: 'weekend' });
         _advance(current, frequency);
         continue;
