@@ -36,10 +36,10 @@ we do not batch everything into one large deploy.
 | # | Item (as reported) | Type | Root cause found? | Risk | Phase |
 |---|---|---|---|---|---|
 | 0 | Any secretary can create a super-admin account | Security | Yes — confirmed in code review | High impact, low effort | **Phase 1 — done, pending deploy** |
-| 1 | "Área" label is confusing on the reservation form | UX copy | Yes — needs one product decision first | Low | Phase 2 |
-| 3 | Export to PDF/CSV/Excel "disappears" in History | Bug | Yes — confirmed | Low | Phase 2 |
-| 4 | Clicking outside a modal closes it and loses work | UX | Yes — confirmed, 2 components | Low | Phase 2 |
-| 6a | Recurring reservations: error shown even though rows were created, calendar doesn't refresh | Bug | Yes — confirmed, dead function call | Low | Phase 2 |
+| 1 | "Área" label is confusing on the reservation form | UX copy | Yes — needs one product decision first | Low | Phase 2 — done, pending deploy |
+| 3 | Export to PDF/CSV/Excel "disappears" in History | Bug | Yes — confirmed | Low | Phase 2 — done, pending deploy |
+| 4 | Clicking outside a modal closes it and loses work | UX | Yes — confirmed, 2 components | Low | Phase 2 — done, pending deploy |
+| 6a | Recurring reservations: error shown even though rows were created, calendar doesn't refresh | Bug | Yes — confirmed, dead function call | Low | Phase 2 — done, pending deploy |
 | 2 | Dashboard stops responding to clicks after creating one reservation | Bug | Hypothesis only, needs live reproduction | Medium | Phase 3 |
 | 5 | Allow booking on some Saturdays | Feature | Yes — current rule found, needs a product decision | Medium | Phase 3 |
 | 6b | Recurrence UX: rename "Ocurrencias", add a "Semester" option | UX + feature | N/A — needs a design discussion | Medium | Phase 4 (discussion first) |
@@ -201,16 +201,48 @@ al crear la serie" and returns *without* calling `_onSaved()` or `close()` —
 so the modal never closes and the calendar never re-renders, even though the
 whole series was created correctly. This exactly matches the report.
 
-**Fix:** remove the dead `Notifications.onReservationCreated(...)` call (or
-replace it with whatever the intended notification actually is, if one was
-meant to exist — check with whoever wrote that line; there's no other
-reference to it anywhere in the codebase, so it looks like leftover code from
-a feature that was renamed or removed).
+**Fix, implemented:** removed the dead `Notifications.onReservationCreated(...)`
+call. There was no other reference to it anywhere in the codebase, confirming
+it was leftover from a renamed/removed feature rather than something to
+reimplement.
 
-**Verification:** create a recurring reservation (any frequency, 2+
-occurrences) → confirm no error appears, a success toast shows the count, the
-modal closes, and the calendar reflects all new occurrences without a manual
-refresh.
+**Verified live** (browser automation against the local dev stack, 2026-09-21):
+created a 4-occurrence recurring reservation end to end. No error shown, a
+success toast appeared, the modal closed, and all 4 rows were confirmed
+persisted via the API — all without a manual page refresh. Test rows deleted
+afterward.
+
+---
+
+## Phase 2 — completed (2026-09-22)
+
+Implemented, verified live via browser automation against the local dev
+stack, and committed on `fix/phase-2-ux-and-bugs`. Not yet merged or deployed.
+
+**Correction to the #3 root-cause writeup above.** Live testing showed the
+actual cause was simpler than "scripts inserted via `innerHTML` never
+execute": the router's existing script-injection logic was already correct
+and did load `export.js` and its dependencies. The real bug was structural:
+`#export-btn-group` (and the role badge, and Dashboard's tutorial button) live
+inside `<header class="topbar">`, **outside** `<main class="page-content">`.
+The router only ever swapped `.page-content` and `.topbar__title` — a page's
+own topbar controls were only ever correct if you happened to reach it via a
+hard reload. Fixed by also swapping `.topbar__actions` on every navigation.
+
+**Important discovery, affects every future frontend deploy, not just this
+one.** Both production and this local image serve `.js`/`.css` with
+`Cache-Control: public, max-age=31536000, immutable` (see
+[DEPLOYMENT.md observation 12](../DEPLOYMENT.md#7-observations--recommendations)),
+keyed only by the `?v=6` query string every `<script>`/`<link>` tag carries.
+A browser that already loaded a page keeps that exact JS forever — not just
+until next visit, until the cache entry itself expires (a year) — regardless
+of reloads, hard reloads, or new deploys, unless the query string changes.
+**This was bumped to `?v=7` across every `frontend/*.html` file as part of
+this fix**, and needs bumping again on every future frontend change, or users
+who already loaded the app simply never receive the fix. Worth automating
+(e.g. a build-time hash) rather than relying on someone remembering to bump a
+number by hand — flagging as a follow-up, not doing it now to keep this phase
+small.
 
 ---
 
