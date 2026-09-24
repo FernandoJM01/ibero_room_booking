@@ -750,9 +750,9 @@ const init = async () => {
 
   /* ── SEMESTRE ACTUAL ──
      Small key/value settings used by the recurring-reservation form's
-     "Usar fin de semestre" shortcut. Any secretaria can see the current
-     range; only Super Admin can change it (enforced server-side too).
-     See docs/changes/2026-09-22-secretary-feedback.md #6b. */
+     "Al final del semestre actual" option. Any secretaria can see the
+     current range; only Super Admin can change it (enforced server-side
+     too). See docs/changes/2026-09-22-secretary-feedback.md #6b. */
   async function _initSemesterSettings() {
     const body = document.getElementById('semester-settings-body');
     if (!body) return;
@@ -786,10 +786,10 @@ const init = async () => {
 
     body.innerHTML = `
       <p style="color:var(--color-secondary-light);font-size:var(--font-size-sm);margin-bottom:var(--space-3);">
-        Se usa para el atajo "Usar fin de semestre" al crear reservaciones
-        recurrentes. Actualízalo una vez por periodo.
+        Se usa para la opción "Al final del semestre actual" al crear
+        reservaciones recurrentes. Actualízalo una vez por periodo.
       </p>
-      <form id="semester-settings-form">
+      <form class="admin-form" id="semester-settings-form">
         <div class="form-group">
           <label for="semester-start">Inicio del semestre</label>
           <input type="date" id="semester-start" value="${Utils.escapeHTML(start)}" required />
@@ -798,7 +798,7 @@ const init = async () => {
           <label for="semester-end">Fin del semestre</label>
           <input type="date" id="semester-end" value="${Utils.escapeHTML(end)}" required />
         </div>
-        <button type="submit" class="btn btn-primary" id="btn-save-semester">Guardar</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-semester" style="align-self:flex-start;">Guardar</button>
       </form>`;
 
     document.getElementById('semester-settings-form')?.addEventListener('submit', async (e) => {
