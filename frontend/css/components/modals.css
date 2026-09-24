@@ -384,6 +384,50 @@
 }
 .rmodal__error.hidden { display: none; }
 
+/* ── Recurrencia: info de semestre y vista previa ──
+   See docs/changes/2026-09-22-secretary-feedback.md #6b. */
+.rmodal__recur-semester-info {
+  background: var(--color-info-bg);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+.rmodal__recur-semester-info--warn {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+}
+
+.rmodal__recur-preview {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+.rmodal__recur-preview.hidden { display: none; }
+.rmodal__recur-preview-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+}
+.rmodal__recur-preview-dates {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+  line-height: 1.5;
+}
+.rmodal__recur-preview-skipped {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+}
+.rmodal__recur-preview-empty {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary-light);
+}
+
 /* ── Responsive ── */
 @media (max-width: 540px) {
   .modal-dialog { max-width: 100%; }

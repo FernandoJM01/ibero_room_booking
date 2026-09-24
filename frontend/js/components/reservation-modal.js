@@ -13,6 +13,7 @@ const ReservationModal = (() => {
   let _prefill         = null;  // { responsible_id, area, observations }
   let _editReservation = null;  // full reservation object when editing
   let _readOnly        = false;
+  let _semesterSettings = {};   // { semester_start, semester_end } — prefetched on open()
 
   /**
    * @param {object}   opts
@@ -42,18 +43,24 @@ const ReservationModal = (() => {
     }
 
     try {
-      const [users, external, ai] = await Promise.all([
+      const [users, external, ai, settings] = await Promise.all([
         API.getUsers().catch(() => []),
         API.getExternalContacts().catch(() => []),
         API.aiStatus().catch(() => ({ enabled: false })),
+        API.getSettings().catch(() => ({})),
       ]);
       _users     = Array.isArray(users) ? users : [];
       Store.setState({ externalContacts: Array.isArray(external) ? external : [] });
       _aiEnabled = false; // Boolean(ai?.enabled); DESACTIVADO TEMPORALMENTE
+      // Prefetched so selecting "Al final del semestre actual" in the
+      // recurrence form resolves instantly, no click/loading step needed.
+      // See docs/changes/2026-09-22-secretary-feedback.md #6b.
+      _semesterSettings = settings && typeof settings === 'object' ? settings : {};
     } catch {
       _users     = [];
       Store.setState({ externalContacts: [] });
       _aiEnabled = false;
+      _semesterSettings = {};
     }
 
     _render();
@@ -384,10 +391,11 @@ const ReservationModal = (() => {
                 </select>
               </div>
 
-              <!-- Termina después de N repeticiones, o en una fecha —
-                   mutuamente exclusivo, nunca ambos a la vez. Antes eran dos
-                   campos independientes que competían silenciosamente (el
-                   que se cumplía primero cortaba la serie sin avisar).
+              <!-- Termina después de N repeticiones, en una fecha, o al fin
+                   del semestre — mutuamente exclusivo, nunca dos a la vez.
+                   Antes "Ocurrencias" y "Hasta" eran dos campos
+                   independientes que competían silenciosamente (el que se
+                   cumplía primero cortaba la serie sin avisar).
                    See docs/changes/2026-09-22-secretary-feedback.md #6b. -->
               <div class="rmodal__field">
                 <label>Terminar</label>
@@ -395,6 +403,7 @@ const ReservationModal = (() => {
                      style="flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
                   <label><input type="radio" name="rmodal-recur-end-mode" value="count" checked /> Después de un número de repeticiones</label>
                   <label><input type="radio" name="rmodal-recur-end-mode" value="date" /> En una fecha específica</label>
+                  <label><input type="radio" name="rmodal-recur-end-mode" value="semester" /> Al final del semestre actual</label>
                 </div>
               </div>
 
@@ -406,15 +415,29 @@ const ReservationModal = (() => {
 
               <div class="rmodal__field hidden" id="rmodal-recur-date-field">
                 <label for="rmodal-recur-end">Fecha final</label>
-                <div style="display:flex;gap:var(--space-2);">
-                  <input type="date" id="rmodal-recur-end" class="form-input" style="flex:1;"
-                         min="${_intervals[0].date}" />
-                  <button type="button" class="btn btn-secondary btn-sm" id="rmodal-recur-semester-btn"
-                          title="Llenar con la fecha de fin del semestre actual">
-                    Usar fin de semestre
-                  </button>
-                </div>
+                <input type="date" id="rmodal-recur-end" class="form-input"
+                       min="${_intervals[0].date}" />
               </div>
+
+              <div class="rmodal__field hidden" id="rmodal-recur-semester-field">
+                <label>Fecha final</label>
+                ${_semesterSettings.semester_end
+                  ? `<p class="rmodal__recur-semester-info">
+                       Termina el <strong>${Utils.escapeHTML(Utils.formatDateShort(_semesterSettings.semester_end))}</strong>
+                       (fin del semestre configurado en Administración).
+                     </p>`
+                  : `<p class="rmodal__recur-semester-info rmodal__recur-semester-info--warn">
+                       El fin de semestre no está configurado. Pide a un Super Administrador
+                       que lo configure en Festivos / Cierres, o elige otra opción para terminar.
+                     </p>`}
+              </div>
+
+              <!-- Vista previa de las fechas que se van a crear, calculada
+                   localmente (sin llamadas al servidor) cada vez que cambia
+                   algo en este panel, para que la secretaria vea el
+                   resultado ANTES de guardar, no después.
+                   See docs/changes/2026-09-22-secretary-feedback.md #6b. -->
+              <div class="rmodal__field rmodal__recur-preview hidden" id="rmodal-recur-preview"></div>
             </div>
           </div>` : ''}
 
@@ -619,41 +642,109 @@ const ReservationModal = (() => {
     const recurPanel = _overlay.querySelector('#rmodal-recur-panel');
     recurChk?.addEventListener('change', () => {
       recurPanel?.classList.toggle('hidden', !recurChk.checked);
+      _updateRecurPreview();
     });
 
-    // "Terminar" mode: count vs. date are mutually exclusive, so only one
-    // field is ever visible/active. See docs/changes/2026-09-22-secretary-feedback.md #6b.
-    const countField = _overlay.querySelector('#rmodal-recur-count-field');
-    const dateField   = _overlay.querySelector('#rmodal-recur-date-field');
+    // "Terminar" mode: count, date and semester are mutually exclusive, so
+    // only one field is ever visible/active.
+    // See docs/changes/2026-09-22-secretary-feedback.md #6b.
+    const countField    = _overlay.querySelector('#rmodal-recur-count-field');
+    const dateField     = _overlay.querySelector('#rmodal-recur-date-field');
+    const semesterField = _overlay.querySelector('#rmodal-recur-semester-field');
     _overlay.querySelectorAll('input[name="rmodal-recur-end-mode"]').forEach(radio => {
       radio.addEventListener('change', () => {
-        const isDate = radio.value === 'date' && radio.checked;
         if (!radio.checked) return;
-        countField?.classList.toggle('hidden', isDate);
-        dateField?.classList.toggle('hidden', !isDate);
+        countField?.classList.toggle('hidden', radio.value !== 'count');
+        dateField?.classList.toggle('hidden', radio.value !== 'date');
+        semesterField?.classList.toggle('hidden', radio.value !== 'semester');
+        _updateRecurPreview();
       });
     });
 
-    _overlay.querySelector('#rmodal-recur-semester-btn')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
-      const dateInput = _overlay.querySelector('#rmodal-recur-end');
-      btn.disabled = true;
-      try {
-        const settings = await API.getSettings();
-        if (!settings.semester_end) {
-          Toast?.show('El fin de semestre no está configurado (Festivos / Cierres, en Administración).', 'warning');
-          return;
-        }
-        if (dateInput) dateInput.value = settings.semester_end;
-      } catch (err) {
-        console.error('Error loading semester settings:', err);
-        Toast?.show('No se pudo cargar la fecha de fin de semestre.', 'error');
-      } finally {
-        btn.disabled = false;
-      }
+    // Live preview: recomputed locally (Recurring.generate() makes no
+    // network calls) on every input that affects which dates would be
+    // created, so the secretary sees the result before saving, not after.
+    // See docs/changes/2026-09-22-secretary-feedback.md #6b.
+    ['#rmodal-recur-freq', '#rmodal-recur-count', '#rmodal-recur-end', '#rmodal-area'].forEach(sel => {
+      _overlay.querySelector(sel)?.addEventListener('input', _updateRecurPreview);
+      _overlay.querySelector(sel)?.addEventListener('change', _updateRecurPreview);
     });
 
     _overlay.querySelector('#rmodal-save')?.addEventListener('click', _save);
+  };
+
+  /* ── VISTA PREVIA DE LA SERIE RECURRENTE ── */
+  const _updateRecurPreview = () => {
+    const previewEl = _overlay?.querySelector('#rmodal-recur-preview');
+    const recurChk  = _overlay?.querySelector('#rmodal-recur-chk');
+    if (!previewEl) return;
+
+    const _clear = () => { previewEl.classList.add('hidden'); previewEl.innerHTML = ''; };
+    if (!recurChk?.checked) return _clear();
+
+    const MAX_RECUR_INSTANCES = 52;
+    const endMode = _overlay.querySelector('input[name="rmodal-recur-end-mode"]:checked')?.value ?? 'count';
+
+    let count, endDate;
+    if (endMode === 'date') {
+      endDate = _overlay.querySelector('#rmodal-recur-end')?.value || null;
+      if (!endDate) return _clear();
+      count = MAX_RECUR_INSTANCES;
+    } else if (endMode === 'semester') {
+      endDate = _semesterSettings.semester_end || null;
+      if (!endDate) return _clear();
+      count = MAX_RECUR_INSTANCES;
+    } else {
+      const rawCnt = parseInt(_overlay.querySelector('#rmodal-recur-count')?.value ?? '4', 10);
+      count   = Math.min(Math.max(isNaN(rawCnt) ? 4 : rawCnt, 2), MAX_RECUR_INSTANCES);
+      endDate = null;
+    }
+
+    const iv   = _intervals[0];
+    const freq = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
+    const area = _overlay.querySelector('#rmodal-area')?.value || '';
+
+    let result;
+    try {
+      result = Recurring.generate({
+        date: iv.date, startTime: iv.startTime, endTime: iv.endTime,
+        responsible_id: null, area, observations: '',
+        frequency: freq, count, endDate,
+      });
+    } catch (err) {
+      console.error('Recurring preview error:', err);
+      return _clear();
+    }
+
+    const { instances, skipped } = result;
+    previewEl.classList.remove('hidden');
+
+    if (!instances.length) {
+      previewEl.innerHTML = `<p class="rmodal__recur-preview-empty">
+        Con estas opciones no se crearía ninguna reservación: todas las fechas
+        caen en un día no disponible, festivo o con traslape.
+      </p>`;
+      return;
+    }
+
+    const reasonLabel = { weekend: 'domingo', holiday: 'festivo/cierre', overlap: 'traslape' };
+    const skippedCounts = {};
+    skipped.forEach(s => { skippedCounts[s.reason] = (skippedCounts[s.reason] || 0) + 1; });
+    const skippedText = Object.entries(skippedCounts)
+      .map(([reason, n]) => `${n} por ${reasonLabel[reason] || reason}`)
+      .join(', ');
+
+    const dateList = instances.map(i => Utils.formatDateShort(i.date)).join(', ');
+
+    previewEl.innerHTML = `
+      <p class="rmodal__recur-preview-title">
+        Se crearán <strong>${instances.length}</strong> reservación${instances.length !== 1 ? 'es' : ''}:
+      </p>
+      <p class="rmodal__recur-preview-dates">${Utils.escapeHTML(dateList)}</p>
+      ${skipped.length ? `<p class="rmodal__recur-preview-skipped">
+        ${skipped.length} fecha${skipped.length !== 1 ? 's' : ''} omitida${skipped.length !== 1 ? 's' : ''} (${Utils.escapeHTML(skippedText)})
+      </p>` : ''}
+    `;
   };
 
   /* ── ASISTENTE IA ── */
@@ -902,9 +993,10 @@ const ReservationModal = (() => {
     const freq    = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
     const errEl   = _overlay.querySelector('#rmodal-error');
 
-    // "Terminar" is mutually exclusive: either a repetition count or an end
-    // date caps the series, never both at once — see the note where these
-    // radios are wired. See docs/changes/2026-09-22-secretary-feedback.md #6b.
+    // "Terminar" is mutually exclusive: a repetition count, an end date, or
+    // the semester end caps the series — never more than one at once. See
+    // the note where these radios are wired.
+    // See docs/changes/2026-09-22-secretary-feedback.md #6b.
     const MAX_RECUR_INSTANCES = 52;
     const endMode = _overlay.querySelector('input[name="rmodal-recur-end-mode"]:checked')?.value ?? 'count';
 
@@ -912,11 +1004,19 @@ const ReservationModal = (() => {
     if (endMode === 'date') {
       endDate = _overlay.querySelector('#rmodal-recur-end')?.value || null;
       if (!endDate) {
-        errEl.textContent = 'Elige una fecha final, o usa "Usar fin de semestre".';
+        errEl.textContent = 'Elige una fecha final.';
         errEl.classList.remove('hidden');
         return;
       }
       count = MAX_RECUR_INSTANCES; // the date is the only real cap
+    } else if (endMode === 'semester') {
+      endDate = _semesterSettings.semester_end || null;
+      if (!endDate) {
+        errEl.textContent = 'El fin de semestre no está configurado. Pide a un Super Administrador que lo configure en Festivos / Cierres.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      count = MAX_RECUR_INSTANCES; // the semester end is the only real cap
     } else {
       const rawCnt = parseInt(_overlay.querySelector('#rmodal-recur-count')?.value ?? '4', 10);
       count   = Math.min(Math.max(isNaN(rawCnt) ? 4 : rawCnt, 2), MAX_RECUR_INSTANCES);

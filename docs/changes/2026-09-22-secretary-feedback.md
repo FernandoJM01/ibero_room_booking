@@ -398,6 +398,40 @@ impossible, not just less likely.
 - All test data (reservations, the temporary semester setting) removed
   afterward.
 
+### #6b follow-up: explicit "Semestre" option + save-time preview
+
+After a design discussion, refined the above on the same branch, still before
+merge:
+
+1. **"Al final del semestre actual" is now its own radio**, a third
+   mutually-exclusive "Terminar" option, not a button tucked inside "date"
+   mode. Selecting it shows a **read-only** resolved date ("Termina el
+   19/12/2026 (fin del semestre configurado en Administración)"), or a clear
+   warning if no semester is configured yet, blocking save in that case. The
+   settings are now prefetched when the modal opens (alongside the existing
+   users/external-contacts/AI-status fetch), so selecting the option resolves
+   instantly — the old "Usar fin de semestre" button and its on-click fetch
+   are gone.
+2. **Live save-time preview.** `Recurring.generate()` makes no network calls
+   (it only reads already-loaded Store data), so it's cheap to call on every
+   relevant keystroke. Added `_updateRecurPreview()`, wired to the recurring
+   checkbox, all three "Terminar" radios, frequency, count, and the manual
+   date field: it shows "Se crearán N reservaciones: <dates>" and, if any
+   were skipped, "X fecha(s) omitida(s) (por domingo/festivo/traslape)" —
+   all *before* the secretary clicks Guardar, not after. This is the actual
+   fix for "why did I only get some of the reservations I expected" as a
+   class of problem, not just for this one bug.
+
+**Verified live:** opening the recurring panel immediately shows a preview
+(no field touched yet, default count=4); selecting "Al final del semestre
+actual" resolves the date with no loading step and updates the preview to the
+correct count (30 daily instances for the configured range, correctly
+excluding a Sunday); saving in that mode produced exactly the previewed 30
+reservations, `2026-11-16` through `2026-12-19`, confirming the preview and
+the actual save agree. The "not configured" warning renders and correctly
+suppresses the preview. Switching directly between all three modes updates
+the preview correctly each time. All test data removed afterward.
+
 ---
 
 ## Phase 5 — completed (2026-09-23)
