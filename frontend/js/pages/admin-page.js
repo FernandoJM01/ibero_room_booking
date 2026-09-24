@@ -133,6 +133,14 @@ const init = async () => {
     const secUsers = document.getElementById('section-users');
     if (tabUsers) tabUsers.style.display = 'none';
     if (secUsers) secUsers.style.display = 'none';
+
+    // Respaldos requires super admin on the backend (see backups.js);
+    // hide it here too so a plain secretaria never sees a button that
+    // will just fail with a 403.
+    const tabBackup = document.getElementById('tab-backup');
+    const secBackup = document.getElementById('section-backup');
+    if (tabBackup) tabBackup.style.display = 'none';
+    if (secBackup) secBackup.style.display = 'none';
   }
 
   // "Solicitudes" removed from the tab list: any secretaria can now
@@ -146,7 +154,9 @@ const init = async () => {
     ] : []),
     { id: 'tab-calendar', section: 'section-calendar', hash: '#calendario',     label: 'Calendario',     breadcrumb: 'Calendario Maestro' },
     { id: 'tab-notif',    section: 'section-notif',    hash: '#notificaciones', label: 'Notificaciones', breadcrumb: 'Notificaciones'     },
-    { id: 'tab-backup',   section: 'section-backup',   hash: '#respaldos',      label: 'Respaldos',      breadcrumb: 'Respaldos'          },
+    ...(isSuperAdmin ? [
+      { id: 'tab-backup', section: 'section-backup', hash: '#respaldos', label: 'Respaldos', breadcrumb: 'Respaldos' },
+    ] : []),
   ];
 
   // Section state — declared here (before _activateTab is called) to avoid TDZ errors.

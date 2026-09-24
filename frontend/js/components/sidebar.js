@@ -36,7 +36,9 @@ const Sidebar = (() => {
         // { id: 'admin-requests', href: 'admin.html#solicitudes', label: 'Solicitudes', icon: 'inbox' },
         { id: 'admin-config', href: 'admin.html#calendario', label: 'Festivos / Cierres', icon: 'settings' },
         { id: 'admin-notif', href: 'admin.html#notificaciones', label: 'Notificaciones', icon: 'bell' },
-        { id: 'admin-backup', href: 'admin.html#respaldos', label: 'Respaldos', icon: 'download' },
+        ...(isAdmin ? [
+          { id: 'admin-backup', href: 'admin.html#respaldos', label: 'Respaldos', icon: 'download' },
+        ] : []),
       ]
     }
   ];
