@@ -28,7 +28,12 @@ const Sidebar = (() => {
         ...(isAdmin ? [
           { id: 'admin-users', href: 'admin.html#usuarios', label: 'Usuarios', icon: 'users' },
         ] : []),
-        { id: 'admin-requests', href: 'admin.html#solicitudes', label: 'Solicitudes', icon: 'inbox' },
+        // "Solicitudes" removed from the nav: any secretaria can now
+        // edit/cancel any reservation directly, so there's nothing to
+        // approve. The tab, its backend routes and table stay in place
+        // (unreached) for any legacy pending requests.
+        // See docs/changes/2026-09-22-secretary-feedback.md #7.
+        // { id: 'admin-requests', href: 'admin.html#solicitudes', label: 'Solicitudes', icon: 'inbox' },
         { id: 'admin-config', href: 'admin.html#calendario', label: 'Festivos / Cierres', icon: 'settings' },
         { id: 'admin-notif', href: 'admin.html#notificaciones', label: 'Notificaciones', icon: 'bell' },
         { id: 'admin-backup', href: 'admin.html#respaldos', label: 'Respaldos', icon: 'download' },

@@ -135,11 +135,15 @@ const init = async () => {
     if (secUsers) secUsers.style.display = 'none';
   }
 
+  // "Solicitudes" removed from the tab list: any secretaria can now
+  // edit/cancel any reservation directly, so there's nothing to approve.
+  // Its section markup, init function and backend routes stay in place
+  // (unreached) for any legacy pending requests.
+  // See docs/changes/2026-09-22-secretary-feedback.md #7.
   const TABS = [
     ...(isSuperAdmin ? [
       { id: 'tab-users',     section: 'section-users',     hash: '#usuarios',       label: 'Usuarios',    breadcrumb: 'Usuarios'          },
     ] : []),
-    { id: 'tab-requests',  section: 'section-requests',  hash: '#solicitudes',    label: 'Solicitudes', breadcrumb: 'Solicitudes de cambio' },
     { id: 'tab-calendar', section: 'section-calendar', hash: '#calendario',     label: 'Calendario',     breadcrumb: 'Calendario Maestro' },
     { id: 'tab-notif',    section: 'section-notif',    hash: '#notificaciones', label: 'Notificaciones', breadcrumb: 'Notificaciones'     },
     { id: 'tab-backup',   section: 'section-backup',   hash: '#respaldos',      label: 'Respaldos',      breadcrumb: 'Respaldos'          },
@@ -185,7 +189,6 @@ const init = async () => {
 
     // Lazy-init section content
     if (tab.id === 'tab-users')     _initUsersSection();
-    if (tab.id === 'tab-requests')  _initRequestsSection();
     if (tab.id === 'tab-calendar')  _initCalendarSection();
     if (tab.id === 'tab-notif') { _initSmtpDiagnostics(); _renderNotifLog(); }
     if (tab.id === 'tab-backup')    _initBackupSection();
@@ -397,8 +400,10 @@ const init = async () => {
               Contraseña ${isEdit ? '<span class="form-hint">(dejar vacío para no cambiar)</span>' : '<span class="required" aria-hidden="true">*</span>'}
             </label>
             <input type="password" id="um-password" class="form-input"
+                   value="${isEdit ? '' : 'Academico1@'}"
                    placeholder="${isEdit ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres'}"
                    autocomplete="new-password" />
+            ${!isEdit ? `<span class="form-hint">Contraseña temporal precargada — puedes dejarla o cambiarla. Pide a la persona que la cambie en su primer acceso.</span>` : ''}
             <span class="form-error-msg hidden" id="um-err-pwd" role="alert"></span>
           </div>
         </div>

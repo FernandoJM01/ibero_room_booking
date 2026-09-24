@@ -5,15 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Administración — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css?v=10" />
-  <link rel="stylesheet" href="css/reset.css?v=10" />
-  <link rel="stylesheet" href="css/base.css?v=10" />
-  <link rel="stylesheet" href="css/layout.css?v=10" />
-  <link rel="stylesheet" href="css/components/calendar.css?v=10" />
-  <link rel="stylesheet" href="css/components/forms.css?v=10" />
-  <link rel="stylesheet" href="css/components/modals.css?v=10" />
-  <link rel="stylesheet" href="css/pages/admin.css?v=10" />
-  <link rel="stylesheet" href="css/responsive.css?v=10" />
+  <link rel="stylesheet" href="css/variables.css?v=11" />
+  <link rel="stylesheet" href="css/reset.css?v=11" />
+  <link rel="stylesheet" href="css/base.css?v=11" />
+  <link rel="stylesheet" href="css/layout.css?v=11" />
+  <link rel="stylesheet" href="css/components/calendar.css?v=11" />
+  <link rel="stylesheet" href="css/components/forms.css?v=11" />
+  <link rel="stylesheet" href="css/components/modals.css?v=11" />
+  <link rel="stylesheet" href="css/pages/admin.css?v=11" />
+  <link rel="stylesheet" href="css/responsive.css?v=11" />
   <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
 
@@ -64,15 +64,11 @@
             Usuarios
           </button>
 
-          <button class="admin-tab" id="tab-requests" role="tab" aria-controls="section-requests" aria-selected="false">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-              <path
-                d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-            </svg>
-            Solicitudes
-          </button>
+          <!-- "Solicitudes" tab removed: any secretaria can now edit/cancel
+               any reservation directly, so there's nothing to approve.
+               #section-requests markup stays in place (unreached) for any
+               legacy pending requests.
+               See docs/changes/2026-09-22-secretary-feedback.md #7. -->
           <button class="admin-tab" id="tab-calendar" role="tab" aria-controls="section-calendar" aria-selected="false">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -436,21 +432,21 @@
   <div id="modal-container"></div>
 
   <!-- Scripts -->
-  <script src="js/core/utils.js?v=10"></script>
-  <script src="js/core/api.js?v=10"></script>
-  <script src="js/core/store.js?v=10"></script>
-  <script src="js/components/toast.js?v=10"></script>
-  <script src="js/components/sidebar.js?v=10"></script>
-  <script src="js/components/change-password-modal.js?v=10"></script>
-  <script src="js/components/calendar-grid.js?v=10"></script>
-  <script src="js/components/modal.js?v=10"></script>
-  <script src="js/modules/notifications.js?v=10"></script>
-  <script src="js/modules/auth.js?v=10"></script>
-  <script src="js/modules/reservations.js?v=10"></script>
-  <script src="js/modules/holidays.js?v=10"></script>
-  <script src="js/modules/users.js?v=10"></script>
-  <script src="js/modules/backup.js?v=10"></script>
-  <script src="js/pages/admin-page.js?v=10"></script>
+  <script src="js/core/utils.js?v=11"></script>
+  <script src="js/core/api.js?v=11"></script>
+  <script src="js/core/store.js?v=11"></script>
+  <script src="js/components/toast.js?v=11"></script>
+  <script src="js/components/sidebar.js?v=11"></script>
+  <script src="js/components/change-password-modal.js?v=11"></script>
+  <script src="js/components/calendar-grid.js?v=11"></script>
+  <script src="js/components/modal.js?v=11"></script>
+  <script src="js/modules/notifications.js?v=11"></script>
+  <script src="js/modules/auth.js?v=11"></script>
+  <script src="js/modules/reservations.js?v=11"></script>
+  <script src="js/modules/holidays.js?v=11"></script>
+  <script src="js/modules/users.js?v=11"></script>
+  <script src="js/modules/backup.js?v=11"></script>
+  <script src="js/pages/admin-page.js?v=11"></script>
 
 </body>
 
