@@ -409,10 +409,13 @@ const init = async () => {
             <label class="form-label" for="um-password">
               Contraseña ${isEdit ? '<span class="form-hint">(dejar vacío para no cambiar)</span>' : '<span class="required" aria-hidden="true">*</span>'}
             </label>
-            <input type="password" id="um-password" class="form-input"
-                   value="${isEdit ? '' : 'Academico1@'}"
-                   placeholder="${isEdit ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres'}"
-                   autocomplete="new-password" />
+            <div class="pw-wrapper">
+              <input type="password" id="um-password" class="form-input"
+                     value="${isEdit ? '' : 'Academico1@'}"
+                     placeholder="${isEdit ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres'}"
+                     autocomplete="new-password" />
+              <button type="button" class="pw-toggle-btn" id="um-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
+            </div>
             ${!isEdit ? `<span class="form-hint">Contraseña temporal precargada — puedes dejarla o cambiarla. Pide a la persona que la cambie en su primer acceso.</span>` : ''}
             <span class="form-error-msg hidden" id="um-err-pwd" role="alert"></span>
           </div>
@@ -431,6 +434,7 @@ const init = async () => {
     overlay.querySelector('#user-modal-close')?.addEventListener('click', close);
     overlay.querySelector('#user-modal-cancel')?.addEventListener('click', close);
     // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
+    Utils.wirePasswordToggle(overlay.querySelector('#um-password'), overlay.querySelector('#um-pwd-toggle'));
     document.addEventListener('keydown', function esc(e) {
       if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
     });

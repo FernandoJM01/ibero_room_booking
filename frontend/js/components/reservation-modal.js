@@ -305,7 +305,10 @@ const ReservationModal = (() => {
                       Contraseña <span class="rmodal__required">*</span>
                       <span class="rmodal__hint">(mín. 8 car.)</span>
                     </label>
-                    <input type="password" id="rmodal-nu-pwd" class="form-input" />
+                    <div class="pw-wrapper">
+                      <input type="password" id="rmodal-nu-pwd" class="form-input" />
+                      <button type="button" class="pw-toggle-btn" id="rmodal-nu-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
+                    </div>
                   </div>
                   <div class="rmodal__field">
                     <label for="rmodal-nu-role">Rol</label>
@@ -621,6 +624,7 @@ const ReservationModal = (() => {
       newUserPanel?.classList.add('hidden');
     });
     _overlay.querySelector('#rmodal-nu-save')?.addEventListener('click', _createNewUser);
+    Utils.wirePasswordToggle(_overlay.querySelector('#rmodal-nu-pwd'), _overlay.querySelector('#rmodal-nu-pwd-toggle'));
 
     // External select + new contact panel
     const extSel      = _overlay.querySelector('#rmodal-ext-select');
@@ -1037,11 +1041,6 @@ const ReservationModal = (() => {
 
     try {
       const savedCount = await Recurring.save({ group, instances });
-      if (!savedCount) {
-        errEl.textContent = 'No se guardaron instancias. Inténtalo de nuevo.';
-        errEl.classList.remove('hidden');
-        return;
-      }
       const skipMsg = skipped.length
         ? ` ${skipped.length} fecha${skipped.length !== 1 ? 's' : ''} omitida${skipped.length !== 1 ? 's' : ''}.`
         : '';
@@ -1050,7 +1049,7 @@ const ReservationModal = (() => {
       close();
     } catch (err) {
       console.error('Error saving recurring series:', err);
-      errEl.textContent = 'Error al crear la serie. Inténtalo de nuevo.';
+      errEl.textContent = err.message || 'Error al crear la serie. Inténtalo de nuevo.';
       errEl.classList.remove('hidden');
     }
   };

@@ -119,10 +119,35 @@ const Utils = (() => {
   const $ = (selector, parent = document) => parent.querySelector(selector);
   const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
+  const _eyeIcon = () => `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>`;
+
+  const _eyeOffIcon = () => `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>`;
+
+  /** Cablea un botón "ojo" para mostrar/ocultar un campo de contraseña */
+  const wirePasswordToggle = (inputEl, btnEl) => {
+    if (!inputEl || !btnEl) return;
+    btnEl.innerHTML = _eyeIcon();
+    btnEl.addEventListener('click', () => {
+      const isHidden = inputEl.type === 'password';
+      inputEl.type = isHidden ? 'text' : 'password';
+      btnEl.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      btnEl.innerHTML = isHidden ? _eyeOffIcon() : _eyeIcon();
+    });
+  };
+
   return {
     formatDateLong, formatDateShort, dateToISO, monthName, dayAbbr,
     daysInMonth, firstDayOfMonth, isWeekend, isSameDate, today,
     timesOverlap, isValidTimeRange, isValidEmail, isValidPassword,
-    normalize, truncate, escapeHTML, uid, $, $$
+    normalize, truncate, escapeHTML, uid, $, $$, wirePasswordToggle
   };
 })();

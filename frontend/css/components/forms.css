@@ -330,6 +330,32 @@
   padding-left: var(--space-8);
 }
 
+/* ── CAMPO DE CONTRASEÑA CON BOTÓN "MOSTRAR" ── */
+.pw-wrapper {
+  position: relative;
+}
+
+.pw-wrapper .form-input {
+  padding-right: var(--space-10);
+}
+
+.pw-toggle-btn {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-secondary-light);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
+}
+.pw-toggle-btn:hover { color: var(--color-secondary); }
+
 .input-icon {
   position: absolute;
   left: var(--space-3);

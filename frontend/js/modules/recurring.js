@@ -16,7 +16,8 @@ const Recurring = (() => {
    * @param {string} opts.date
    * @param {string} opts.startTime
    * @param {string} opts.endTime
-   * @param {string} opts.responsible
+   * @param {string} [opts.responsible_id]
+   * @param {string} [opts.external_responsible_id]
    * @param {string} opts.area
    * @param {string} [opts.observations]
    * @param {'daily'|'weekly'|'biweekly'|'monthly'} opts.frequency
@@ -26,7 +27,7 @@ const Recurring = (() => {
    */
   const generate = (opts) => {
     const {
-      date, startTime, endTime, responsible_id, area, observations = '',
+      date, startTime, endTime, responsible_id, external_responsible_id, area, observations = '',
       frequency, count, endDate,
     } = opts;
 
@@ -84,6 +85,7 @@ const Recurring = (() => {
       instances.push({
         id:               Utils.uid(),
         responsible_id,
+        external_responsible_id,
         area:             area.trim(),
         date:             dateStr,
         startTime,
@@ -142,11 +144,13 @@ const Recurring = (() => {
 
     // Save each instance to the API
     let savedCount = 0;
+    let lastError = null;
     const savedInstances = [];
     for (const r of instances) {
       try {
         const apiData = {
           responsible_id: r.responsible_id,
+          external_responsible_id: r.external_responsible_id,
           area: r.area,
           start_time: `${r.date}T${r.startTime}:00`,
           end_time: `${r.date}T${r.endTime}:00`,
@@ -164,7 +168,15 @@ const Recurring = (() => {
         }
       } catch (err) {
         console.error('Error saving recurring instance:', err);
+        lastError = err;
       }
+    }
+
+    // Every instance failed for the same reason (e.g. a validation error
+    // that applies to the whole series) — surface it instead of a generic
+    // "try again" that hides what actually went wrong.
+    if (savedCount === 0 && lastError) {
+      throw new Error(lastError.data?.error || lastError.message || 'Error al guardar las reservaciones.');
     }
 
     if (savedCount > 0) {
