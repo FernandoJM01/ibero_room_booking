@@ -68,3 +68,14 @@ Date: 2026-09-25
   `is_admin`/`last_login` but the cards read `isAdmin`/`lastLogin`, so both were always
   empty. Rows are now normalized in `api.js`; the badge reads "Super Admin".
 - History action buttons are now 30px with 15px icons (were 38/20 after the first fix).
+
+## Follow-up: "Modificado por" line replaced by an indicator on the clock button
+
+The inline "Modificado por X" under "Creado por" made rows tall (long names wrapped to
+~4 lines) and mixed two facts in one column. It is removed; the change log dialog
+carries that detail. To keep the at-a-glance signal, the **Ver cambios** button shows a
+small blue dot on any reservation edited or cancelled after creation (by anyone,
+including its creator), and its tooltip reads e.g. "Modificada por Toño · 25/09/2026 11:41"
+or "Cancelada por …". "Modified" means `updated_at` is more than 1 s after `created_at`
+(both are the same `NOW()` on insert). `Store.updateReservation` now keeps the server's
+`updated_at` instead of overwriting it with the browser clock.
