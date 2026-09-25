@@ -172,15 +172,21 @@ const API = (() => {
   const deleteHoliday = (id) =>
     _request('DELETE', `/calendar/holidays/${id}`);
 
-  // Users
-  const getUsers = () =>
-    _request('GET', '/users');
+  // Users — the API speaks snake_case; the UI reads isAdmin / lastLogin.
+  const _normalizeUser = (u) => ({
+    ...u,
+    isAdmin:   !!u.is_admin,
+    lastLogin: u.last_login ?? null,
+  });
 
-  const createUser = (data) =>
-    _request('POST', '/users', data);
+  const getUsers = async () =>
+    (await _request('GET', '/users')).map(_normalizeUser);
 
-  const updateUser = (id, data) =>
-    _request('PUT', `/users/${id}`, data);
+  const createUser = async (data) =>
+    _normalizeUser(await _request('POST', '/users', data));
+
+  const updateUser = async (id, data) =>
+    _normalizeUser(await _request('PUT', `/users/${id}`, data));
 
   const deactivateUser = (id) =>
     _request('PATCH', `/users/${id}/deactivate`);

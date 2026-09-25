@@ -47,3 +47,24 @@ Date: 2026-09-25
 - Cancelling an already-cancelled reservation is now a no-op (no audit row, no email).
 - Deploy: backend and frontend both change (new migration 008, new endpoint, new
   script `reservation-history-modal.js`). Cache-buster is `?v=18`.
+
+## Follow-up (same day): Usuarios for every secretaria, Super Admin option, compact icons
+
+- **Usuarios tab is now available to every secretaria** (list, create, edit, reset
+  password, deactivate/activate). `PUT /api/users/:id` and the activate/deactivate
+  routes moved from super-admin-only to secretaria, with these guardrails, all enforced
+  server-side (the UI mirrors them):
+  - Super-admin accounts can only be modified by a super admin. Without this, a
+    secretaria could reset a super admin's password and take the account over.
+  - `is_admin` is only honoured from a super admin; a secretaria's value is ignored.
+  - A super admin cannot remove their own super-admin access (guarantees at least
+    one remains); nobody can change their own role or deactivate themselves.
+  - A super admin always has role `secretaria` (the role check gates every screen).
+  - Role must be `secretaria` or `academico`; malformed ids return 400 instead of 500.
+- **Super Administrador checkbox** in the user form (visible to super admins only,
+  create and edit). Previously no UI could create a super admin. Checking it locks the
+  role to Secretaria. Respaldos, the semester dates and SMTP diagnostics stay super-admin only.
+- **Fixed the "Admin" badge and "Último acceso" on user cards**: the API returns
+  `is_admin`/`last_login` but the cards read `isAdmin`/`lastLogin`, so both were always
+  empty. Rows are now normalized in `api.js`; the badge reads "Super Admin".
+- History action buttons are now 30px with 15px icons (were 38/20 after the first fix).
