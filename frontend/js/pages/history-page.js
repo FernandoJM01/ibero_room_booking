@@ -288,9 +288,8 @@ const init = async () => {
          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>`;
 
     const historyBtn = `
-           <button class="btn btn-secondary btn-sm row-history-btn" data-id="${r.id}"
-                   title="Ver cambios" aria-label="Ver cambios de la reservación de ${Utils.escapeHTML(r.responsible)}"
-                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+           <button class="btn btn-secondary btn-sm row-action-btn row-history-btn" data-id="${r.id}"
+                   title="Ver cambios" aria-label="Ver cambios de la reservación de ${Utils.escapeHTML(r.responsible)}">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -300,9 +299,8 @@ const init = async () => {
            </button>`;
 
     const editCancelBtns = isActive ? `
-           <button class="btn btn-secondary btn-sm row-edit-btn" data-id="${r.id}"
-                   title="${editLabel}" aria-label="${editLabel} reservación de ${Utils.escapeHTML(r.responsible)}"
-                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+           <button class="btn btn-secondary btn-sm row-action-btn row-edit-btn" data-id="${r.id}"
+                   title="${editLabel}" aria-label="${editLabel} reservación de ${Utils.escapeHTML(r.responsible)}">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -310,9 +308,8 @@ const init = async () => {
              </svg>
            </button>
            ${canModify ? `
-           <button class="btn btn-danger btn-sm row-cancel-btn" data-id="${r.id}"
-                   title="Cancelar" aria-label="Cancelar reservación de ${Utils.escapeHTML(r.responsible)}"
-                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+           <button class="btn btn-danger btn-sm row-action-btn row-cancel-btn" data-id="${r.id}"
+                   title="Cancelar" aria-label="Cancelar reservación de ${Utils.escapeHTML(r.responsible)}">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

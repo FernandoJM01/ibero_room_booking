@@ -90,6 +90,9 @@ const Utils = (() => {
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   /** Valida contraseña (mín. 8 chars con mayúscula, minúscula, número y especial) */
+  /** Contraseña temporal precargada al crear usuarios (formulario de Usuarios y alta rápida en Reservar) */
+  const DEFAULT_USER_PASSWORD = 'Academico1@';
+
   const isValidPassword = (pwd) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(pwd);
 
   /* ── STRINGS ── */
@@ -157,7 +160,7 @@ const Utils = (() => {
   return {
     formatDateLong, formatDateShort, dateToISO, monthName, dayAbbr,
     daysInMonth, firstDayOfMonth, isWeekend, isSameDate, today,
-    timesOverlap, isValidTimeRange, isValidEmail, isValidPassword,
+    timesOverlap, isValidTimeRange, isValidEmail, isValidPassword, DEFAULT_USER_PASSWORD,
     normalize, truncate, escapeHTML, uid, $, $$, wirePasswordToggle, formatDateTimeMX
   };
 })();
