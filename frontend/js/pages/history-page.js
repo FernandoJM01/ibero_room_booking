@@ -287,9 +287,19 @@ const init = async () => {
     const editIcon  = `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>`;
 
+    // "Modified" = touched after it was created (created_at and updated_at
+    // are the same NOW() on insert). The dot replaces the old inline
+    // "Modificado por" line; the full detail lives in the Ver cambios dialog.
+    const wasModified = r.updated_at && r.created_at
+      && (new Date(r.updated_at) - new Date(r.created_at)) > 1000;
+    const changeTip = wasModified
+      ? `${r.status === 'cancelled' ? 'Cancelada' : 'Modificada'}${r.lastModifiedByName ? ` por ${r.lastModifiedByName}` : ''} · ${Utils.formatDateTimeMX(r.updated_at)}`
+      : 'Ver cambios';
+
     const historyBtn = `
-           <button class="btn btn-secondary btn-sm row-action-btn row-history-btn" data-id="${r.id}"
-                   title="Ver cambios" aria-label="Ver cambios de la reservación de ${Utils.escapeHTML(r.responsible)}">
+           <button class="btn btn-secondary btn-sm row-action-btn row-history-btn${wasModified ? ' has-changes' : ''}" data-id="${r.id}"
+                   title="${Utils.escapeHTML(changeTip)}"
+                   aria-label="Ver cambios de la reservación de ${Utils.escapeHTML(r.responsible)}${wasModified ? '. ' + Utils.escapeHTML(changeTip) : ''}">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -335,22 +345,12 @@ const init = async () => {
         </div>`;
     }
 
-    // Show who last touched it only when it differs from who created it —
-    // any secretaria can now edit/cancel any reservation (no more approval
-    // step), so this is the visible trail of who actually made a change.
-    // See docs/changes/2026-09-22-secretary-feedback.md #7.
-    const modifiedByHTML = (r.lastModifiedByName && r.lastModifiedByName !== r.creatorName)
-      ? `<div style="font-size:var(--font-size-xs);color:var(--color-secondary-light);margin-top:2px;">
-           Modificado por ${Utils.escapeHTML(r.lastModifiedByName)}
-         </div>`
-      : '';
-
     return `
       <tr class="${rowCls}" data-id="${r.id}">
         ${checkCell}
         <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
         <td>${responsibleHTML}</td>
-        <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}${modifiedByHTML}</td>
+        <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>
         <td style="white-space:nowrap;">${r.startTime}–${r.endTime}</td>
         <td>${statusBadge}</td>

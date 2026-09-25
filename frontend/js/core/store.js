@@ -93,7 +93,7 @@ const Store = (() => {
   const updateReservation = (id, updates) => {
     const idx = state.reservations.findIndex(r => r.id === id);
     if (idx === -1) return false;
-    state.reservations[idx] = { ...state.reservations[idx], ...updates, updated_at: new Date().toISOString() };
+    state.reservations[idx] = { ...state.reservations[idx], ...updates, updated_at: updates.updated_at ?? new Date().toISOString() };
     _notifyListeners();
     return true;
   };
