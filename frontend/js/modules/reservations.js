@@ -63,8 +63,8 @@ const Reservations = (() => {
   const cancel = async (id) => {
     try {
       const r = getById(id);
-      await API.cancelReservation(id);
-      Store.updateReservation(id, { status: 'cancelled' });
+      const cancelled = await API.cancelReservation(id);
+      Store.updateReservation(id, cancelled);
       Notifications && Notifications.onReservationCancelled(r);
       return true;
     } catch (err) {
@@ -79,8 +79,8 @@ const Reservations = (() => {
   const bulkCancel = async (ids) => {
     try {
       const result = await API.bulkCancelReservations(ids);
-      ids.forEach(id => Store.updateReservation(id, { status: 'cancelled' }));
-      return result.deleted || ids.length;
+      result.reservations.forEach(r => Store.updateReservation(r.id, r));
+      return result.deleted;
     } catch (err) {
       console.error('Bulk cancel error:', err);
       return 0;

@@ -121,14 +121,19 @@ const init = async () => {
       'Cancelar reservaciones',
       `¿Confirmas la cancelación de <strong>${count} reservación${count !== 1 ? 'es' : ''}</strong>?<br>
        Esta acción se registrará en el historial y no se puede deshacer.`,
-      () => {
-        const cancelled = Reservations.bulkCancel([..._selected]);
+      async () => {
+        const cancelled = await Reservations.bulkCancel([..._selected]);
         _selected.clear();
-        Toast.show(
-          `${cancelled} reservación${cancelled !== 1 ? 'es canceladas' : ' cancelada'} correctamente.`,
-          'success'
-        );
+        if (cancelled > 0) {
+          Toast.show(
+            `${cancelled} reservaci${cancelled !== 1 ? 'ones canceladas' : 'ón cancelada'} correctamente.`,
+            'success'
+          );
+        } else {
+          Toast.show('No se pudo cancelar las reservaciones seleccionadas.', 'error');
+        }
         _applyFilters();
+        _updateBulkBar();
       }
     );
   });
@@ -228,7 +233,17 @@ const init = async () => {
       btn.addEventListener('click', () => {
         const r = Store.getState().reservations.find(res => res.id === btn.dataset.id);
         if (!r) return;
-        ReservationModal.open({ editReservation: r, onSaved: () => _renderTable() });
+        // _applyFilters (not _renderTable): _filtered is a snapshot of Store
+        // objects, and an edit replaces the object, so re-derive it first.
+        ReservationModal.open({ editReservation: r, onSaved: () => _applyFilters() });
+      });
+    });
+
+    // Wire per-reservation change log
+    tableBody.querySelectorAll('.row-history-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = Store.getState().reservations.find(res => res.id === btn.dataset.id);
+        if (r) ReservationHistoryModal.open(r);
       });
     });
 
@@ -272,8 +287,19 @@ const init = async () => {
     const editIcon  = `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>`;
 
-    const actions = isSecretary && isActive
-      ? `<div class="row-actions" style="display:flex; gap:6px; justify-content:flex-end;">
+    const historyBtn = `
+           <button class="btn btn-secondary btn-sm row-history-btn" data-id="${r.id}"
+                   title="Ver cambios" aria-label="Ver cambios de la reservación de ${Utils.escapeHTML(r.responsible)}"
+                   style="display:flex; align-items:center; justify-content:center; padding:6px;">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+               <circle cx="12" cy="12" r="9"/>
+               <polyline points="12 7 12 12 15 14"/>
+             </svg>
+           </button>`;
+
+    const editCancelBtns = isActive ? `
            <button class="btn btn-secondary btn-sm row-edit-btn" data-id="${r.id}"
                    title="${editLabel}" aria-label="${editLabel} reservación de ${Utils.escapeHTML(r.responsible)}"
                    style="display:flex; align-items:center; justify-content:center; padding:6px;">
@@ -293,7 +319,12 @@ const init = async () => {
                <line x1="18" y1="6" x2="6" y2="18"/>
                <line x1="6"  y1="6" x2="18" y2="18"/>
              </svg>
-           </button>` : ''}
+           </button>` : ''}` : '';
+
+    // The change log is for secretaries only (it names who edited what).
+    const actions = isSecretary
+      ? `<div class="row-actions" style="display:flex; gap:6px; justify-content:flex-end;">
+           ${historyBtn}${editCancelBtns}
          </div>`
       : `<span style="color:var(--color-secondary-light);font-size:var(--font-size-xs);">—</span>`;
 
@@ -339,9 +370,9 @@ const init = async () => {
       `¿Cancelar la reservación de <strong>${Utils.escapeHTML(r.responsible)}</strong><br>
        el ${Utils.formatDateLong(r.date)}, ${r.startTime}–${r.endTime}?`,
       async () => {
-        await Reservations.cancel(id);
+        const ok = await Reservations.cancel(id);
         _selected.delete(id);
-        Toast.show('Reservación cancelada.', 'success');
+        Toast.show(ok ? 'Reservación cancelada.' : 'No se pudo cancelar la reservación.', ok ? 'success' : 'error');
         _applyFilters();
       }
     );

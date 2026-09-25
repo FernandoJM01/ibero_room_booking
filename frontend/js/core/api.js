@@ -127,11 +127,16 @@ const API = (() => {
     return _normalizeReservation(res);
   };
 
-  const cancelReservation = (id) =>
-    _request('DELETE', `/reservations/${id}`);
+  const cancelReservation = async (id) =>
+    _normalizeReservation(await _request('DELETE', `/reservations/${id}`));
 
-  const bulkCancelReservations = (ids) =>
-    _request('DELETE', '/reservations/bulk', { ids });
+  const bulkCancelReservations = async (ids) => {
+    const res = await _request('DELETE', '/reservations/bulk', { ids });
+    return { ...res, reservations: (res.reservations ?? []).map(_normalizeReservation) };
+  };
+
+  const getReservationHistory = (id) =>
+    _request('GET', `/reservations/${id}/history`);
 
   const getWeekReservations = async (date) => {
     const data = await _request('GET', `/reservations/week${_qs({ date })}`);
@@ -250,6 +255,7 @@ const API = (() => {
     updateReservation,
     cancelReservation,
     bulkCancelReservations,
+    getReservationHistory,
     getWeekReservations,
     createMultiReservation,
     getHolidays,
