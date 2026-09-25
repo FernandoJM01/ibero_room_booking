@@ -411,7 +411,7 @@ const init = async () => {
             </label>
             <div class="pw-wrapper">
               <input type="password" id="um-password" class="form-input"
-                     value="${isEdit ? '' : 'Academico1@'}"
+                     value="${isEdit ? '' : Utils.DEFAULT_USER_PASSWORD}"
                      placeholder="${isEdit ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres'}"
                      autocomplete="new-password" />
               <button type="button" class="pw-toggle-btn" id="um-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>

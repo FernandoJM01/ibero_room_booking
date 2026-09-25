@@ -126,7 +126,8 @@
 }
 
 .col-actions {
-  width: 90px;
+  width: 1%;              /* shrink-to-fit the buttons, never squeeze them */
+  min-width: 140px;
   text-align: right;
   white-space: nowrap;
 }
@@ -134,7 +135,23 @@
 .row-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-1);
+  gap: var(--space-2);
+}
+
+/* Square icon buttons: fixed size so a third button can never squash the
+   others into slivers (the table cell used to be a fixed 90px). */
+.row-actions .row-action-btn {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.row-actions .row-action-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* ── ESTADO VACÍO ── */

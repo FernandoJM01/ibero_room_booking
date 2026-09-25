@@ -306,9 +306,11 @@ const ReservationModal = (() => {
                       <span class="rmodal__hint">(mín. 8 car.)</span>
                     </label>
                     <div class="pw-wrapper">
-                      <input type="password" id="rmodal-nu-pwd" class="form-input" />
+                      <input type="password" id="rmodal-nu-pwd" class="form-input"
+                             value="${Utils.escapeHTML(Utils.DEFAULT_USER_PASSWORD)}" autocomplete="new-password" />
                       <button type="button" class="pw-toggle-btn" id="rmodal-nu-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
                     </div>
+                    <span class="rmodal__hint">Temporal precargada; puedes cambiarla.</span>
                   </div>
                   <div class="rmodal__field">
                     <label for="rmodal-nu-role">Rol</label>
