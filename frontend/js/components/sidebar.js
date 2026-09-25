@@ -25,9 +25,7 @@ const Sidebar = (() => {
     {
       label: 'Administración',
       items: [
-        ...(isAdmin ? [
-          { id: 'admin-users', href: 'admin.html#usuarios', label: 'Usuarios', icon: 'users' },
-        ] : []),
+        { id: 'admin-users', href: 'admin.html#usuarios', label: 'Usuarios', icon: 'users' },
         // "Solicitudes" removed from the nav: any secretaria can now
         // edit/cancel any reservation directly, so there's nothing to
         // approve. The tab, its backend routes and table stay in place

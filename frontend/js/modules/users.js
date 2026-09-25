@@ -27,7 +27,7 @@ const Users = (() => {
    * create({ name, email, role, password })
    * Returns Promise<{ success, user }> or Promise<{ success: false, error }>
    */
-  async function create({ name, email, role, password }) {
+  async function create({ name, email, role, password, isAdmin = false }) {
     if (!name?.trim() || !email?.trim() || !password?.trim()) {
       return { success: false, error: 'missing_fields' };
     }
@@ -46,6 +46,8 @@ const Users = (() => {
       email:     email.trim().toLowerCase(),
       role:      role === 'secretaria' ? 'secretaria' : 'academico',
       password,
+      // Only honoured by the server when the caller is a super admin.
+      ...(isAdmin ? { is_admin: true } : {}),
     };
 
     try {
@@ -58,6 +60,7 @@ const Users = (() => {
       if (err?.data?.error === 'password_too_weak') {
         return { success: false, error: 'weak_password' };
       }
+      if (err?.status === 403) return { success: false, error: 'forbidden' };
       return { success: false, error: 'api_error' };
     }
   }
@@ -65,7 +68,7 @@ const Users = (() => {
   /* ── UPDATE ───────────────────────────────────────────── */
 
   /**
-   * update(id, { name?, email?, role?, password? })
+   * update(id, { name?, email?, role?, password?, isAdmin? })
    * Returns Promise<{ success }> or Promise<{ success: false, error }>
    */
   async function update(id, updates) {
@@ -92,21 +95,22 @@ const Users = (() => {
       ...(updates.email    ? { email: updates.email.trim().toLowerCase() }         : {}),
       ...(updates.role     ? { role:  updates.role === 'secretaria' ? 'secretaria' : 'academico' } : {}),
       ...(updates.password ? { password: updates.password }                        : {}),
+      ...(typeof updates.isAdmin === 'boolean' ? { is_admin: updates.isAdmin }     : {}),
     };
 
     try {
-      await API.updateUser(id, updatePayload);
-      const updated = { ...current, ...updatePayload, updatedAt: new Date().toISOString() };
+      // Use the server's row so role/isAdmin reflect what it actually saved.
+      const saved = await API.updateUser(id, updatePayload);
       const newUsers = [...users];
-      newUsers[idx] = updated;
+      newUsers[idx] = { ...current, ...saved };
       Store.setState({ users: newUsers });
-      console.log('User updated:', id, updatePayload);
       return { success: true };
     } catch (err) {
       console.error('Error updating user:', err);
       if (err?.data?.error === 'password_too_weak') {
         return { success: false, error: 'weak_password' };
       }
+      if (err?.status === 403) return { success: false, error: 'forbidden' };
       return { success: false, error: 'api_error' };
     }
   }
@@ -156,6 +160,7 @@ const Users = (() => {
     weak_password:  'La contraseña debe tener al menos 8 caracteres y contener al menos una mayúscula, una minúscula, un número y un carácter especial.',
     email_taken:    'Ya existe un usuario con ese correo electrónico.',
     not_found:      'Usuario no encontrado.',
+    forbidden:      'Solo un Super Administrador puede modificar esta cuenta.',
     api_error:      'Error al comunicarse con el servidor. Verifica tu conexión.',
   };
 

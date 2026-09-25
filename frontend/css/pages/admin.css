@@ -586,3 +586,21 @@
   .admin-tabs { flex-wrap: wrap; width: 100%; }
   .admin-tab  { flex: 1; justify-content: center; }
 }
+
+
+/* ── Checkbox "Super Administrador" del formulario de usuario ── */
+.um-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+.um-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+.um-check input[type="checkbox"]:disabled { cursor: not-allowed; }

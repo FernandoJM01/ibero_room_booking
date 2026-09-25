@@ -16,10 +16,7 @@ const init = async () => {
 
   // Load fresh data from API
   try {
-    const toLoad = isSuperAdmin
-      ? [API.getUsers(), API.getHolidays()]
-      : [Promise.resolve([]), API.getHolidays()];
-    const [users, holidays] = await Promise.all(toLoad);
+    const [users, holidays] = await Promise.all([API.getUsers(), API.getHolidays()]);
     Store.setState({ users, holidays });
   } catch (err) {
     console.error('Error loading admin data:', err);
@@ -35,7 +32,7 @@ const init = async () => {
     if (hash === '#calendario')     return 'admin-config';
     if (hash === '#notificaciones') return 'admin-notif';
     if (hash === '#respaldos')      return 'admin-backup';
-    return isSuperAdmin ? 'admin-users' : 'admin-config';
+    return 'admin-users';
   };
 
   Sidebar.init(_navIdForHash(location.hash));
@@ -129,11 +126,6 @@ const init = async () => {
   ════════════════════════════════════════════════════════ */
 
   if (!isSuperAdmin) {
-    const tabUsers = document.getElementById('tab-users');
-    const secUsers = document.getElementById('section-users');
-    if (tabUsers) tabUsers.style.display = 'none';
-    if (secUsers) secUsers.style.display = 'none';
-
     // Respaldos requires super admin on the backend (see backups.js);
     // hide it here too so a plain secretaria never sees a button that
     // will just fail with a 403.
@@ -149,9 +141,7 @@ const init = async () => {
   // (unreached) for any legacy pending requests.
   // See docs/changes/2026-09-22-secretary-feedback.md #7.
   const TABS = [
-    ...(isSuperAdmin ? [
-      { id: 'tab-users',     section: 'section-users',     hash: '#usuarios',       label: 'Usuarios',    breadcrumb: 'Usuarios'          },
-    ] : []),
+    { id: 'tab-users',    section: 'section-users',    hash: '#usuarios',       label: 'Usuarios',       breadcrumb: 'Usuarios'           },
     { id: 'tab-calendar', section: 'section-calendar', hash: '#calendario',     label: 'Calendario',     breadcrumb: 'Calendario Maestro' },
     { id: 'tab-notif',    section: 'section-notif',    hash: '#notificaciones', label: 'Notificaciones', breadcrumb: 'Notificaciones'     },
     ...(isSuperAdmin ? [
@@ -313,6 +303,10 @@ const init = async () => {
     const toggleLabel = u.active ? 'Desactivar' : 'Activar';
     const toggleClass = u.active ? 'btn-danger' : 'btn-success';
 
+    // Super-admin accounts can only be changed by a super admin (the server
+    // enforces this too); everyone else sees them read-only.
+    const locked = u.isAdmin && !isSuperAdmin;
+
     return `
       <div class="user-card${!u.active ? ' is-inactive' : ''}">
         <div class="user-card__header">
@@ -324,10 +318,11 @@ const init = async () => {
         </div>
         <div class="user-card__meta">
           ${roleBadge} ${statusBadge}
-          ${u.isAdmin ? '<span class="badge badge-warning" style="font-size:10px;">Admin</span>' : ''}
+          ${u.isAdmin ? '<span class="badge badge-warning" style="font-size:10px;">Super Admin</span>' : ''}
         </div>
         <div class="user-card__last-login">Último acceso: ${lastLogin}</div>
         <div class="user-card__actions">
+          ${locked ? `<span style="font-size:var(--font-size-xs);color:var(--color-secondary-light);align-self:center;">Solo un Super Admin puede modificar esta cuenta.</span>` : `
           <button class="btn btn-secondary btn-sm" data-user-edit="${u.id}"
                   aria-label="Editar ${Utils.escapeHTML(u.name)}">
             Editar
@@ -336,7 +331,7 @@ const init = async () => {
           <button class="btn ${toggleClass} btn-sm" data-user-toggle="${u.id}"
                   aria-label="${toggleLabel} a ${Utils.escapeHTML(u.name)}">
             ${toggleLabel}
-          </button>` : `<span style="font-size:var(--font-size-xs);color:var(--color-secondary-light);align-self:center;">(tú)</span>`}
+          </button>` : `<span style="font-size:var(--font-size-xs);color:var(--color-secondary-light);align-self:center;">(tú)</span>`}`}
         </div>
       </div>`;
   }
@@ -405,6 +400,14 @@ const init = async () => {
               <option value="secretaria" ${u?.role === 'secretaria' ? 'selected' : ''}>Secretaria</option>
             </select>
           </div>
+          ${isSuperAdmin ? `
+          <div class="form-group">
+            <label class="um-check">
+              <input type="checkbox" id="um-is-admin" ${u?.isAdmin ? 'checked' : ''} ${isEdit && u?.id === user.id ? 'disabled' : ''} />
+              <span>Super Administrador</span>
+            </label>
+            <span class="form-hint">Además de las funciones de Secretaria, puede gestionar respaldos, el semestre y cuentas de Super Administrador. Siempre tiene rol Secretaria.${isEdit && u?.id === user.id ? ' No puedes quitarte este permiso a ti mismo.' : ''}</span>
+          </div>` : ''}
           <div class="form-group">
             <label class="form-label" for="um-password">
               Contraseña ${isEdit ? '<span class="form-hint">(dejar vacío para no cambiar)</span>' : '<span class="required" aria-hidden="true">*</span>'}
@@ -435,6 +438,17 @@ const init = async () => {
     overlay.querySelector('#user-modal-cancel')?.addEventListener('click', close);
     // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
     Utils.wirePasswordToggle(overlay.querySelector('#um-password'), overlay.querySelector('#um-pwd-toggle'));
+
+    // A super admin is always a secretaria: lock the role while it's checked.
+    const adminChk = overlay.querySelector('#um-is-admin');
+    const roleSel  = overlay.querySelector('#um-role');
+    const syncRole = () => {
+      if (!adminChk || !roleSel) return;
+      if (adminChk.checked) roleSel.value = 'secretaria';
+      roleSel.disabled = adminChk.checked;
+    };
+    adminChk?.addEventListener('change', syncRole);
+    syncRole();
     document.addEventListener('keydown', function esc(e) {
       if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
     });
@@ -444,6 +458,8 @@ const init = async () => {
       const email = overlay.querySelector('#um-email')?.value.trim() ?? '';
       const role  = overlay.querySelector('#um-role')?.value         ?? 'academico';
       const pwd   = overlay.querySelector('#um-password')?.value     ?? '';
+      const chk   = overlay.querySelector('#um-is-admin');
+      const isAdminChecked = chk ? chk.checked : undefined;
 
       // Clear errors
       ['um-err-name','um-err-email','um-err-pwd'].forEach(id => {
@@ -455,9 +471,10 @@ const init = async () => {
       if (isEdit) {
         const updates = { name, email, role };
         if (pwd) updates.password = pwd;
+        if (chk && !chk.disabled) updates.isAdmin = isAdminChecked;
         result = await Users.update(editId, updates);
       } else {
-        result = await Users.create({ name, email, role, password: pwd });
+        result = await Users.create({ name, email, role, password: pwd, isAdmin: !!isAdminChecked });
       }
 
       if (result.success) {
@@ -471,6 +488,7 @@ const init = async () => {
           invalid_email:  'um-err-email',
           email_taken:    'um-err-email',
           weak_password:  'um-err-pwd',
+          forbidden:      'um-err-name',
           api_error:      'um-err-name',
         };
         const errId = fieldMap[result.error] ?? 'um-err-name';
