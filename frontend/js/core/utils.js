@@ -132,6 +132,16 @@ const Utils = (() => {
     <line x1="1" y1="1" x2="23" y2="23"/>
   </svg>`;
 
+  /** Instante (ISO/UTC) → "24/09/2026 14:32" en hora de Ciudad de México, sin depender del navegador */
+  const formatDateTimeMX = (iso) => {
+    const parts = new Intl.DateTimeFormat('es-MX', {
+      timeZone: 'America/Mexico_City',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(new Date(iso)).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+    return `${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
+  };
+
   /** Cablea un botón "ojo" para mostrar/ocultar un campo de contraseña */
   const wirePasswordToggle = (inputEl, btnEl) => {
     if (!inputEl || !btnEl) return;
@@ -148,6 +158,6 @@ const Utils = (() => {
     formatDateLong, formatDateShort, dateToISO, monthName, dayAbbr,
     daysInMonth, firstDayOfMonth, isWeekend, isSameDate, today,
     timesOverlap, isValidTimeRange, isValidEmail, isValidPassword,
-    normalize, truncate, escapeHTML, uid, $, $$, wirePasswordToggle
+    normalize, truncate, escapeHTML, uid, $, $$, wirePasswordToggle, formatDateTimeMX
   };
 })();

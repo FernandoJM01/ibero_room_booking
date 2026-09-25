@@ -428,6 +428,124 @@
   color: var(--color-secondary-light);
 }
 
+/* ── Historial de cambios de una reservación (rhist) ── */
+.rhist__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary-mid);
+}
+.rhist__summary strong { color: var(--color-secondary); }
+
+.rhist__body { max-height: 60vh; overflow-y: auto; }
+
+.rhist__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-2);
+  position: relative;
+}
+.rhist__timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.rhist__entry {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+}
+.rhist__entry:last-child { padding-bottom: 0; }
+
+.rhist__dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--color-secondary-light);
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border);
+  z-index: 1;
+}
+.rhist__entry.is-create .rhist__dot { background: var(--color-success); }
+.rhist__entry.is-update .rhist__dot { background: var(--color-info); }
+.rhist__entry.is-cancel .rhist__dot { background: var(--color-error); }
+
+.rhist__entry-body { flex: 1; min-width: 0; }
+
+.rhist__entry-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+}
+.rhist__entry-head time {
+  color: var(--color-secondary-light);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.rhist__by {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-mid);
+  margin-top: 2px;
+}
+
+.rhist__changes {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.rhist__change {
+  display: grid;
+  grid-template-columns: 9rem 1fr auto 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--font-size-xs);
+}
+.rhist__field { font-weight: var(--font-weight-semibold); color: var(--color-secondary); }
+.rhist__from  { color: var(--color-secondary-light); text-decoration: line-through; overflow-wrap: anywhere; }
+.rhist__to    { color: var(--color-secondary); overflow-wrap: anywhere; }
+.rhist__arrow { color: var(--color-secondary-light); }
+
+.rhist__note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-light);
+}
+.rhist__state {
+  text-align: center;
+  margin: var(--space-4) 0;
+  color: var(--color-secondary-light);
+  font-size: var(--font-size-sm);
+}
+.rhist__state--error { color: var(--color-error); }
+
+@media (max-width: 540px) {
+  .rhist__change { grid-template-columns: 1fr; gap: 2px; }
+  .rhist__arrow { display: none; }
+  .rhist__summary { padding-left: var(--space-4); padding-right: var(--space-4); }
+}
+
 /* ── Responsive ── */
 @media (max-width: 540px) {
   .modal-dialog { max-width: 100%; }

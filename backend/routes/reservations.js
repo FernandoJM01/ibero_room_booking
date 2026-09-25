@@ -10,8 +10,26 @@ const {
   reservationAdminModifiedEmail,
   reservationAdminCancelledEmail,
 } = require('../utils/mailer');
+const { buildCreateDetails, buildUpdateChanges, logReservationEvent } = require('../utils/reservationAudit');
 
 const router = express.Router();
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Write endpoints must return the same shape as the list endpoint (creator
+// and last-modifier names joined in). A bare `RETURNING *` row lacks them,
+// which made the History table lose "Creado por"/"Modificado por" until a
+// full page reload.
+const RESERVATION_WITH_NAMES = `
+  SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
+         ec.email AS external_email, ec.organization AS external_organization
+  FROM reservations r
+  LEFT JOIN users u  ON u.id  = r.created_by
+  LEFT JOIN users lm ON lm.id = r.last_modified_by
+  LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id`;
+
+const fetchWithNames = async (db, id) =>
+  (await db.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id])).rows[0];
 
 // All reservations routes require authentication
 router.use(auth);
@@ -249,11 +267,12 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
       );
       created.push(ins.rows[0]);
 
-      await client.query(
-        `INSERT INTO audit_log (user_id, action, entity, entity_id)
-         VALUES ($1, $2, $3, $4)`,
-        [req.user.id, 'create_reservation', 'reservations', ins.rows[0].id]
-      );
+      await logReservationEvent(client, {
+        userId: req.user.id,
+        action: 'create_reservation',
+        reservationId: ins.rows[0].id,
+        details: buildCreateDetails(ins.rows[0]),
+      });
     }
 
     await client.query('COMMIT');
@@ -266,13 +285,39 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
       }
     }
 
-    res.status(201).json({ reservations: created, grouped_id: groupedId });
+    const createdWithNames = await Promise.all(created.map(r => fetchWithNames(pool, r.id)));
+    res.status(201).json({ reservations: createdWithNames, grouped_id: groupedId });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     console.error('Error creating multi reservation:', err);
     res.status(500).json({ error: 'Server error' });
   } finally {
     client.release();
+  }
+});
+
+// GET /api/reservations/:id/history - Change log for one reservation (secretaria only)
+router.get('/:id/history', requireRole('secretaria'), async (req, res) => {
+  const { id } = req.params;
+  if (!UUID_RE.test(id)) {
+    return res.status(400).json({ error: 'Invalid reservation id' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT a.id, a.action, a.timestamp, a.details, u.name AS user_name
+       FROM audit_log a
+       LEFT JOIN users u ON u.id = a.user_id
+       WHERE a.entity = 'reservations'
+         AND a.entity_id = $1
+         AND a.action IN ('create_reservation', 'update_reservation', 'cancel_reservation')
+       ORDER BY a.timestamp DESC, a.id`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching reservation history:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -388,18 +433,18 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
       ]
     );
 
-    // Log to audit
-    await pool.query(
-      `INSERT INTO audit_log (user_id, action, entity, entity_id)
-       VALUES ($1, $2, $3, $4)`,
-      [req.user.id, 'create_reservation', 'reservations', result.rows[0].id]
-    );
+    await logReservationEvent(pool, {
+      userId: req.user.id,
+      action: 'create_reservation',
+      reservationId: result.rows[0].id,
+      details: buildCreateDetails(result.rows[0]),
+    });
 
     // Send confirmation email to responsible person (non-blocking)
     const { subject, html } = reservationCreatedEmail(result.rows[0]);
     sendEmail(responsible.email, subject, html);
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(await fetchWithNames(pool, result.rows[0].id));
   } catch (err) {
     console.error('Error creating reservation:', err);
     res.status(500).json({ error: 'Server error' });
@@ -488,16 +533,22 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       [id, setResId, setExtId, responsible?.name ?? null, area, start_time, end_time, observations, req.user.id]
     );
 
-    // Log to audit
-    await pool.query(
-      `INSERT INTO audit_log (user_id, action, entity, entity_id)
-       VALUES ($1, $2, $3, $4)`,
-      [req.user.id, 'update_reservation', 'reservations', id]
-    );
-
-    // Compute which fields actually changed and notify the responsible person
     const before = existing.rows[0];
     const after  = result.rows[0];
+
+    // Audit trail: one row per edit that actually changed something, with a
+    // before/after diff for the History "Ver cambios" timeline.
+    const auditChanges = buildUpdateChanges(before, after);
+    if (auditChanges.length) {
+      await logReservationEvent(pool, {
+        userId: req.user.id,
+        action: 'update_reservation',
+        reservationId: id,
+        details: { changes: auditChanges },
+      });
+    }
+
+    // Compute which fields actually changed and notify the responsible person
     const fieldLabels = {
       responsible_name: 'responsable',
       area: 'área',
@@ -538,76 +589,15 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       }
     }
 
-    res.json(result.rows[0]);
+    res.json(await fetchWithNames(pool, id));
   } catch (err) {
     console.error('Error updating reservation:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// DELETE /api/reservations/:id - Cancel single reservation (soft delete)
-// Own reservations: any secretaria; other secretaries' reservations: super-admin only
-router.delete('/:id', requireRole('secretaria'), async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const existing = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
-    if (existing.rows.length === 0) {
-      return res.status(404).json({ error: 'Reservation not found' });
-    }
-
-    // Any secretaria may cancel any reservation — see the note in PUT /:id
-    // above. See docs/changes/2026-09-22-secretary-feedback.md #7.
-    const isOwner = existing.rows[0].created_by === req.user.id;
-
-    const result = await pool.query(
-      `UPDATE reservations SET status = 'cancelled', last_modified_by = $2, updated_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
-      [id, req.user.id]
-    );
-
-    // Log to audit
-    await pool.query(
-      `INSERT INTO audit_log (user_id, action, entity, entity_id)
-       VALUES ($1, $2, $3, $4)`,
-      [req.user.id, 'cancel_reservation', 'reservations', id]
-    );
-
-    const cancelled = result.rows[0];
-
-    // Send cancellation email to responsible person (non-blocking)
-    let respEmail = null;
-    if (cancelled.responsible_id) {
-      const resp = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.responsible_id]);
-      respEmail = resp.rows[0]?.email;
-    } else if (cancelled.external_responsible_id) {
-      const extQ = await pool.query('SELECT email FROM external_contacts WHERE id = $1', [cancelled.external_responsible_id]);
-      respEmail = extQ.rows[0]?.email;
-    }
-
-    if (respEmail) {
-      const { subject, html } = reservationCancelledEmail(cancelled);
-      sendEmail(respEmail, subject, html);
-    }
-
-    // Notify the creating secretary whenever someone else cancels their
-    // reservation (used to be admin-only; see the note in PUT /:id above).
-    if (!isOwner && cancelled.created_by) {
-      const creatorQ = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.created_by]);
-      if (creatorQ.rows[0]?.email) {
-        const { subject, html } = reservationAdminCancelledEmail(cancelled, req.user.name);
-        sendEmail(creatorQ.rows[0].email, subject, html);
-      }
-    }
-
-    res.status(204).send();
-  } catch (err) {
-    console.error('Error cancelling reservation:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
+// NOTE: must stay above DELETE /:id — Express matches routes in order, and
+// '/:id' would otherwise capture the literal path '/bulk' (500: invalid uuid).
 // DELETE /api/reservations/bulk - Cancel multiple reservations
 // Secretaries may only cancel their own; super-admin may cancel any
 router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
@@ -622,17 +612,21 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
     // PUT /:id above. See docs/changes/2026-09-22-secretary-feedback.md #7.
     const result = await pool.query(
       `UPDATE reservations SET status = 'cancelled', last_modified_by = $2, updated_at = NOW()
-       WHERE id = ANY($1::uuid[])
+       WHERE id = ANY($1::uuid[]) AND status = 'active'
        RETURNING *`,
       [ids, req.user.id]
     );
 
-    // Log to audit
-    await pool.query(
-      `INSERT INTO audit_log (user_id, action, entity, details)
-       VALUES ($1, $2, $3, $4)`,
-      [req.user.id, 'bulk_cancel_reservations', 'reservations', JSON.stringify({ count: result.rows.length })]
-    );
+    // One audit row per reservation (with its id) so each reservation's
+    // own change history shows the cancellation.
+    for (const r of result.rows) {
+      await logReservationEvent(pool, {
+        userId: req.user.id,
+        action: 'cancel_reservation',
+        reservationId: r.id,
+        details: { bulk: true },
+      });
+    }
 
     // Send a cancellation email per affected reservation (non-blocking)
     const responsibleIds = [...new Set(result.rows.map(r => r.responsible_id).filter(Boolean))];
@@ -668,9 +662,77 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
       }
     }
 
-    res.json({ deleted: result.rows.length });
+    const withNames = await Promise.all(result.rows.map(r => fetchWithNames(pool, r.id)));
+    res.json({ deleted: result.rows.length, reservations: withNames });
   } catch (err) {
     console.error('Error bulk cancelling reservations:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/reservations/:id - Cancel single reservation (soft delete)
+// Own reservations: any secretaria; other secretaries' reservations: super-admin only
+router.delete('/:id', requireRole('secretaria'), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const existing = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+
+    // Any secretaria may cancel any reservation — see the note in PUT /:id
+    // above. See docs/changes/2026-09-22-secretary-feedback.md #7.
+    const isOwner = existing.rows[0].created_by === req.user.id;
+
+    // Already cancelled: nothing to change, log or notify.
+    if (existing.rows[0].status === 'cancelled') {
+      return res.json(await fetchWithNames(pool, id));
+    }
+
+    const result = await pool.query(
+      `UPDATE reservations SET status = 'cancelled', last_modified_by = $2, updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, req.user.id]
+    );
+
+    await logReservationEvent(pool, {
+      userId: req.user.id,
+      action: 'cancel_reservation',
+      reservationId: id,
+    });
+
+    const cancelled = result.rows[0];
+
+    // Send cancellation email to responsible person (non-blocking)
+    let respEmail = null;
+    if (cancelled.responsible_id) {
+      const resp = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.responsible_id]);
+      respEmail = resp.rows[0]?.email;
+    } else if (cancelled.external_responsible_id) {
+      const extQ = await pool.query('SELECT email FROM external_contacts WHERE id = $1', [cancelled.external_responsible_id]);
+      respEmail = extQ.rows[0]?.email;
+    }
+
+    if (respEmail) {
+      const { subject, html } = reservationCancelledEmail(cancelled);
+      sendEmail(respEmail, subject, html);
+    }
+
+    // Notify the creating secretary whenever someone else cancels their
+    // reservation (used to be admin-only; see the note in PUT /:id above).
+    if (!isOwner && cancelled.created_by) {
+      const creatorQ = await pool.query('SELECT email FROM users WHERE id = $1', [cancelled.created_by]);
+      if (creatorQ.rows[0]?.email) {
+        const { subject, html } = reservationAdminCancelledEmail(cancelled, req.user.name);
+        sendEmail(creatorQ.rows[0].email, subject, html);
+      }
+    }
+
+    res.json(await fetchWithNames(pool, id));
+  } catch (err) {
+    console.error('Error cancelling reservation:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

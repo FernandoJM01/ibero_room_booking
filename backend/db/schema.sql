@@ -129,3 +129,4 @@ CREATE INDEX idx_reservations_responsible_id ON reservations(responsible_id);
 CREATE INDEX idx_calendar_events_date ON calendar_events(date);
 CREATE INDEX idx_audit_log_user_id ON audit_log(user_id);
 CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp);
+CREATE INDEX idx_audit_log_entity ON audit_log(entity, entity_id, timestamp DESC);
