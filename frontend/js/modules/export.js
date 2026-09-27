@@ -15,6 +15,7 @@ const Export = (() => {
   function _buildRows(reservations) {
     return reservations.map(r => ({
       Fecha:        r.date,
+      Sala:         r.roomName ?? '—',
       Responsable:  r.responsible,
       Tipo:         r.externalEmail ? 'Externo' : 'Interno',
       'Creado por': r.creatorName ?? '—',
@@ -51,6 +52,11 @@ const Export = (() => {
    *  Falls back to reservaciones_completo_<fecha>.<ext> when nothing is filtered. */
   function _buildFilenameBase(opts = {}) {
     const parts = [];
+    if (opts.roomName) {
+      // filename-safe: strip anything but letters/digits/spaces, then spaces -> _
+      parts.push(opts.roomName.normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_').toLowerCase());
+    }
     if (opts.status && opts.status !== 'all') {
       parts.push(opts.status === 'active' ? 'activas' : 'canceladas');
     }
@@ -108,9 +114,10 @@ const Export = (() => {
     const tableStartY = metaY + 3;
 
     // Auto-table
-    const head = [['Fecha', 'Responsable', 'Tipo', 'Creado por', 'Nombre de la junta', 'Inicio', 'Fin']];
+    const head = [['Fecha', 'Sala', 'Responsable', 'Tipo', 'Creado por', 'Nombre de la junta', 'Inicio', 'Fin']];
     const body = reservations.map(r => [
       r.date,
+      r.roomName ?? '—',
       r.responsible,
       r.externalEmail ? 'Externo' : 'Interno',
       r.creatorName ?? '—',
@@ -135,9 +142,9 @@ const Export = (() => {
         alternateRowStyles: { fillColor: [250, 250, 250] },
         columnStyles: {
           0: { cellWidth: 18 },  // Fecha
-          1: { cellWidth: 35 },  // Responsable
-          2: { cellWidth: 35 },  // Tipo/Correo
-          3: { cellWidth: 30 },  // Depto Ext
+          1: { cellWidth: 25 },  // Sala
+          2: { cellWidth: 32 },  // Responsable
+          3: { cellWidth: 18 },  // Tipo
           4: { cellWidth: 25 },  // Creado por
           5: { cellWidth: 45 },  // Nombre de la junta
           6: { cellWidth: 12 },  // Inicio
@@ -168,7 +175,7 @@ const Export = (() => {
 
   /** Minimal table renderer for when autoTable plugin is absent */
   function _drawSimpleTable(doc, headers, rows, startY) {
-    const colW  = [18, 35, 35, 30, 25, 45, 12, 12];
+    const colW  = [18, 25, 32, 18, 25, 45, 12, 12];
     const rowH  = 7;
     let   x     = 10;
     let   y     = startY;
@@ -242,6 +249,7 @@ const Export = (() => {
     // Column widths
     ws['!cols'] = [
       { wch: 14 },  // Fecha
+      { wch: 20 },  // Sala
       { wch: 35 },  // Responsable
       { wch: 12 },  // Tipo
       { wch: 30 },  // Creado por

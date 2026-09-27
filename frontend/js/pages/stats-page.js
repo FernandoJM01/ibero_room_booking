@@ -20,9 +20,14 @@ const init = async () => {
   }
 
   // Load fresh data from API
+  let _rooms = [];
   try {
-    const reservations = await API.getReservations();
+    const [reservations, rooms] = await Promise.all([
+      API.getReservations(),
+      API.getRooms(),
+    ]);
     Store.setState({ reservations });
+    _rooms = Array.isArray(rooms) ? rooms : [];
   } catch (err) {
     console.error('Error loading reservations:', err);
     Toast.show('Error cargando datos', 'error');
@@ -44,8 +49,18 @@ const init = async () => {
   /* ── DOM refs ──────────────────────────────────────────── */
   const dateFromEl = document.getElementById('stats-date-from');
   const dateToEl   = document.getElementById('stats-date-to');
+  const roomEl     = document.getElementById('stats-room');
   const btnApply   = document.getElementById('btn-stats-apply');
   const btnReset   = document.getElementById('btn-stats-reset');
+
+  if (roomEl) {
+    _rooms.forEach(room => {
+      const opt = document.createElement('option');
+      opt.value       = room.id;
+      opt.textContent = room.name;
+      roomEl.appendChild(opt);
+    });
+  }
 
   /* ── Chart instances (kept for destroy on re-render) ──── */
   let _charts = {};
@@ -60,7 +75,7 @@ const init = async () => {
 
   /* ── Event listeners ───────────────────────────────────── */
   btnApply?.addEventListener('click', _render);
-  btnReset?.addEventListener('click', () => { _setDefaultPeriod(); _render(); });
+  btnReset?.addEventListener('click', () => { _setDefaultPeriod(); if (roomEl) roomEl.value = 'all'; _render(); });
 
   /* ── Export wiring ─────────────────────────────────────── */
   Export.attachExportButtons({
@@ -72,7 +87,9 @@ const init = async () => {
       title:       'Reporte de Estadísticas — Sala de Juntas Ibero',
       dateFrom:    dateFromEl?.value ?? '',
       dateTo:      dateToEl?.value   ?? '',
+      roomName:    (roomEl?.value && roomEl.value !== 'all') ? roomEl.selectedOptions[0]?.textContent : null,
       generatedBy: user.name,
+      filters:     _activeFilterLines(),
     }),
   });
 
@@ -80,10 +97,21 @@ const init = async () => {
      RENDER
   ════════════════════════════════════════════════════════ */
 
+  function _activeFilterLines() {
+    const lines = [];
+    if (dateFromEl?.value) lines.push(`Desde: ${Utils.formatDateShort(dateFromEl.value)}`);
+    if (dateToEl?.value)   lines.push(`Hasta: ${Utils.formatDateShort(dateToEl.value)}`);
+    if (roomEl?.value && roomEl.value !== 'all') {
+      lines.push(`Sala: ${roomEl.selectedOptions[0]?.textContent}`);
+    }
+    return lines;
+  }
+
   function _getFiltered() {
     const from = dateFromEl?.value ?? '';
     const to   = dateToEl?.value   ?? '';
-    return Search.filter(Store.getState().reservations, { dateFrom: from, dateTo: to });
+    const roomId = roomEl?.value ?? 'all';
+    return Search.filter(Store.getState().reservations, { dateFrom: from, dateTo: to, roomId });
   }
 
   function _render() {

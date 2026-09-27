@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Estadísticas — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css?v=28" />
-  <link rel="stylesheet" href="css/reset.css?v=28" />
-  <link rel="stylesheet" href="css/base.css?v=28" />
-  <link rel="stylesheet" href="css/layout.css?v=28" />
-  <link rel="stylesheet" href="css/pages/stats.css?v=28" />
-  <link rel="stylesheet" href="css/components/forms.css?v=28" />
-  <link rel="stylesheet" href="css/responsive.css?v=28" />
+  <link rel="stylesheet" href="css/variables.css?v=29" />
+  <link rel="stylesheet" href="css/reset.css?v=29" />
+  <link rel="stylesheet" href="css/base.css?v=29" />
+  <link rel="stylesheet" href="css/layout.css?v=29" />
+  <link rel="stylesheet" href="css/pages/stats.css?v=29" />
+  <link rel="stylesheet" href="css/components/forms.css?v=29" />
+  <link rel="stylesheet" href="css/responsive.css?v=29" />
   <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
 <body>
@@ -60,6 +60,12 @@
           <label for="stats-date-to">Hasta</label>
           <input type="date" id="stats-date-to" class="filter-input"
                  aria-label="Fecha hasta" />
+        </div>
+        <div class="filter-group">
+          <label for="stats-room">Sala</label>
+          <select id="stats-room" class="filter-select" aria-label="Filtrar por sala">
+            <option value="all">Todas</option>
+          </select>
         </div>
         <div class="filter-group" style="flex-direction:row;gap:var(--space-2);align-items:flex-end;">
           <button class="btn btn-primary btn-sm" id="btn-stats-apply">Aplicar</button>
@@ -183,19 +189,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- Scripts -->
-<script src="js/core/utils.js?v=28"></script>
-<script src="js/core/api.js?v=28"></script>
-<script src="js/core/store.js?v=28"></script>
-<script src="js/components/toast.js?v=28"></script>
-<script src="js/components/sidebar.js?v=28"></script>
-<script src="js/components/change-password-modal.js?v=28"></script>
-<script src="js/modules/notifications.js?v=28"></script>
-<script src="js/modules/auth.js?v=28"></script>
-<script src="js/modules/reservations.js?v=28"></script>
-<script src="js/modules/search.js?v=28"></script>
-<script src="js/modules/stats.js?v=28"></script>
-<script src="js/modules/export.js?v=28"></script>
-<script src="js/pages/stats-page.js?v=28"></script>
+<script src="js/core/utils.js?v=29"></script>
+<script src="js/core/api.js?v=29"></script>
+<script src="js/core/store.js?v=29"></script>
+<script src="js/components/toast.js?v=29"></script>
+<script src="js/components/sidebar.js?v=29"></script>
+<script src="js/components/change-password-modal.js?v=29"></script>
+<script src="js/modules/notifications.js?v=29"></script>
+<script src="js/modules/auth.js?v=29"></script>
+<script src="js/modules/reservations.js?v=29"></script>
+<script src="js/modules/search.js?v=29"></script>
+<script src="js/modules/stats.js?v=29"></script>
+<script src="js/modules/export.js?v=29"></script>
+<script src="js/pages/stats-page.js?v=29"></script>
 
 </body>
 </html>

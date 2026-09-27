@@ -15,9 +15,14 @@ const init = async () => {
   if (!user) return;
 
   // Load fresh data from API
+  let _rooms = [];
   try {
-    const reservations = await API.getReservations();
+    const [reservations, rooms] = await Promise.all([
+      API.getReservations(),
+      API.getRooms(),
+    ]);
     Store.setState({ reservations });
+    _rooms = Array.isArray(rooms) ? rooms : [];
   } catch (err) {
     console.error('Error loading reservations:', err);
     Toast.show('Error cargando datos', 'error');
@@ -53,6 +58,7 @@ const init = async () => {
   const filterDateTo   = document.getElementById('filter-date-to');
   const filterStatus   = document.getElementById('filter-status');
   const filterType     = document.getElementById('filter-type');
+  const filterRoom     = document.getElementById('filter-room');
   const btnClear       = document.getElementById('btn-clear-filters');
   const selectAllTop   = document.getElementById('select-all-top');
   const bulkBar        = document.getElementById('bulk-bar');
@@ -64,6 +70,16 @@ const init = async () => {
   const tableEmpty     = document.getElementById('table-empty');
   const tableFooter    = document.getElementById('table-footer');
 
+  /* ── SALAS (filtro) ── */
+  if (filterRoom) {
+    _rooms.forEach(room => {
+      const opt = document.createElement('option');
+      opt.value       = room.id;
+      opt.textContent = room.name;
+      filterRoom.appendChild(opt);
+    });
+  }
+
   /* ── FILTROS ── */
   filterField?.addEventListener('change',  _applyFilters);
   filterSearch?.addEventListener('input',  _applyFilters);
@@ -71,6 +87,7 @@ const init = async () => {
   filterDateTo?.addEventListener('change',   _applyFilters);
   filterStatus?.addEventListener('change', _applyFilters);
   filterType?.addEventListener('change', _applyFilters);
+  filterRoom?.addEventListener('change', _applyFilters);
 
   btnClear?.addEventListener('click', () => {
     if (filterField)    filterField.value = 'all';
@@ -79,6 +96,7 @@ const init = async () => {
     if (filterDateTo)   filterDateTo.value = '';
     if (filterStatus)   filterStatus.value = 'all';
     if (filterType)     filterType.value = 'all';
+    if (filterRoom)     filterRoom.value = 'all';
     _applyFilters();
   });
 
@@ -148,6 +166,7 @@ const init = async () => {
     const dateTo   = filterDateTo?.value   ?? '';
     const status   = filterStatus?.value   ?? 'all';
     const type     = filterType?.value     ?? 'all';
+    const roomId   = filterRoom?.value     ?? 'all';
 
     const all = Store.getState().reservations;
 
@@ -155,6 +174,7 @@ const init = async () => {
       if (status !== 'all' && r.status !== status) return false;
       if (type === 'internals' && r.externalEmail) return false;
       if (type === 'externals' && !r.externalEmail) return false;
+      if (roomId !== 'all' && r.roomId !== roomId) return false;
       if (dateFrom && r.date < dateFrom)           return false;
       if (dateTo   && r.date > dateTo)             return false;
       if (search) {
@@ -349,6 +369,7 @@ const init = async () => {
       <tr class="${rowCls}" data-id="${r.id}">
         ${checkCell}
         <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
+        <td class="hide-on-mobile">${r.roomName ? Utils.escapeHTML(r.roomName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${responsibleHTML}</td>
         <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>
@@ -474,6 +495,9 @@ const init = async () => {
     if (filterType?.value && filterType.value !== 'all') {
       lines.push(`Tipo: ${filterType.selectedOptions[0]?.textContent}`);
     }
+    if (filterRoom?.value && filterRoom.value !== 'all') {
+      lines.push(`Sala: ${filterRoom.selectedOptions[0]?.textContent}`);
+    }
     return lines;
   }
 
@@ -489,6 +513,7 @@ const init = async () => {
       dateTo:      filterDateTo?.value   ?? '',
       status:      filterStatus?.value   ?? 'all',
       type:        filterType?.value     ?? 'all',
+      roomName:    (filterRoom?.value && filterRoom.value !== 'all') ? filterRoom.selectedOptions[0]?.textContent : null,
       generatedBy: user.name,
       filters:     _activeFilterLines(),
     }),

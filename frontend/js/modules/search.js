@@ -22,6 +22,7 @@ const Search = (() => {
       dateFrom  = '',
       dateTo    = '',
       status    = 'all',
+      roomId    = '',
       isRecurring,
     } = criteria;
 
@@ -30,6 +31,9 @@ const Search = (() => {
     return reservations.filter(r => {
       // Status
       if (status !== 'all' && r.status !== status) return false;
+
+      // Room
+      if (roomId && roomId !== 'all' && r.roomId !== roomId) return false;
 
       // Date range
       if (dateFrom && r.date < dateFrom) return false;
