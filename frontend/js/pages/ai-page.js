@@ -19,8 +19,9 @@ const init = async () => {
     return;
   }
 
-  // Load reservations and users from API
+  // Load reservations, users and rooms from API
   let _users = [];
+  let _rooms = [];
   await Promise.allSettled([
     API.getReservations()
       .then(r => Store.setState({ reservations: r }))
@@ -28,6 +29,9 @@ const init = async () => {
     API.getUsers()
       .then(u => { _users = u || []; })
       .catch(e => console.warn('[AI Page] users:', e.message)),
+    API.getRooms()
+      .then(r => { _rooms = r || []; })
+      .catch(e => console.warn('[AI Page] rooms:', e.message)),
   ]);
 
   Sidebar.init('ai-panel');
@@ -47,6 +51,7 @@ const init = async () => {
   const propDate    = document.getElementById('prop-date');
   const propStart   = document.getElementById('prop-start');
   const propEnd     = document.getElementById('prop-end');
+  const propRoom    = document.getElementById('prop-room');
   const propRespon  = document.getElementById('prop-responsible');
   const propArea    = document.getElementById('prop-area');
   const propObs     = document.getElementById('prop-observations');
@@ -76,6 +81,9 @@ const init = async () => {
 
   /* ── Populate responsible select ───────────────────────── */
   _populateResponsibleSelect();
+
+  /* ── Populate room select ──────────────────────────────── */
+  _populateRoomSelect();
 
   API.aiStatus().then(s => {
     if (!s?.enabled) Toast.show('Asistente IA en modo local. Sin clave API configurada.', 'info');
@@ -197,6 +205,7 @@ const init = async () => {
     // Focus first incomplete field
     if (!result.date)            propDate?.focus();
     else if (!useStart)          propStart?.focus();
+    else if (!propRoom?.value)   propRoom?.focus();
     else if (!propRespon?.value) propRespon?.focus();
     else                         btnSave?.focus();
   }
@@ -216,6 +225,7 @@ const init = async () => {
   });
   propStart?.addEventListener('change', _checkOverlap);
   propEnd?.addEventListener('change',   _checkOverlap);
+  propRoom?.addEventListener('change',  _checkOverlap);
   propArea?.addEventListener('input', _validateProposal);
 
   propRespon?.addEventListener('change', () => {
@@ -277,9 +287,14 @@ const init = async () => {
       return;
     }
 
-    // TODO(multi-room phase 6): pass the proposal's chosen room once the AI
-    // panel has a room selector; until then this can't claim a time is free.
-    const conflict = Reservations.checkOverlap(date, start, end, null);
+    const roomId = propRoom?.value || null;
+    if (!roomId) {
+      _setOverlapStatus('no-room');
+      _validateProposal();
+      return;
+    }
+
+    const conflict = Reservations.checkOverlap(date, start, end, roomId);
     if (conflict) {
       _setOverlapStatus('conflict', conflict);
     } else {
@@ -303,6 +318,11 @@ const init = async () => {
       if (overlapText) overlapText.textContent = '';
       return;
     }
+    if (state === 'no-room') {
+      if (overlapIcon) overlapIcon.innerHTML = '';
+      if (overlapText) overlapText.textContent = 'Elige una sala para ver disponibilidad';
+      return;
+    }
     if (state === 'available') {
       if (overlapIcon) overlapIcon.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
       if (overlapText) overlapText.textContent = 'Horario disponible';
@@ -322,6 +342,7 @@ const init = async () => {
     const ok = propDate?.value
             && propStart?.value
             && propEnd?.value
+            && propRoom?.value
             && propRespon?.value && propRespon.value !== '__new__'
             && propArea?.value?.trim()
             && _currentOverlapState === 'available';
@@ -342,6 +363,7 @@ const init = async () => {
       start_time:     `${propDate?.value}T${propStart?.value}:00`,
       end_time:       `${propDate?.value}T${propEnd?.value}:00`,
       responsible_id: propRespon?.value,
+      room_id:        propRoom?.value,
       area:           propArea?.value?.trim(),
       observations:   propObs?.value?.trim() ?? '',
     };
@@ -436,6 +458,16 @@ const init = async () => {
     });
     propRespon.add(new Option('+ Crear nuevo usuario…', '__new__'));
     if (current && current !== '__new__') propRespon.value = current;
+  }
+
+  function _populateRoomSelect() {
+    if (!propRoom) return;
+    const current = propRoom.value;
+    propRoom.innerHTML = '<option value="">— Selecciona una sala —</option>';
+    _rooms.forEach(r => {
+      propRoom.add(new Option(r.capacity ? `${r.name} (cap. ${r.capacity})` : r.name, r.id));
+    });
+    if (current) propRoom.value = current;
   }
 
   function _tryMatchResponsible(aiName) {
