@@ -13,6 +13,16 @@ CREATE TABLE users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Rooms (bookable spaces)
+CREATE TABLE rooms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  location VARCHAR(200),
+  capacity INTEGER,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- External contacts
 CREATE TABLE external_contacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -37,6 +47,7 @@ CREATE TABLE reservations (
   responsible_id UUID REFERENCES users(id) ON DELETE SET NULL,
   external_responsible_id UUID REFERENCES external_contacts(id) ON DELETE SET NULL,
   responsible_name VARCHAR(200) NOT NULL,
+  room_id UUID NOT NULL REFERENCES rooms(id),
   area VARCHAR(200) NOT NULL,
   start_time TIMESTAMPTZ NOT NULL,
   end_time TIMESTAMPTZ NOT NULL,
@@ -126,6 +137,7 @@ CREATE INDEX idx_reservations_grouped_id ON reservations(grouped_id) WHERE group
 CREATE INDEX idx_reservations_start_time ON reservations(start_time);
 CREATE INDEX idx_reservations_created_by ON reservations(created_by);
 CREATE INDEX idx_reservations_responsible_id ON reservations(responsible_id);
+CREATE INDEX idx_reservations_room_id ON reservations(room_id);
 CREATE INDEX idx_calendar_events_date ON calendar_events(date);
 CREATE INDEX idx_audit_log_user_id ON audit_log(user_id);
 CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp);

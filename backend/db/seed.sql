@@ -14,6 +14,10 @@ VALUES (
   TRUE
 );
 
+-- Insertar sala inicial (renómbrala en Administración → Salas)
+INSERT INTO rooms (id, name)
+VALUES ('a10e1300-0000-4000-8000-000000000001'::UUID, 'Sala Principal');
+
 -- Insertar configuración institucional (Días Festivos / Cierres)
 INSERT INTO calendar_events (date, name, type)
 VALUES

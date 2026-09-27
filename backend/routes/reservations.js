@@ -22,11 +22,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // full page reload.
 const RESERVATION_WITH_NAMES = `
   SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
-         ec.email AS external_email, ec.organization AS external_organization
+         ec.email AS external_email, ec.organization AS external_organization,
+         rm.name AS room_name
   FROM reservations r
   LEFT JOIN users u  ON u.id  = r.created_by
   LEFT JOIN users lm ON lm.id = r.last_modified_by
-  LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id`;
+  LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
+  LEFT JOIN rooms rm ON rm.id = r.room_id`;
 
 const fetchWithNames = async (db, id) =>
   (await db.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id])).rows[0];
@@ -63,14 +65,22 @@ router.get('/', async (req, res) => {
   try {
     let query = `
       SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
-             ec.email AS external_email, ec.organization AS external_organization
+             ec.email AS external_email, ec.organization AS external_organization,
+             rm.name AS room_name
       FROM reservations r
       LEFT JOIN users u  ON u.id  = r.created_by
       LEFT JOIN users lm ON lm.id = r.last_modified_by
       LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
+      LEFT JOIN rooms rm ON rm.id = r.room_id
       WHERE 1=1`;
     const params = [];
     let paramCount = 1;
+
+    if (req.query.room_id) {
+      query += ` AND r.room_id = $${paramCount}`;
+      params.push(req.query.room_id);
+      paramCount++;
+    }
 
     if (status) {
       query += ` AND r.status = $${paramCount}`;
@@ -133,11 +143,13 @@ router.get('/week', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
-              ec.email AS external_email, ec.organization AS external_organization
+              ec.email AS external_email, ec.organization AS external_organization,
+              rm.name AS room_name
        FROM reservations r
        LEFT JOIN users u  ON u.id  = r.created_by
        LEFT JOIN users lm ON lm.id = r.last_modified_by
        LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
+       LEFT JOIN rooms rm ON rm.id = r.room_id
        WHERE r.start_time >= $1 AND r.start_time < $2
        ORDER BY r.start_time ASC`,
       [weekStart.toISOString(), weekEnd.toISOString()]
@@ -154,7 +166,7 @@ router.get('/week', async (req, res) => {
 
 // POST /api/reservations/multi - Create multiple reservations in one logical booking (secretaria only)
 router.post('/multi', requireRole('secretaria'), async (req, res) => {
-  const { intervals, responsible_id, external_responsible_id, area, observations } = req.body || {};
+  const { intervals, responsible_id, external_responsible_id, area, observations, room_id } = req.body || {};
 
   if (!Array.isArray(intervals) || intervals.length === 0) {
     return res.status(400).json({ error: 'intervals[] is required' });
@@ -167,6 +179,9 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
   }
   if (!area) {
     return res.status(400).json({ error: 'area is required' });
+  }
+  if (!room_id) {
+    return res.status(400).json({ error: 'room_id is required' });
   }
   for (const it of intervals) {
     if (!it?.start_time || !it?.end_time) {
@@ -207,7 +222,19 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
       externalId = responsible.id;
     }
 
-    // Conflict check across all intervals (incl. against each other)
+    const roomResult = await client.query('SELECT id, active FROM rooms WHERE id = $1', [room_id]);
+    if (roomResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Room not found' });
+    }
+    if (!roomResult.rows[0].active) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Room is not active' });
+    }
+
+    // Conflict check across all intervals (incl. against each other) — the
+    // whole multi-booking shares one room_id, so the self-overlap check
+    // below doesn't need room scoping, only the existing-reservations check.
     for (let i = 0; i < intervals.length; i++) {
       const a = intervals[i];
       // Self-overlap within payload
@@ -218,14 +245,15 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
           return res.status(400).json({ error: 'Selected intervals overlap each other' });
         }
       }
-      // Overlap with existing active reservations
+      // Overlap with existing active reservations IN THIS ROOM
       const overlap = await client.query(
         `SELECT id, responsible_name, start_time, end_time
          FROM reservations
          WHERE status = 'active'
+         AND room_id = $3
          AND start_time < $2 AND end_time > $1
          LIMIT 1`,
-        [a.start_time, a.end_time]
+        [a.start_time, a.end_time, room_id]
       );
       if (overlap.rows.length > 0) {
         await client.query('ROLLBACK');
@@ -248,14 +276,15 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
     for (const it of intervals) {
       const ins = await client.query(
         `INSERT INTO reservations (
-          responsible_id, external_responsible_id, responsible_name, area, start_time, end_time,
+          responsible_id, external_responsible_id, responsible_name, room_id, area, start_time, end_time,
           observations, grouped_id, created_by, last_modified_by
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
         [
           internalId,
           externalId,
           responsible.name,
+          room_id,
           area,
           it.start_time,
           it.end_time,
@@ -271,7 +300,7 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
         userId: req.user.id,
         action: 'create_reservation',
         reservationId: ins.rows[0].id,
-        details: buildCreateDetails(ins.rows[0]),
+        details: buildCreateDetails(await fetchWithNames(client, ins.rows[0].id)),
       });
     }
 
@@ -326,15 +355,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`
-      SELECT r.*, u.name AS creator_name, lm.name AS last_modified_by_name,
-             ec.email AS external_email, ec.organization AS external_organization
-      FROM reservations r
-      LEFT JOIN users u  ON u.id  = r.created_by
-      LEFT JOIN users lm ON lm.id = r.last_modified_by
-      LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
-      WHERE r.id = $1
-    `, [id]);
+    const result = await pool.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -351,6 +372,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     responsible_id,
     external_responsible_id,
     area,
+    room_id,
     start_time,
     end_time,
     observations,
@@ -358,7 +380,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     recurring_group
   } = req.body;
 
-  if ((!responsible_id && !external_responsible_id) || !area || !start_time || !end_time) {
+  if ((!responsible_id && !external_responsible_id) || !area || !room_id || !start_time || !end_time) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   if (responsible_id && external_responsible_id) {
@@ -393,14 +415,23 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
       externalId = responsible.id;
     }
 
-    // Check for overlap with active reservations
+    const roomResult = await pool.query('SELECT id, active FROM rooms WHERE id = $1', [room_id]);
+    if (roomResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Room not found' });
+    }
+    if (!roomResult.rows[0].active) {
+      return res.status(400).json({ error: 'Room is not active' });
+    }
+
+    // Check for overlap with active reservations IN THIS ROOM
     const overlapCheck = await pool.query(
       `SELECT id, responsible_name, start_time, end_time
        FROM reservations
        WHERE status = 'active'
+       AND room_id = $3
        AND start_time < $2
        AND end_time > $1`,
-      [start_time, end_time]
+      [start_time, end_time, room_id]
     );
 
     if (overlapCheck.rows.length > 0) {
@@ -414,14 +445,15 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     // Create reservation
     const result = await pool.query(
       `INSERT INTO reservations (
-        responsible_id, external_responsible_id, responsible_name, area, start_time, end_time,
+        responsible_id, external_responsible_id, responsible_name, room_id, area, start_time, end_time,
         observations, is_recurring, recurring_group, created_by, last_modified_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [
         internalId,
         externalId,
         responsible.name,
+        room_id,
         area,
         start_time,
         end_time,
@@ -437,7 +469,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
       userId: req.user.id,
       action: 'create_reservation',
       reservationId: result.rows[0].id,
-      details: buildCreateDetails(result.rows[0]),
+      details: buildCreateDetails(await fetchWithNames(pool, result.rows[0].id)),
     });
 
     // Send confirmation email to responsible person (non-blocking)
@@ -454,11 +486,12 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
 // PUT /api/reservations/:id - Update reservation (secretaria only, own reservation; super-admin for any)
 router.put('/:id', requireRole('secretaria'), async (req, res) => {
   const { id } = req.params;
-  const { responsible_id, external_responsible_id, area, start_time, end_time, observations } = req.body;
+  const { responsible_id, external_responsible_id, area, room_id, start_time, end_time, observations } = req.body;
 
   try {
-    // Check if reservation exists
-    const existing = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
+    // Joined (not bare SELECT *) so `before.room_name` is available for the
+    // audit diff below without a second lookup.
+    const existing = await pool.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id]);
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -498,13 +531,28 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       externalId = responsible.id;
     }
 
-    // Check for overlap (excluding current reservation)
+    // room_id may change independently of the schedule; the overlap check
+    // must run against whichever room the reservation will end up in.
+    if (room_id) {
+      const roomResult = await pool.query('SELECT id, active FROM rooms WHERE id = $1', [room_id]);
+      if (roomResult.rows.length === 0) {
+        return res.status(400).json({ error: 'Room not found' });
+      }
+      if (!roomResult.rows[0].active) {
+        return res.status(400).json({ error: 'Room is not active' });
+      }
+    }
+    const effectiveRoomId = room_id || existing.rows[0].room_id;
+
+    // Check for overlap (excluding current reservation), scoped to the room
+    // this reservation will be in after the edit.
     if (start_time && end_time) {
       const overlapCheck = await pool.query(
         `SELECT id FROM reservations
          WHERE status = 'active' AND id != $1
+         AND room_id = $4
          AND start_time < $3 AND end_time > $2`,
-        [id, start_time, end_time]
+        [id, start_time, end_time, effectiveRoomId]
       );
 
       if (overlapCheck.rows.length > 0) {
@@ -522,19 +570,20 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
        SET responsible_id   = $2,
            external_responsible_id = $3,
            responsible_name = COALESCE($4, responsible_name),
-           area             = COALESCE($5, area),
-           start_time       = COALESCE($6, start_time),
-           end_time         = COALESCE($7, end_time),
-           observations     = COALESCE($8, observations),
-           last_modified_by = $9,
+           room_id          = $5,
+           area             = COALESCE($6, area),
+           start_time       = COALESCE($7, start_time),
+           end_time         = COALESCE($8, end_time),
+           observations     = COALESCE($9, observations),
+           last_modified_by = $10,
            updated_at       = NOW()
        WHERE id = $1
        RETURNING *`,
-      [id, setResId, setExtId, responsible?.name ?? null, area, start_time, end_time, observations, req.user.id]
+      [id, setResId, setExtId, responsible?.name ?? null, effectiveRoomId, area, start_time, end_time, observations, req.user.id]
     );
 
     const before = existing.rows[0];
-    const after  = result.rows[0];
+    const after  = await fetchWithNames(pool, id);
 
     // Audit trail: one row per edit that actually changed something, with a
     // before/after diff for the History "Ver cambios" timeline.
@@ -551,6 +600,7 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
     // Compute which fields actually changed and notify the responsible person
     const fieldLabels = {
       responsible_name: 'responsable',
+      room_name: 'sala',
       area: 'área',
       start_time: 'inicio',
       end_time: 'fin',
@@ -589,7 +639,7 @@ router.put('/:id', requireRole('secretaria'), async (req, res) => {
       }
     }
 
-    res.json(await fetchWithNames(pool, id));
+    res.json(after);
   } catch (err) {
     console.error('Error updating reservation:', err);
     res.status(500).json({ error: 'Server error' });

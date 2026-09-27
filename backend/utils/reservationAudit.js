@@ -8,6 +8,7 @@ const text = (v) => (v ?? '');
 function buildCreateDetails(row) {
   return {
     responsible_name: row.responsible_name,
+    room_name: row.room_name,
     area: row.area,
     start_time: iso(row.start_time),
     end_time: iso(row.end_time),
@@ -28,6 +29,9 @@ function buildUpdateChanges(before, after) {
   }
   if (before.responsible_name !== after.responsible_name) {
     changes.push({ field: 'responsible', from: before.responsible_name, to: after.responsible_name });
+  }
+  if (before.room_name !== after.room_name) {
+    changes.push({ field: 'room', from: before.room_name, to: after.room_name });
   }
   if (text(before.area) !== text(after.area)) {
     changes.push({ field: 'area', from: before.area, to: after.area });

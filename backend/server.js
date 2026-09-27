@@ -14,6 +14,7 @@ const notificationsRoutes = require('./routes/notifications');
 const externalContactsRoutes = require('./routes/externalContacts');
 const backupsRoutes = require('./routes/backups');
 const settingsRoutes = require('./routes/settings');
+const roomsRoutes = require('./routes/rooms');
 const { runMigrations } = require('./db/migrate');
 const { startRetentionScheduler } = require('./utils/retentionJob');
 
@@ -60,6 +61,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/external-contacts', externalContactsRoutes);
 app.use('/api/backups', backupsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/rooms', roomsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
