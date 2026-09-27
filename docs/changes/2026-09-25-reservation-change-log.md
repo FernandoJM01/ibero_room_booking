@@ -125,3 +125,21 @@ the filter bar.
   column-width array had 11 entries for 9 actual columns (leftover from removed
   "Correo"/"Depto" columns), which silently shifted widths — Observaciones was 12
   characters wide (should be 40) and Hora inicio/fin were 30–35 (should be 12).
+
+## Follow-up (2026-09-27): show/hide eye icon on every remaining password field
+
+Extends the eye-icon toggle (already on login, the Usuarios form, and the two quick
+"crear nuevo usuario" panels) to the last three places a password is typed blind:
+
+- **Cambiar Contraseña** (the modal every logged-in user reaches from their own menu) —
+  contraseña actual, nueva contraseña, confirmar nueva contraseña.
+- **Restablecer contraseña** (the "forgot password" email-link flow, `reset-password.html`)
+  — nueva contraseña, confirmar contraseña. This page is intentionally standalone (no
+  shared JS modules), so the toggle is implemented inline, matching the same icon pair
+  used on the login page.
+- **Asistente IA's** own inline "Crear nuevo usuario" panel — contraseña temporal.
+
+While wiring Cambiar Contraseña's toggle, found that `calendar.html` and
+`estadisticas.html` never loaded `components/forms.css` at all — `.form-input`/
+`.form-group` (used by that same modal) were rendering completely unstyled on those two
+pages already, before this change. Added the missing stylesheet link to both.

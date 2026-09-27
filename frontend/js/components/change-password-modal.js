@@ -13,16 +13,25 @@ const ChangePasswordModal = (() => {
       <form id="change-password-form">
         <div class="form-group">
           <label for="cp-current" class="form-label">Contraseña actual</label>
-          <input type="password" id="cp-current" class="form-input" required />
+          <div class="pw-wrapper">
+            <input type="password" id="cp-current" class="form-input" required />
+            <button type="button" class="pw-toggle-btn" id="cp-current-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
+          </div>
         </div>
         <div class="form-group" style="margin-top: var(--space-3);">
           <label for="cp-new" class="form-label">Nueva contraseña</label>
-          <input type="password" id="cp-new" class="form-input" required />
+          <div class="pw-wrapper">
+            <input type="password" id="cp-new" class="form-input" required />
+            <button type="button" class="pw-toggle-btn" id="cp-new-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
+          </div>
           <div class="form-help">Mínimo 8 caracteres, con mayúscula, minúscula, número y especial</div>
         </div>
         <div class="form-group" style="margin-top: var(--space-3);">
           <label for="cp-confirm" class="form-label">Confirmar nueva contraseña</label>
-          <input type="password" id="cp-confirm" class="form-input" required />
+          <div class="pw-wrapper">
+            <input type="password" id="cp-confirm" class="form-input" required />
+            <button type="button" class="pw-toggle-btn" id="cp-confirm-toggle" tabindex="-1" aria-label="Mostrar contraseña"></button>
+          </div>
         </div>
         <div id="cp-error" class="form-help" style="color: var(--color-danger); display: none; margin-top: var(--space-3);"></div>
       </form>
@@ -55,6 +64,9 @@ const ChangePasswordModal = (() => {
     // Event listeners
     document.getElementById('cp-cancel-btn').addEventListener('click', close);
     // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
+    Utils.wirePasswordToggle(document.getElementById('cp-current'), document.getElementById('cp-current-toggle'));
+    Utils.wirePasswordToggle(document.getElementById('cp-new'),     document.getElementById('cp-new-toggle'));
+    Utils.wirePasswordToggle(document.getElementById('cp-confirm'), document.getElementById('cp-confirm-toggle'));
 
     const form = document.getElementById('change-password-form');
     const errorDiv = document.getElementById('cp-error');

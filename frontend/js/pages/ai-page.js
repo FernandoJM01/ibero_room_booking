@@ -65,6 +65,7 @@ const init = async () => {
   const newUserRole   = document.getElementById('new-user-role');
   const btnNewUserSave   = document.getElementById('btn-new-user-save');
   const btnNewUserCancel = document.getElementById('btn-new-user-cancel');
+  Utils.wirePasswordToggle(newUserPwd, document.getElementById('new-user-password-toggle'));
 
   // Suggestions
   const suggestDate = document.getElementById('suggest-date');
