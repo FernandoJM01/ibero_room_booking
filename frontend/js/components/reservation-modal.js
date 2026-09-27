@@ -14,6 +14,7 @@ const ReservationModal = (() => {
   let _editReservation = null;  // full reservation object when editing
   let _readOnly        = false;
   let _semesterSettings = {};   // { semester_start, semester_end } — prefetched on open()
+  let _rooms            = [];   // active rooms — prefetched on open()
 
   /**
    * @param {object}   opts
@@ -43,13 +44,15 @@ const ReservationModal = (() => {
     }
 
     try {
-      const [users, external, ai, settings] = await Promise.all([
+      const [users, external, ai, settings, rooms] = await Promise.all([
         API.getUsers().catch(() => []),
         API.getExternalContacts().catch(() => []),
         API.aiStatus().catch(() => ({ enabled: false })),
         API.getSettings().catch(() => ({})),
+        API.getRooms().catch(() => []),
       ]);
       _users     = Array.isArray(users) ? users : [];
+      _rooms     = Array.isArray(rooms) ? rooms : [];
       Store.setState({ externalContacts: Array.isArray(external) ? external : [] });
       _aiEnabled = false; // Boolean(ai?.enabled); DESACTIVADO TEMPORALMENTE
       // Prefetched so selecting "Al final del semestre actual" in the
@@ -58,6 +61,7 @@ const ReservationModal = (() => {
       _semesterSettings = settings && typeof settings === 'object' ? settings : {};
     } catch {
       _users     = [];
+      _rooms     = [];
       Store.setState({ externalContacts: [] });
       _aiEnabled = false;
       _semesterSettings = {};
@@ -155,6 +159,18 @@ const ReservationModal = (() => {
     if (current && current !== '__new__') sel.value = current;
   };
 
+  const _populateRoomSelect = (sel) => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Selecciona una sala —</option>';
+    _rooms.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value       = r.id;
+      opt.textContent = r.capacity ? `${r.name} (cap. ${r.capacity})` : r.name;
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+  };
+
   const _populateExternalContactsSelect = (sel) => {
     const current = sel.value;
     sel.innerHTML = '<option value="">— Selecciona un solicitante externo —</option>';
@@ -223,6 +239,10 @@ const ReservationModal = (() => {
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
               Horarios
+            </div>
+            <div class="rmodal__field" style="margin-bottom: var(--space-3);">
+              <label for="rmodal-room">Sala <span class="rmodal__required">*</span></label>
+              <select id="rmodal-room" class="form-select"></select>
             </div>
             <div class="rmodal__iv-list">
               ${_intervals.map((iv, i) => `
@@ -471,6 +491,9 @@ const ReservationModal = (() => {
     const extSel = overlay.querySelector('#rmodal-ext-select');
     if (extSel) _populateExternalContactsSelect(extSel);
 
+    const roomSel = overlay.querySelector('#rmodal-room');
+    if (roomSel) _populateRoomSelect(roomSel);
+
     if (_editReservation) {
       const r      = _editReservation;
       const areaEl = overlay.querySelector('#rmodal-area');
@@ -482,6 +505,7 @@ const ReservationModal = (() => {
       }
       if (areaEl)  areaEl.value  = r.area ?? '';
       if (obsEl)   obsEl.value   = r.observations ?? '';
+      if (roomSel && r.roomId) roomSel.value = String(r.roomId);
     } else if (_prefill) {
       if (_prefill.external_responsible_id && extSel) {
          extSel.value = String(_prefill.external_responsible_id);
@@ -511,7 +535,15 @@ const ReservationModal = (() => {
       el.className = 'rmodal__iv-overlap hidden';
       return;
     }
-    const conflict = Reservations.checkOverlap(iv.date, iv.startTime, iv.endTime, _editReservation?.id ?? null);
+    const roomId = _overlay?.querySelector('#rmodal-room')?.value || null;
+    if (!roomId) {
+      // Can't claim a time is free before knowing which room — show a
+      // neutral prompt instead of a misleading "Horario disponible".
+      el.classList.remove('hidden', 'is-conflict', 'is-available');
+      el.textContent = 'Elige una sala para ver disponibilidad';
+      return;
+    }
+    const conflict = Reservations.checkOverlap(iv.date, iv.startTime, iv.endTime, roomId, _editReservation?.id ?? null);
     el.classList.remove('hidden', 'is-conflict', 'is-available');
     if (conflict) {
       el.classList.add('is-conflict');
@@ -583,6 +615,11 @@ const ReservationModal = (() => {
         _intervals[idx].endTime = sel.value;
         _checkIvOverlap(idx);
       });
+    });
+
+    // Availability depends on the room — re-check every interval when it changes.
+    _overlay.querySelector('#rmodal-room')?.addEventListener('change', () => {
+      _intervals.forEach((_, idx) => _checkIvOverlap(idx));
     });
 
     // AI toggle
@@ -671,7 +708,7 @@ const ReservationModal = (() => {
     // network calls) on every input that affects which dates would be
     // created, so the secretary sees the result before saving, not after.
     // See docs/changes/2026-09-22-secretary-feedback.md #6b.
-    ['#rmodal-recur-freq', '#rmodal-recur-count', '#rmodal-recur-end', '#rmodal-area'].forEach(sel => {
+    ['#rmodal-recur-freq', '#rmodal-recur-count', '#rmodal-recur-end', '#rmodal-area', '#rmodal-room'].forEach(sel => {
       _overlay.querySelector(sel)?.addEventListener('input', _updateRecurPreview);
       _overlay.querySelector(sel)?.addEventListener('change', _updateRecurPreview);
     });
@@ -706,15 +743,16 @@ const ReservationModal = (() => {
       endDate = null;
     }
 
-    const iv   = _intervals[0];
-    const freq = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
-    const area = _overlay.querySelector('#rmodal-area')?.value || '';
+    const iv     = _intervals[0];
+    const freq   = _overlay.querySelector('#rmodal-recur-freq')?.value ?? 'weekly';
+    const area   = _overlay.querySelector('#rmodal-area')?.value || '';
+    const roomId = _overlay.querySelector('#rmodal-room')?.value || null;
 
     let result;
     try {
       result = Recurring.generate({
         date: iv.date, startTime: iv.startTime, endTime: iv.endTime,
-        responsible_id: null, area, observations: '',
+        responsible_id: null, room_id: roomId, area, observations: '',
         frequency: freq, count, endDate,
       });
     } catch (err) {
@@ -873,6 +911,7 @@ const ReservationModal = (() => {
     const isExternal = _overlay.querySelector('input[name="rmodal-resp-type"][value="external"]')?.checked;
     const respEl  = _overlay.querySelector('#rmodal-responsible');
     const extEl   = _overlay.querySelector('#rmodal-ext-select');
+    const roomEl  = _overlay.querySelector('#rmodal-room');
     const areaEl  = _overlay.querySelector('#rmodal-area');
     const obsEl   = _overlay.querySelector('#rmodal-obs');
     const errEl   = _overlay.querySelector('#rmodal-error');
@@ -891,6 +930,7 @@ const ReservationModal = (() => {
 
     const payload = {
       area: areaEl.value.trim(),
+      room_id: roomEl.value,
       observations: obsEl.value.trim()
     };
 
@@ -900,8 +940,8 @@ const ReservationModal = (() => {
       payload.responsible_id = respEl.value;
     }
 
-    if ((!payload.responsible_id && !payload.external_responsible_id) || !payload.area) {
-      errEl.textContent = 'Completa los campos obligatorios (responsable y área).';
+    if ((!payload.responsible_id && !payload.external_responsible_id) || !payload.area || !payload.room_id) {
+      errEl.textContent = 'Completa los campos obligatorios (responsable, sala y área).';
       errEl.classList.remove('hidden');
       return;
     }

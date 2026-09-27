@@ -85,6 +85,8 @@ const API = (() => {
       externalOrg:      r.external_organization ?? null,
       isRecurring:      r.is_recurring,
       recurringGroupId: r.recurring_group,
+      roomId:           r.room_id ?? null,
+      roomName:         r.room_name ?? null,
     };
   };
 
@@ -159,6 +161,16 @@ const API = (() => {
   };
 
   // Calendar / Holidays
+  // Rooms
+  const getRooms = async (all = false) =>
+    _request('GET', `/rooms${all ? '?all=1' : ''}`);
+
+  const createRoom = (data) =>
+    _request('POST', '/rooms', data);
+
+  const updateRoom = (id, data) =>
+    _request('PUT', `/rooms/${id}`, data);
+
   const getHolidays = async () => {
     const data = await _request('GET', '/calendar/holidays');
     return Array.isArray(data) ? data.map(_normalizeHoliday) : data;
@@ -267,6 +279,9 @@ const API = (() => {
     getHolidays,
     createHoliday,
     deleteHoliday,
+    getRooms,
+    createRoom,
+    updateRoom,
     getUsers,
     createUser,
     updateUser,

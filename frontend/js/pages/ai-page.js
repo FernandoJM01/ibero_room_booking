@@ -277,7 +277,9 @@ const init = async () => {
       return;
     }
 
-    const conflict = Reservations.checkOverlap(date, start, end);
+    // TODO(multi-room phase 6): pass the proposal's chosen room once the AI
+    // panel has a room selector; until then this can't claim a time is free.
+    const conflict = Reservations.checkOverlap(date, start, end, null);
     if (conflict) {
       _setOverlapStatus('conflict', conflict);
     } else {

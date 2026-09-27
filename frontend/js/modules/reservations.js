@@ -14,6 +14,7 @@ const Reservations = (() => {
     try {
       const reservation = await API.createReservation({
         responsible_id: data.responsible_id,
+        room_id: data.room_id,
         area: data.area.trim(),
         start_time: data.start_time,
         end_time: data.end_time,
@@ -42,6 +43,7 @@ const Reservations = (() => {
     try {
       const reservation = await API.updateReservation(id, {
         responsible_id: data.responsible_id,
+        room_id: data.room_id,
         area: data.area.trim(),
         start_time: data.start_time,
         end_time: data.end_time,
@@ -102,15 +104,19 @@ const Reservations = (() => {
   /* ════════════════════════════════════════
      OVERLAP DETECTION — HU-09
      ════════════════════════════════════════ */
-  const checkOverlap = (date, startTime, endTime, excludeId = null) => {
+  const checkOverlap = (date, startTime, endTime, roomId = null, excludeId = null) => {
     const allRes = Store.getState().reservations;
 
     for (const r of allRes) {
       // Skip cancelled reservations and the reservation being edited
       if (r.status === 'cancelled' || r.id === excludeId) continue;
 
-      // Only check reservations on the same date
+      // Only check reservations on the same date, IN THE SAME ROOM — two
+      // rooms booked at the same time are not a conflict. roomId=null (a
+      // caller that hasn't picked a room yet) matches nothing, same as the
+      // server: no room means nothing can be confirmed free yet.
       if (r.date !== date) continue;
+      if (r.roomId !== roomId) continue;
 
       // Check time overlap: new period [start,end) overlaps with [rStart,rEnd)?
       if (startTime < r.endTime && endTime > r.startTime) {

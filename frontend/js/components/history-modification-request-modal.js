@@ -149,7 +149,7 @@ const HistoryModificationRequestModal = (() => {
       return;
     }
 
-    const conflict = Reservations.checkOverlap(dateVal, startVal, endVal, _reservation?.id ?? null);
+    const conflict = Reservations.checkOverlap(dateVal, startVal, endVal, _reservation?.roomId ?? null, _reservation?.id ?? null);
     statusEl.classList.remove('hidden', 'is-conflict', 'is-available');
     if (conflict) {
       statusEl.classList.add('is-conflict');

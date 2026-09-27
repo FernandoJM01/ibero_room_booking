@@ -18,6 +18,7 @@ const Recurring = (() => {
    * @param {string} opts.endTime
    * @param {string} [opts.responsible_id]
    * @param {string} [opts.external_responsible_id]
+   * @param {string} opts.room_id
    * @param {string} opts.area
    * @param {string} [opts.observations]
    * @param {'daily'|'weekly'|'biweekly'|'monthly'} opts.frequency
@@ -27,7 +28,7 @@ const Recurring = (() => {
    */
   const generate = (opts) => {
     const {
-      date, startTime, endTime, responsible_id, external_responsible_id, area, observations = '',
+      date, startTime, endTime, responsible_id, external_responsible_id, room_id, area, observations = '',
       frequency, count, endDate,
     } = opts;
 
@@ -75,7 +76,7 @@ const Recurring = (() => {
         continue;
       }
 
-      const conflict = Reservations.checkOverlap(dateStr, startTime, endTime);
+      const conflict = Reservations.checkOverlap(dateStr, startTime, endTime, room_id);
       if (conflict) {
         skipped.push({ date: dateStr, reason: 'overlap', conflictWith: conflict });
         _advance(current, frequency);
@@ -86,6 +87,7 @@ const Recurring = (() => {
         id:               Utils.uid(),
         responsible_id,
         external_responsible_id,
+        room_id,
         area:             area.trim(),
         date:             dateStr,
         startTime,
@@ -151,6 +153,7 @@ const Recurring = (() => {
         const apiData = {
           responsible_id: r.responsible_id,
           external_responsible_id: r.external_responsible_id,
+          room_id: r.room_id,
           area: r.area,
           start_time: `${r.date}T${r.startTime}:00`,
           end_time: `${r.date}T${r.endTime}:00`,
