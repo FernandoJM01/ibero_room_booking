@@ -28,6 +28,7 @@ const init = async () => {
   /* ── Sidebar & topbar ──────────────────────────────────── */
   const _navIdForHash = (hash) => {
     if (hash === '#usuarios')       return 'admin-users';
+    if (hash === '#salas')          return 'admin-rooms';
     if (hash === '#solicitudes')    return 'admin-requests';
     if (hash === '#calendario')     return 'admin-config';
     if (hash === '#notificaciones') return 'admin-notif';
@@ -133,6 +134,11 @@ const init = async () => {
     const secBackup = document.getElementById('section-backup');
     if (tabBackup) tabBackup.style.display = 'none';
     if (secBackup) secBackup.style.display = 'none';
+
+    const tabRooms = document.getElementById('tab-rooms');
+    const secRooms = document.getElementById('section-rooms');
+    if (tabRooms) tabRooms.style.display = 'none';
+    if (secRooms) secRooms.style.display = 'none';
   }
 
   // "Solicitudes" removed from the tab list: any secretaria can now
@@ -142,6 +148,9 @@ const init = async () => {
   // See docs/changes/2026-09-22-secretary-feedback.md #7.
   const TABS = [
     { id: 'tab-users',    section: 'section-users',    hash: '#usuarios',       label: 'Usuarios',       breadcrumb: 'Usuarios'           },
+    ...(isSuperAdmin ? [
+      { id: 'tab-rooms', section: 'section-rooms', hash: '#salas', label: 'Salas', breadcrumb: 'Salas' },
+    ] : []),
     { id: 'tab-calendar', section: 'section-calendar', hash: '#calendario',     label: 'Calendario',     breadcrumb: 'Calendario Maestro' },
     { id: 'tab-notif',    section: 'section-notif',    hash: '#notificaciones', label: 'Notificaciones', breadcrumb: 'Notificaciones'     },
     ...(isSuperAdmin ? [
@@ -159,6 +168,8 @@ const init = async () => {
   let _calYear           = new Date().getFullYear();
   let _calMonth          = new Date().getMonth();
   let _backupInitialized = false;
+  let _roomsInitialized  = false;
+  let _rooms             = [];
   let _requestsInitialized = false;
   let _externalContacts = [];
 
@@ -189,6 +200,7 @@ const init = async () => {
 
     // Lazy-init section content
     if (tab.id === 'tab-users')     _initUsersSection();
+    if (tab.id === 'tab-rooms')     _initRoomsSection();
     if (tab.id === 'tab-calendar') { _initCalendarSection(); _initSemesterSettings(); }
     if (tab.id === 'tab-notif') { _initSmtpDiagnostics(); _renderNotifLog(); }
     if (tab.id === 'tab-backup')    _initBackupSection();
@@ -502,6 +514,230 @@ const init = async () => {
 
     // Focus first field
     overlay.querySelector('#um-name')?.focus();
+  }
+
+  /* ════════════════════════════════════════════════════════
+     SECTION: SALAS (super-admin only)
+     See docs/changes/2026-09-27-multi-room-support.md
+  ════════════════════════════════════════════════════════ */
+
+  async function _initRoomsSection() {
+    if (_roomsInitialized) { _renderRoomsGrid(); return; }
+    _roomsInitialized = true;
+
+    document.getElementById('btn-add-room')?.addEventListener('click', () => _openRoomModal(null));
+    document.getElementById('rooms-search')?.addEventListener('input', () => _renderRoomsGrid());
+
+    try {
+      // all=1: includes retired rooms too, so they stay visible/reactivatable
+      // here even though the room switcher (Reservar/Calendario) never
+      // offers them for new bookings.
+      _rooms = await API.getRooms(true);
+    } catch (err) {
+      console.error('Error loading rooms:', err);
+      Toast.show('Error cargando salas', 'error');
+      _rooms = [];
+    }
+    _renderRoomsGrid();
+  }
+
+  function _renderRoomsGrid(query) {
+    const gridEl = document.getElementById('rooms-grid');
+    if (!gridEl) return;
+
+    const q = Utils.normalize(
+      (typeof query === 'string' ? query : document.getElementById('rooms-search')?.value) ?? ''
+    );
+
+    let rooms = [..._rooms].sort((a, b) => a.name.localeCompare(b.name));
+    if (q) rooms = rooms.filter(r => Utils.normalize(r.name).includes(q));
+
+    if (!rooms.length) {
+      gridEl.innerHTML = `<div style="grid-column:1/-1;color:var(--color-secondary-light);font-size:var(--font-size-sm);padding:var(--space-6);">No se encontraron salas.</div>`;
+      return;
+    }
+
+    gridEl.innerHTML = rooms.map(_buildRoomCard).join('');
+
+    gridEl.querySelectorAll('[data-room-edit]').forEach(btn => {
+      btn.addEventListener('click', () => _openRoomModal(btn.dataset.roomEdit));
+    });
+    gridEl.querySelectorAll('[data-room-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => _toggleRoomActive(btn.dataset.roomToggle));
+    });
+  }
+
+  function _buildRoomCard(r) {
+    const statusBadge = r.active
+      ? `<span class="badge badge-success" style="font-size:10px;">Activa</span>`
+      : `<span class="badge badge-neutral" style="font-size:10px;">Inactiva</span>`;
+    const toggleLabel = r.active ? 'Desactivar' : 'Activar';
+    const toggleClass = r.active ? 'btn-danger' : 'btn-success';
+    const meta = [
+      r.location ? Utils.escapeHTML(r.location) : null,
+      r.capacity ? `Capacidad: ${r.capacity}` : null,
+    ].filter(Boolean).join(' · ');
+
+    return `
+      <div class="user-card${!r.active ? ' is-inactive' : ''}">
+        <div class="user-card__header">
+          <div class="user-card__avatar" aria-hidden="true">${Utils.escapeHTML(r.name.charAt(0).toUpperCase())}</div>
+          <div class="user-card__info">
+            <div class="user-card__name" title="${Utils.escapeHTML(r.name)}">${Utils.escapeHTML(r.name)}</div>
+            <div class="user-card__email">${meta || '<span style="color:var(--color-secondary-light)">Sin datos adicionales</span>'}</div>
+          </div>
+        </div>
+        <div class="user-card__meta">${statusBadge}</div>
+        <div class="user-card__actions">
+          <button class="btn btn-secondary btn-sm" data-room-edit="${r.id}"
+                  aria-label="Editar ${Utils.escapeHTML(r.name)}">
+            Editar
+          </button>
+          <button class="btn ${toggleClass} btn-sm" data-room-toggle="${r.id}"
+                  aria-label="${toggleLabel} ${Utils.escapeHTML(r.name)}">
+            ${toggleLabel}
+          </button>
+        </div>
+      </div>`;
+  }
+
+  function _toggleRoomActive(id) {
+    const r = _rooms.find(x => x.id === id);
+    if (!r) return;
+
+    Modal.confirm(
+      {
+        title:       `${r.active ? 'Desactivar' : 'Activar'} sala`,
+        message:     `¿${r.active ? 'Desactivar' : 'Activar'} <strong>${Utils.escapeHTML(r.name)}</strong>?<br>
+                      ${r.active
+                        ? 'Ya no podrá elegirse para reservaciones nuevas. Su historial de reservaciones no se ve afectado.'
+                        : 'Volverá a estar disponible para reservaciones nuevas.'}`,
+        confirmText: `${r.active ? 'Desactivar' : 'Activar'}`,
+        danger:      r.active,
+      },
+      async () => {
+        try {
+          const updated = await API.updateRoom(id, { active: !r.active });
+          const idx = _rooms.findIndex(x => x.id === id);
+          if (idx !== -1) _rooms[idx] = updated;
+          Toast.show(`Sala ${r.active ? 'desactivada' : 'activada'}.`, 'success');
+          _renderRoomsGrid();
+        } catch (err) {
+          console.error('Error toggling room:', err);
+          Toast.show('No se pudo realizar la acción.', 'error');
+        }
+      }
+    );
+  }
+
+  /* ── ROOM MODAL (create / edit) ── */
+  function _openRoomModal(editId) {
+    const isEdit = !!editId;
+    const r      = isEdit ? _rooms.find(x => x.id === editId) : null;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'user-modal-overlay';
+    overlay.setAttribute('role',       'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', isEdit ? 'Editar sala' : 'Nueva sala');
+
+    overlay.innerHTML = `
+      <div class="user-modal-dialog">
+        <div class="user-modal-header">
+          <h3>${isEdit ? 'Editar sala' : 'Nueva sala'}</h3>
+          <button class="btn btn-ghost btn-sm" id="room-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="user-modal-body">
+          <div class="form-group">
+            <label class="form-label" for="rm-name">Nombre <span class="required" aria-hidden="true">*</span></label>
+            <input type="text" id="rm-name" class="form-input"
+                   value="${Utils.escapeHTML(r?.name ?? '')}"
+                   placeholder="Ej: Sala Ejecutiva" maxlength="100" required />
+            <span class="form-error-msg hidden" id="rm-err-name" role="alert"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rm-location">Ubicación (opcional)</label>
+            <input type="text" id="rm-location" class="form-input"
+                   value="${Utils.escapeHTML(r?.location ?? '')}"
+                   placeholder="Ej: Edificio F, planta 3" maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rm-capacity">Capacidad (opcional)</label>
+            <input type="number" id="rm-capacity" class="form-input" min="1" step="1"
+                   value="${r?.capacity ?? ''}" placeholder="Ej: 12" />
+            <span class="form-error-msg hidden" id="rm-err-capacity" role="alert"></span>
+          </div>
+        </div>
+        <div class="user-modal-footer">
+          <button class="btn btn-secondary" id="room-modal-cancel">Cancelar</button>
+          <button class="btn btn-primary"   id="room-modal-save">
+            ${isEdit ? 'Guardar cambios' : 'Crear sala'}
+          </button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('#room-modal-close')?.addEventListener('click', close);
+    overlay.querySelector('#room-modal-cancel')?.addEventListener('click', close);
+    // No click-outside-to-close — see docs/changes/2026-09-22-secretary-feedback.md #4.
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+    });
+
+    overlay.querySelector('#room-modal-save')?.addEventListener('click', async () => {
+      const name       = overlay.querySelector('#rm-name')?.value.trim()     ?? '';
+      const location   = overlay.querySelector('#rm-location')?.value.trim() ?? '';
+      const capacityRaw = overlay.querySelector('#rm-capacity')?.value       ?? '';
+      const capacity   = capacityRaw ? parseInt(capacityRaw, 10) : null;
+
+      ['rm-err-name', 'rm-err-capacity'].forEach(id => {
+        const el = overlay.querySelector(`#${id}`);
+        if (el) { el.textContent = ''; el.classList.add('hidden'); }
+      });
+
+      if (!name) {
+        const el = overlay.querySelector('#rm-err-name');
+        el.textContent = 'El nombre es obligatorio.';
+        el.classList.remove('hidden');
+        return;
+      }
+      if (capacityRaw && (!Number.isInteger(capacity) || capacity < 1)) {
+        const el = overlay.querySelector('#rm-err-capacity');
+        el.textContent = 'La capacidad debe ser un número entero positivo.';
+        el.classList.remove('hidden');
+        return;
+      }
+
+      const saveBtn = overlay.querySelector('#room-modal-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando…';
+
+      try {
+        if (isEdit) {
+          const updated = await API.updateRoom(editId, { name, location, capacity });
+          const idx = _rooms.findIndex(x => x.id === editId);
+          if (idx !== -1) _rooms[idx] = updated;
+          Toast.show('Sala actualizada.', 'success');
+        } else {
+          const created = await API.createRoom({ name, location, capacity });
+          _rooms.push(created);
+          Toast.show('Sala creada.', 'success');
+        }
+        close();
+        _renderRoomsGrid();
+      } catch (err) {
+        console.error('Error saving room:', err);
+        const el = overlay.querySelector('#rm-err-name');
+        el.textContent = err.data?.error || 'Error al guardar la sala.';
+        el.classList.remove('hidden');
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEdit ? 'Guardar cambios' : 'Crear sala';
+      }
+    });
+
+    overlay.querySelector('#rm-name')?.focus();
   }
 
   /* ════════════════════════════════════════════════════════

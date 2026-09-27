@@ -26,6 +26,10 @@ const Sidebar = (() => {
       label: 'Administración',
       items: [
         { id: 'admin-users', href: 'admin.html#usuarios', label: 'Usuarios', icon: 'users' },
+        // Salas: solo super admin — ver docs/changes/2026-09-27-multi-room-support.md
+        ...(isAdmin ? [
+          { id: 'admin-rooms', href: 'admin.html#salas', label: 'Salas', icon: 'door' },
+        ] : []),
         // "Solicitudes" removed from the nav: any secretaria can now
         // edit/cancel any reservation directly, so there's nothing to
         // approve. The tab, its backend routes and table stay in place
@@ -67,6 +71,7 @@ const Sidebar = (() => {
     download: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
     bell: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
     inbox: `<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>`,
+    door: `<path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>`,
   };
 
   const _icon = (name) =>

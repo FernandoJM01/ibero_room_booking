@@ -5,15 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Administración — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css?v=29" />
-  <link rel="stylesheet" href="css/reset.css?v=29" />
-  <link rel="stylesheet" href="css/base.css?v=29" />
-  <link rel="stylesheet" href="css/layout.css?v=29" />
-  <link rel="stylesheet" href="css/components/calendar.css?v=29" />
-  <link rel="stylesheet" href="css/components/forms.css?v=29" />
-  <link rel="stylesheet" href="css/components/modals.css?v=29" />
-  <link rel="stylesheet" href="css/pages/admin.css?v=29" />
-  <link rel="stylesheet" href="css/responsive.css?v=29" />
+  <link rel="stylesheet" href="css/variables.css?v=30" />
+  <link rel="stylesheet" href="css/reset.css?v=30" />
+  <link rel="stylesheet" href="css/base.css?v=30" />
+  <link rel="stylesheet" href="css/layout.css?v=30" />
+  <link rel="stylesheet" href="css/components/calendar.css?v=30" />
+  <link rel="stylesheet" href="css/components/forms.css?v=30" />
+  <link rel="stylesheet" href="css/components/modals.css?v=30" />
+  <link rel="stylesheet" href="css/pages/admin.css?v=30" />
+  <link rel="stylesheet" href="css/responsive.css?v=30" />
   <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
 
@@ -62,6 +62,18 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
             Usuarios
+          </button>
+
+          <!-- Solo super admin — ver docs/changes/2026-09-27-multi-room-support.md -->
+          <button class="admin-tab" id="tab-rooms" role="tab" aria-controls="section-rooms" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 21h18" />
+              <path d="M5 21V7l8-4v18" />
+              <path d="M19 21V11l-6-4" />
+              <path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01" />
+            </svg>
+            Salas
           </button>
 
           <!-- "Solicitudes" tab removed: any secretaria can now edit/cancel
@@ -151,6 +163,28 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- ══════════════════════════════════════════
+           SECCIÓN: SALAS (super-admin)
+      ══════════════════════════════════════════ -->
+        <div id="section-rooms" role="tabpanel" aria-labelledby="tab-rooms" class="hidden">
+          <div class="users-toolbar">
+            <input type="search" id="rooms-search" class="users-toolbar__search"
+              placeholder="Buscar por nombre…" aria-label="Buscar salas" />
+            <button class="btn btn-primary btn-sm" id="btn-add-room">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Nueva sala
+            </button>
+          </div>
+
+          <div class="users-grid" id="rooms-grid" aria-label="Lista de salas">
+            <!-- JS renders here -->
+          </div>
         </div>
 
         <!-- ══════════════════════════════════════════
@@ -454,21 +488,21 @@
   <div id="modal-container"></div>
 
   <!-- Scripts -->
-  <script src="js/core/utils.js?v=29"></script>
-  <script src="js/core/api.js?v=29"></script>
-  <script src="js/core/store.js?v=29"></script>
-  <script src="js/components/toast.js?v=29"></script>
-  <script src="js/components/sidebar.js?v=29"></script>
-  <script src="js/components/change-password-modal.js?v=29"></script>
-  <script src="js/components/calendar-grid.js?v=29"></script>
-  <script src="js/components/modal.js?v=29"></script>
-  <script src="js/modules/notifications.js?v=29"></script>
-  <script src="js/modules/auth.js?v=29"></script>
-  <script src="js/modules/reservations.js?v=29"></script>
-  <script src="js/modules/holidays.js?v=29"></script>
-  <script src="js/modules/users.js?v=29"></script>
-  <script src="js/modules/backup.js?v=29"></script>
-  <script src="js/pages/admin-page.js?v=29"></script>
+  <script src="js/core/utils.js?v=30"></script>
+  <script src="js/core/api.js?v=30"></script>
+  <script src="js/core/store.js?v=30"></script>
+  <script src="js/components/toast.js?v=30"></script>
+  <script src="js/components/sidebar.js?v=30"></script>
+  <script src="js/components/change-password-modal.js?v=30"></script>
+  <script src="js/components/calendar-grid.js?v=30"></script>
+  <script src="js/components/modal.js?v=30"></script>
+  <script src="js/modules/notifications.js?v=30"></script>
+  <script src="js/modules/auth.js?v=30"></script>
+  <script src="js/modules/reservations.js?v=30"></script>
+  <script src="js/modules/holidays.js?v=30"></script>
+  <script src="js/modules/users.js?v=30"></script>
+  <script src="js/modules/backup.js?v=30"></script>
+  <script src="js/pages/admin-page.js?v=30"></script>
 
 </body>
 
