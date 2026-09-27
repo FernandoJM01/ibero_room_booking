@@ -10,6 +10,13 @@
   gap: var(--space-6);
   align-items: start;
 }
+/* Respaldos: dos columnas de igual ancho (en vez de un estilo inline, que
+   ganaba sobre la media query de abajo y dejaba el panel a la mitad del
+   ancho en celular — el botón "Descargar respaldo SQL" y los contadores
+   se veían cortados). */
+.admin-layout--split {
+  grid-template-columns: 1fr 1fr;
+}
 
 /* ── PANELES ── */
 .admin-panel {
@@ -580,11 +587,22 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
-  .admin-layout {
+  .admin-layout,
+  .admin-layout--split {
     grid-template-columns: 1fr;
   }
   .admin-tabs { flex-wrap: wrap; width: 100%; }
   .admin-tab  { flex: 1; justify-content: center; }
+}
+
+/* A couple of admin buttons (Respaldos, Restaurar) carry a longer label
+   than typical actions; let them wrap on narrow screens instead of
+   overflowing past the panel and getting clipped. */
+@media (max-width: 480px) {
+  .btn-full {
+    white-space: normal;
+    line-height: var(--line-height-normal);
+  }
 }
 
 

@@ -20,7 +20,11 @@ const Reservations = (() => {
         observations: (data.observations ?? '').trim()
       });
       Store.addReservation(reservation);
-      Notifications && Notifications.onReservationCreated(reservation);
+      // Notifications no longer exposes onReservationCreated (it now only
+      // exposes getLog(), which reads the server's own send log). Calling
+      // the old hook threw here *after* the reservation was already saved,
+      // which reported a false error back to the caller. See the same fix
+      // for the recurring path: docs/changes/2026-09-22-secretary-feedback.md #6a.
       return { success: true, reservation };
     } catch (err) {
       if (err.status === 409) {
@@ -62,10 +66,12 @@ const Reservations = (() => {
      ════════════════════════════════════════ */
   const cancel = async (id) => {
     try {
-      const r = getById(id);
       const cancelled = await API.cancelReservation(id);
       Store.updateReservation(id, cancelled);
-      Notifications && Notifications.onReservationCancelled(r);
+      // Same dead-hook issue as create() above: Notifications no longer
+      // exposes onReservationCancelled. Calling it threw after the
+      // cancellation had already succeeded, which reported a false error to
+      // the secretary even though the booking was correctly cancelled.
       return true;
     } catch (err) {
       console.error('Cancel reservation error:', err);

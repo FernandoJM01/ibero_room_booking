@@ -79,3 +79,23 @@ including its creator), and its tooltip reads e.g. "Modificada por Toño · 25/0
 or "Cancelada por …". "Modified" means `updated_at` is more than 1 s after `created_at`
 (both are the same `NOW()` on insert). `Store.updateReservation` now keeps the server's
 `updated_at` instead of overwriting it with the browser clock.
+
+## Follow-up (2026-09-27): false "cancel failed" error, Respaldos overflow on mobile
+
+- **Cancelling a reservation from History always showed "No se pudo cancelar la
+  reservación," even though the cancellation succeeded.** Same root cause as the earlier
+  recurring-reservations bug (#6a): `Reservations.cancel()` called
+  `Notifications.onReservationCancelled(...)`, a method the `Notifications` module no
+  longer exposes (it now only exposes `getLog()`). The call threw *after* the
+  cancellation had already saved, so the UI reported failure on a success. Found the
+  same dead call in `Reservations.create()` (used by the AI assistant's booking flow,
+  `ai-page.js`) and removed it too, before it caused the same complaint there.
+- **Respaldos looked broken on phones** — the button text "Descargar respaldo SQL
+  (.sql)" was clipped, and the reservation/user/holiday counts had no gap before the
+  number. Cause: the Respaldos panel forced two equal columns via an **inline**
+  `style="grid-template-columns:1fr 1fr"`, which beats any stylesheet rule regardless of
+  a media query, so the existing mobile breakpoint that collapses `.admin-layout` to one
+  column never applied to it. Moved the two-column rule into a class
+  (`.admin-layout--split`) that the same breakpoint now also targets. Added a small
+  fallback (`.btn-full` wraps under 480px) for this and the hidden "Restaurar" button,
+  which has an equally long label.
