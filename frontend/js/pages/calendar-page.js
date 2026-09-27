@@ -6,6 +6,9 @@
    ============================================================ */
 
 (() => {
+let _rooms = [];
+let _currentRoomId = null;
+
 const init = async () => {
   if (!document.getElementById('cal-body')) return;
 
@@ -21,11 +24,14 @@ const init = async () => {
 
   // Load fresh data from API (API is source of truth)
   try {
-    const [reservations, holidays] = await Promise.all([
+    const [reservations, holidays, rooms] = await Promise.all([
       API.getReservations(),
-      API.getHolidays()
+      API.getHolidays(),
+      API.getRooms()
     ]);
     Store.setState({ reservations, holidays });
+    _rooms = Array.isArray(rooms) ? rooms : [];
+    _currentRoomId = RoomSwitcher.pickInitial(_rooms);
   } catch (err) {
     console.error('Error loading calendar data:', err);
     Toast.show('Error cargando datos del calendario', 'error');
@@ -48,10 +54,22 @@ const init = async () => {
     document.getElementById('readonly-banner')?.classList.remove('hidden');
   }
 
+  // ── Selector de sala ──
+  const roomSel = document.getElementById('room-switcher');
+  if (roomSel) {
+    RoomSwitcher.populateSelect(roomSel, _rooms, _currentRoomId);
+    roomSel.addEventListener('change', () => {
+      _currentRoomId = roomSel.value;
+      RoomSwitcher.setStored(_currentRoomId);
+      Calendar.setRoomId(_currentRoomId);
+    });
+  }
+
   // ── Init Calendar module ──
   Calendar.init({
     containerId:        'cal-body',
     titleId:            'cal-title',
+    roomId:              _currentRoomId,
     editable:           isSecretary,
     onDayClick:         _onDayClick,
     onReservationClick: _onReservationClick,

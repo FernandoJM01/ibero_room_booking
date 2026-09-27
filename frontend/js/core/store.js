@@ -81,6 +81,7 @@ const Store = (() => {
       const q = filter.responsible.toLowerCase();
       list = list.filter(r => r.responsible.toLowerCase().includes(q));
     }
+    if (filter.roomId)    list = list.filter(r => r.roomId === filter.roomId);
     return list;
   };
 

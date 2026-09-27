@@ -23,6 +23,7 @@ const Calendar = (() => {
   let _onBlockDrop        = null;
   let _onBlockResize      = null;
   let _highlightDate      = null;
+  let _roomId             = null;   // currently displayed room — see docs/changes/2026-09-27-multi-room-support.md
 
   /* ════════════════════════════════════════
      INIT
@@ -46,6 +47,7 @@ const Calendar = (() => {
     _onCommitSelection  = opts.onCommitSelection   ?? null;
     _onBlockDrop        = opts.onBlockDrop         ?? null;
     _onBlockResize      = opts.onBlockResize       ?? null;
+    _roomId              = opts.roomId              ?? null;
 
     const state = Store.getState();
     _year  = state.currentYear  ?? new Date().getFullYear();
@@ -67,12 +69,13 @@ const Calendar = (() => {
     if (titleEl) titleEl.textContent = `${Utils.monthName(month)} ${year}`;
 
     const { reservations, holidays } = Store.getState();
+    const roomReservations = _filterByRoom(reservations);
 
     CalendarGrid.render({
       containerId:        _containerId,
       year,
       month,
-      reservations,
+      reservations: roomReservations,
       holidays,
       editable:           _editable,
       onDayClick:         _onDayClick,
@@ -100,11 +103,12 @@ const Calendar = (() => {
     }
 
     const { reservations, holidays } = Store.getState();
+    const roomReservations = _filterByRoom(reservations);
 
     CalendarWeek.render({
       containerId:        _containerId,
       weekStart:          _weekStart,
-      reservations,
+      reservations: roomReservations,
       holidays,
       editable:           _editable,
       selectable:         _selectable,
@@ -189,6 +193,13 @@ const Calendar = (() => {
   const getCurrentWeekStart = () => _weekStart;
   const getHighlightDate    = () => _highlightDate;
   const setHighlightDate    = (d) => { _highlightDate = d; };
+  const getRoomId           = () => _roomId;
+  // Re-renders the active view for the new room — the caller doesn't need
+  // to know whether month or week is currently showing.
+  const setRoomId = (roomId) => {
+    _roomId = roomId || null;
+    _rerender();
+  };
 
   /* ════════════════════════════════════════
      PRIVATE HELPERS
@@ -199,6 +210,11 @@ const Calendar = (() => {
     if (_view === 'week') renderWeek(_weekStart);
     else renderMonth(_year, _month);
   };
+
+  // null roomId = no room context yet (page didn't call setRoomId) — show
+  // everything rather than silently hiding all reservations.
+  const _filterByRoom = (reservations) =>
+    _roomId ? reservations.filter(r => r.roomId === _roomId) : reservations;
 
   /** Devuelve el lunes de la semana que contiene `date` */
   const _getMonday = (date) => {
@@ -234,5 +250,7 @@ const Calendar = (() => {
     getCurrentWeekStart,
     getHighlightDate,
     setHighlightDate,
+    getRoomId,
+    setRoomId,
   };
 })();

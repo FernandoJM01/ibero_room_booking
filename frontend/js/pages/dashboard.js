@@ -4,6 +4,9 @@
    Plataforma Reservación Sala de Juntas · Ibero CDMX
    ============================================================ */
 
+let _rooms = [];
+let _currentRoomId = null;
+
 (() => {
 const init = async () => {
   if (!document.getElementById('stat-total')) return;
@@ -29,15 +32,21 @@ const init = async () => {
 
   // 5. Load data from API
   try {
-    const [reservations, holidays] = await Promise.all([
+    const [reservations, holidays, rooms] = await Promise.all([
       API.getReservations(),
-      API.getHolidays()
+      API.getHolidays(),
+      API.getRooms()
     ]);
     Store.setState({ reservations, holidays });
+    _rooms = Array.isArray(rooms) ? rooms : [];
+    _currentRoomId = RoomSwitcher.pickInitial(_rooms);
   } catch (err) {
     console.error('Error loading data:', err);
     Toast && Toast.show('Error cargando datos', 'error');
   }
+
+  // 5b. Selector de sala
+  _initRoomSwitcher();
 
   // 6. Renderizar estadísticas resumen
   _renderStats();
@@ -66,7 +75,9 @@ document.addEventListener('SPA:Navigated', init);
 
 /* ── ESTADÍSTICAS ── */
 function _renderStats() {
-  const state    = Store.getState();
+  // Room-scoped: these cards sit right above the room's own calendar, so
+  // they describe that room, not the whole system.
+  const reservations = Store.getReservations({ roomId: _currentRoomId });
   const today    = Utils.today();
   const now      = new Date();
 
@@ -74,24 +85,24 @@ function _renderStats() {
   const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
   const thisMonthEnd   = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(Utils.daysInMonth(now.getFullYear(), now.getMonth())).padStart(2,'0')}`;
 
-  const thisMonth   = state.reservations.filter(r =>
+  const thisMonth   = reservations.filter(r =>
     r.date >= thisMonthStart && r.date <= thisMonthEnd && r.status !== 'cancelled'
   );
 
   // Próximos 7 días
   const in7Days = new Date(); in7Days.setDate(in7Days.getDate() + 7);
   const in7Str  = Utils.dateToISO(in7Days);
-  const next7   = state.reservations.filter(r =>
+  const next7   = reservations.filter(r =>
     r.date >= today && r.date <= in7Str && r.status === 'active'
   );
 
   // Hoy
-  const todayRes = state.reservations.filter(r =>
+  const todayRes = reservations.filter(r =>
     r.date === today && r.status === 'active'
   );
 
   // Recurrentes activas
-  const recurring = state.reservations.filter(r =>
+  const recurring = reservations.filter(r =>
     r.isRecurring && r.status === 'active' && r.date >= today
   );
 
@@ -104,6 +115,20 @@ function _renderStats() {
   _set('stat-active',    next7.length);
   _set('stat-today',     todayRes.length);
   _set('stat-recurring', recurring.length);
+}
+
+/* ── SELECTOR DE SALA ── */
+function _initRoomSwitcher() {
+  const sel = document.getElementById('room-switcher');
+  if (!sel) return;
+  RoomSwitcher.populateSelect(sel, _rooms, _currentRoomId);
+  sel.addEventListener('change', () => {
+    _currentRoomId = sel.value;
+    RoomSwitcher.setStored(_currentRoomId);
+    Calendar.setRoomId(_currentRoomId);
+    _renderStats();
+    _renderUpcoming();
+  });
 }
 
 /* ── MINI-CALENDARIO SIDEBAR ── */
@@ -136,6 +161,7 @@ function _initCalendar() {
   Calendar.init({
     containerId:        'calendar-body',
     titleId:            'cal-month-title',
+    roomId:              _currentRoomId,
     editable:           isSecretary,
     selectable:         isSecretary,
     onDayClick:         _onDayClick,
@@ -383,7 +409,7 @@ function _renderUpcoming() {
   if (!listEl) return;
 
   const today = Utils.today();
-  const upcoming = Store.getReservations({ dateFrom: today, status: 'active' })
+  const upcoming = Store.getReservations({ dateFrom: today, status: 'active', roomId: _currentRoomId })
     .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
     .slice(0, 8);
 
