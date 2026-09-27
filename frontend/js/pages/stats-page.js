@@ -69,9 +69,10 @@ const init = async () => {
     csvBtnId:        'btn-stats-csv',
     getReservations: () => _getFiltered(),
     getOpts:         () => ({
-      title:    'Reporte de Estadísticas — Sala de Juntas Ibero',
-      dateFrom: dateFromEl?.value ?? '',
-      dateTo:   dateToEl?.value   ?? '',
+      title:       'Reporte de Estadísticas — Sala de Juntas Ibero',
+      dateFrom:    dateFromEl?.value ?? '',
+      dateTo:      dateToEl?.value   ?? '',
+      generatedBy: user.name,
     }),
   });
 

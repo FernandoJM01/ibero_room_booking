@@ -455,6 +455,28 @@ const init = async () => {
   }
 
   /* ── EXPORT BUTTONS ── */
+  // Human-readable summary of the filters actually applied, using the same
+  // labels shown in the filter UI — printed in the PDF/Excel header so a
+  // report carries what it was filtered by (CSV stays plain data; it's the
+  // format someone reimports, not the one they print or hand out).
+  function _activeFilterLines() {
+    const lines  = [];
+    const search = filterSearch?.value.trim() ?? '';
+    if (search) {
+      const fieldLabel = filterField?.selectedOptions[0]?.textContent ?? 'Todos los campos';
+      lines.push(`Buscar (${fieldLabel}): "${search}"`);
+    }
+    if (filterDateFrom?.value) lines.push(`Desde: ${Utils.formatDateShort(filterDateFrom.value)}`);
+    if (filterDateTo?.value)   lines.push(`Hasta: ${Utils.formatDateShort(filterDateTo.value)}`);
+    if (filterStatus?.value && filterStatus.value !== 'all') {
+      lines.push(`Estado: ${filterStatus.selectedOptions[0]?.textContent}`);
+    }
+    if (filterType?.value && filterType.value !== 'all') {
+      lines.push(`Tipo: ${filterType.selectedOptions[0]?.textContent}`);
+    }
+    return lines;
+  }
+
   document.getElementById('export-btn-group')?.style.setProperty('display', '');
   Export.attachExportButtons({
     pdfBtnId:        'btn-export-pdf',
@@ -462,9 +484,13 @@ const init = async () => {
     csvBtnId:        'btn-export-csv',
     getReservations: () => _getSortedData(),
     getOpts:         () => ({
-      title:    'Reservaciones — Sala de Juntas Ibero',
-      dateFrom: filterDateFrom?.value ?? '',
-      dateTo:   filterDateTo?.value   ?? '',
+      title:       'Reservaciones — Sala de Juntas Ibero',
+      dateFrom:    filterDateFrom?.value ?? '',
+      dateTo:      filterDateTo?.value   ?? '',
+      status:      filterStatus?.value   ?? 'all',
+      type:        filterType?.value     ?? 'all',
+      generatedBy: user.name,
+      filters:     _activeFilterLines(),
     }),
   });
 

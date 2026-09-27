@@ -26,9 +26,43 @@ const Export = (() => {
     }));
   }
 
-  function _buildFilenameBase(label) {
-    const ts = new Date().toISOString().slice(0, 10);
-    return `reservaciones_${label}_${ts}`;
+  /** Builds the "Filtros aplicados" lines shown in PDF/Excel headers.
+   *  Prefers opts.filters (a page that knows its own filter UI, e.g.
+   *  History, passes the exact human-readable lines); falls back to just
+   *  the date range for pages that only filter by period (e.g. Estadísticas). */
+  function _filterLines(opts) {
+    if (Array.isArray(opts.filters) && opts.filters.length) return opts.filters;
+    const lines = [];
+    if (opts.dateFrom) lines.push(`Desde: ${Utils.formatDateShort(opts.dateFrom)}`);
+    if (opts.dateTo)   lines.push(`Hasta: ${Utils.formatDateShort(opts.dateTo)}`);
+    return lines;
+  }
+
+  function _generatedByLine(opts) {
+    const name = opts.generatedBy ?? Store.getUser()?.name ?? '—';
+    const now  = new Date();
+    const date = now.toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' });
+    const time = now.toLocaleTimeString('es-MX', { timeZone: 'America/Mexico_City', hour: '2-digit', minute: '2-digit' });
+    return `Generado por ${name} — ${date} ${time}`;
+  }
+
+  /** Self-describing filename: reservaciones_<filtros>_<fecha-de-hoy>.<ext>
+   *  e.g. reservaciones_activas_internos_2026-09-01_a_2026-09-30_2026-09-27.pdf
+   *  Falls back to reservaciones_completo_<fecha>.<ext> when nothing is filtered. */
+  function _buildFilenameBase(opts = {}) {
+    const parts = [];
+    if (opts.status && opts.status !== 'all') {
+      parts.push(opts.status === 'active' ? 'activas' : 'canceladas');
+    }
+    if (opts.type && opts.type !== 'all') {
+      parts.push(opts.type === 'internals' ? 'internos' : 'externos');
+    }
+    if (opts.dateFrom || opts.dateTo) {
+      parts.push(`${opts.dateFrom || 'inicio'}_a_${opts.dateTo || 'hoy'}`);
+    }
+    if (!parts.length) parts.push('completo');
+    parts.push(new Date().toISOString().slice(0, 10));
+    return `reservaciones_${parts.join('_')}`;
   }
 
   /* ── PDF ──────────────────────────────────────────────── */
@@ -48,24 +82,30 @@ const Export = (() => {
     const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const title = opts.title ?? 'Reservaciones — Sala de Juntas Ibero';
 
-    // Header
+    // Banda de título
     doc.setFillColor(239, 62, 66);          // --color-primary
     doc.rect(0, 0, 297, 18, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.text(title, 10, 12);
-
-    // Date range subtitle
-    if (opts.dateFrom || opts.dateTo) {
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      const from = opts.dateFrom ?? '—';
-      const to   = opts.dateTo   ?? '—';
-      doc.text(`Período: ${from} – ${to}`, 10, 17);
-    }
-
     doc.setTextColor(0, 0, 0);
+
+    // Bloque de filtros aplicados + metadatos del reporte — para que un
+    // académico que pide un reporte pueda ver, impreso, exactamente qué
+    // se filtró, sin tener que anotarlo aparte.
+    const filterLines = _filterLines(opts);
+    const filterText  = filterLines.length ? filterLines.join('   ·   ') : 'Sin filtros aplicados';
+    const wrapped     = doc.splitTextToSize(`Filtros: ${filterText}`, 277);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    let metaY = 24;
+    wrapped.forEach(line => { doc.text(line, 10, metaY); metaY += 4.5; });
+    doc.text(_generatedByLine(opts), 10, metaY); metaY += 4.5;
+    doc.text(`Total de registros: ${reservations.length}`, 10, metaY); metaY += 3;
+
+    const tableStartY = metaY + 3;
 
     // Auto-table
     const head = [['Fecha', 'Responsable', 'Tipo', 'Creado por', 'Nombre de la junta', 'Inicio', 'Fin']];
@@ -82,7 +122,7 @@ const Export = (() => {
     // Use autoTable if available (jspdf-autotable plugin)
     if (typeof doc.autoTable === 'function') {
       doc.autoTable({
-        startY: 22,
+        startY: tableStartY,
         head,
         body,
         headStyles: {
@@ -107,7 +147,7 @@ const Export = (() => {
       });
     } else {
       // Fallback: simple manual table without plugin
-      _drawSimpleTable(doc, head[0], body, 22);
+      _drawSimpleTable(doc, head[0], body, tableStartY);
     }
 
     // Footer
@@ -123,8 +163,7 @@ const Export = (() => {
       doc.text(`${i} / ${pageCount}`, 287, 205, { align: 'right' });
     }
 
-    const filename = _buildFilenameBase(opts.dateFrom ?? 'completo') + '.pdf';
-    doc.save(filename);
+    doc.save(_buildFilenameBase(opts) + '.pdf');
   }
 
   /** Minimal table renderer for when autoTable plugin is absent */
@@ -181,15 +220,30 @@ const Export = (() => {
     const rows      = _buildRows(reservations);
     const sheetName = opts.sheetName ?? 'Reservaciones';
     const wb        = window.XLSX.utils.book_new();
-    const ws        = window.XLSX.utils.json_to_sheet(rows);
+    const colCount  = Object.keys(rows[0] ?? {}).length || 1;
+
+    // Header block (title, filters, who/when it was generated, row count) as
+    // its own rows above the data table — same information as the PDF, so a
+    // filtered report carries the filters it was run with even in Excel.
+    const filterLines = _filterLines(opts);
+    const headerBlock = [
+      [opts.title ?? 'Reservaciones — Sala de Juntas Ibero'],
+      [`Filtros: ${filterLines.length ? filterLines.join('   ·   ') : 'Sin filtros aplicados'}`],
+      [_generatedByLine(opts)],
+      [`Total de registros: ${reservations.length}`],
+      [],
+    ];
+    const ws = window.XLSX.utils.aoa_to_sheet(headerBlock);
+    window.XLSX.utils.sheet_add_json(ws, rows, { origin: headerBlock.length });
+    ws['!merges'] = headerBlock.slice(0, 4).map((_, r) => ({
+      s: { r, c: 0 }, e: { r, c: colCount - 1 },
+    }));
 
     // Column widths
     ws['!cols'] = [
       { wch: 14 },  // Fecha
       { wch: 35 },  // Responsable
       { wch: 12 },  // Tipo
-      { wch: 30 },  // Correo (Ext)
-      { wch: 30 },  // Depto (Ext)
       { wch: 30 },  // Creado por
       { wch: 35 },  // Nombre de la junta
       { wch: 12 },  // Hora inicio
@@ -200,8 +254,7 @@ const Export = (() => {
 
     window.XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
-    const filename = _buildFilenameBase(opts.dateFrom ?? 'completo') + '.xlsx';
-    window.XLSX.writeFile(wb, filename);
+    window.XLSX.writeFile(wb, _buildFilenameBase(opts) + '.xlsx');
   }
 
   /* ── CSV (fallback sin dependencias) ─────────────────── */
@@ -224,7 +277,7 @@ const Export = (() => {
     const url      = URL.createObjectURL(blob);
     const a        = document.createElement('a');
     a.href         = url;
-    a.download     = _buildFilenameBase(opts.dateFrom ?? 'completo') + '.csv';
+    a.download     = _buildFilenameBase(opts) + '.csv';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();

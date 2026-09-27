@@ -99,3 +99,29 @@ or "Cancelada por …". "Modified" means `updated_at` is more than 1 s after `cr
   (`.admin-layout--split`) that the same breakpoint now also targets. Added a small
   fallback (`.btn-full` wraps under 480px) for this and the hidden "Restaurar" button,
   which has an equally long label.
+
+## Follow-up (2026-09-27): filters header in PDF/Excel exports (options A+B)
+
+Exports from History now carry the filters they were generated with, so a report
+handed to an academic (or filed later) is self-describing without a screenshot of
+the filter bar.
+
+- **PDF and Excel** gain a header block above the table: report title, the exact
+  filters applied (search field/text, date range, status, type) or "Sin filtros
+  aplicados", who generated it and when (Mexico City time), and the row count.
+  Verified by decoding a generated PDF's content stream and inspecting a generated
+  workbook's cells directly.
+- **Filename** for all three formats (PDF, Excel, **and CSV**) now encodes the active
+  filters, e.g. `reservaciones_activas_internos_2026-09-01_a_2026-09-30_2026-09-27.xlsx`,
+  or `reservaciones_completo_<fecha>` with nothing filtered.
+- **CSV stays plain data** — no header block, data starts on row 1 — since it's the
+  format someone reimports or scripts against, not the one they print or file; a
+  header block there risks breaking a naive re-import. This was an explicit choice,
+  not an oversight.
+- Estadísticas' exports (date-range only, no status/type/search) get the same
+  treatment automatically: the header falls back to just the date range when a page
+  doesn't pass a `filters` list, and now also states who generated the report.
+- Found and fixed a real pre-existing bug while touching the Excel export: the
+  column-width array had 11 entries for 9 actual columns (leftover from removed
+  "Correo"/"Depto" columns), which silently shifted widths — Observaciones was 12
+  characters wide (should be 40) and Hora inicio/fin were 30–35 (should be 12).
