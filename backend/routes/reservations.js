@@ -309,7 +309,7 @@ router.post('/multi', requireRole('secretaria'), async (req, res) => {
     // Confirmation email per interval (non-blocking)
     if (responsible.email) {
       for (const r of created) {
-        const { subject, html } = reservationCreatedEmail(r);
+        const { subject, html } = reservationCreatedEmail(await fetchWithNames(pool, r.id));
         sendEmail(responsible.email, subject, html);
       }
     }
@@ -473,7 +473,7 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
     });
 
     // Send confirmation email to responsible person (non-blocking)
-    const { subject, html } = reservationCreatedEmail(result.rows[0]);
+    const { subject, html } = reservationCreatedEmail(await fetchWithNames(pool, result.rows[0].id));
     sendEmail(responsible.email, subject, html);
 
     res.status(201).json(await fetchWithNames(pool, result.rows[0].id));
@@ -707,7 +707,7 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
         : emailByExtId.get(reservation.external_responsible_id);
         
       if (email) {
-        const { subject, html } = reservationCancelledEmail(reservation);
+        const { subject, html } = reservationCancelledEmail(await fetchWithNames(pool, reservation.id));
         sendEmail(email, subject, html);
       }
     }
@@ -766,7 +766,7 @@ router.delete('/:id', requireRole('secretaria'), async (req, res) => {
     }
 
     if (respEmail) {
-      const { subject, html } = reservationCancelledEmail(cancelled);
+      const { subject, html } = reservationCancelledEmail(await fetchWithNames(pool, id));
       sendEmail(respEmail, subject, html);
     }
 

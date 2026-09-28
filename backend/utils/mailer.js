@@ -61,6 +61,7 @@ function _reservationTable(reservation, includeObservations = true) {
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <tr><td style="padding:6px 0;color:#555;">Responsable</td><td style="padding:6px 0;font-weight:600;">${_esc(reservation.responsible_name)}</td></tr>
       <tr><td style="padding:6px 0;color:#555;">Nombre de la junta</td><td style="padding:6px 0;">${_esc(reservation.area)}</td></tr>
+      ${reservation.room_name ? `<tr><td style="padding:6px 0;color:#555;">Sala</td><td style="padding:6px 0;font-weight:600;">${_esc(reservation.room_name)}</td></tr>` : ''}
       <tr><td style="padding:6px 0;color:#555;">Fecha</td><td style="padding:6px 0;">${date}</td></tr>
       <tr><td style="padding:6px 0;color:#555;">Horario</td><td style="padding:6px 0;">${start} – ${end}</td></tr>
       ${includeObservations && reservation.observations ? `<tr><td style="padding:6px 0;color:#555;">Observaciones</td><td style="padding:6px 0;">${_esc(reservation.observations)}</td></tr>` : ''}
@@ -250,6 +251,7 @@ function modificationRequestReceivedEmail(adminName, requesterName, reservation,
        <table style="width:100%;border-collapse:collapse;font-size:14px;">
          <tr><td style="padding:6px 0;color:#555;">Responsable</td><td style="padding:6px 0;font-weight:600;">${_esc(reservation.responsible_name)}</td></tr>
          <tr><td style="padding:6px 0;color:#555;">Nombre de la junta</td><td style="padding:6px 0;">${_esc(reservation.area)}</td></tr>
+         ${reservation.room_name ? `<tr><td style="padding:6px 0;color:#555;">Sala</td><td style="padding:6px 0;">${_esc(reservation.room_name)}</td></tr>` : ''}
          <tr><td style="padding:6px 0;color:#555;">Horario actual</td><td style="padding:6px 0;">${currentDate} ${currentStart}–${currentEnd}</td></tr>
          ${newTimeHtml}
          ${reason ? `<tr><td style="padding:6px 0;color:#555;">Motivo</td><td style="padding:6px 0;font-style:italic;">${_esc(reason)}</td></tr>` : ''}
