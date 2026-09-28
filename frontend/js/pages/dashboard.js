@@ -119,13 +119,9 @@ function _renderStats() {
 
 /* ── SELECTOR DE SALA ── */
 function _initRoomSwitcher() {
-  const sel = document.getElementById('room-switcher');
-  if (!sel) return;
-  RoomSwitcher.populateSelect(sel, _rooms, _currentRoomId);
-  sel.addEventListener('change', () => {
-    _currentRoomId = sel.value;
-    RoomSwitcher.setStored(_currentRoomId);
-    Calendar.setRoomId(_currentRoomId);
+  RoomSwitcher.bind(_rooms, _currentRoomId, (id) => {
+    _currentRoomId = id;
+    Calendar.setRoomId(id);
     _renderStats();
     _renderUpcoming();
   });

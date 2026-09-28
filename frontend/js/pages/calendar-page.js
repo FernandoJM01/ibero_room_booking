@@ -55,15 +55,10 @@ const init = async () => {
   }
 
   // ── Selector de sala ──
-  const roomSel = document.getElementById('room-switcher');
-  if (roomSel) {
-    RoomSwitcher.populateSelect(roomSel, _rooms, _currentRoomId);
-    roomSel.addEventListener('change', () => {
-      _currentRoomId = roomSel.value;
-      RoomSwitcher.setStored(_currentRoomId);
-      Calendar.setRoomId(_currentRoomId);
-    });
-  }
+  RoomSwitcher.bind(_rooms, _currentRoomId, (id) => {
+    _currentRoomId = id;
+    Calendar.setRoomId(id);
+  });
 
   // ── Init Calendar module ──
   Calendar.init({

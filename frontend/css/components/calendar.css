@@ -1084,53 +1084,48 @@
   color: #fff;
 }
 
-/* ── BARRA DE SALA (selector de sala sobre el calendario) ──
-   Fila propia encima de la barra de controles: así no empuja título,
-   navegación ni toggle Mes/Semana cuando cambia el nombre de la sala. */
-.room-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-5);
-  background: var(--color-bg-alt);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.room-bar__label {
+/* ── SELECTOR DE SALA (junto al título del calendario) ──
+   Va en la misma fila que el título/controles: no añade altura al calendario
+   en escritorio. Cuando no cabe, baja a su propia fila (ver media queries). */
+.room-picker {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-secondary-light);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.room-bar__select {
-  flex: 0 1 280px;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  background: var(--color-bg-alt);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-secondary-light);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.room-picker:hover { border-color: var(--color-primary); }
+.room-picker:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+.room-picker svg { flex-shrink: 0; }
+
+.room-picker__select {
+  min-width: 0;
+  max-width: 200px;
+  padding: var(--space-2) var(--space-1);
   font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-secondary);
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: 0;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-overflow: ellipsis;
 }
+.room-picker__select:focus { outline: none; }
 
-.room-bar__select:hover { border-color: var(--color-primary); }
-.room-bar__select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-bg);
-}
+/* Escritorio: selector en la barra superior. Móvil: dentro de la tarjeta. */
+.room-picker--card { display: none; }
 
-@media (max-width: 640px) {
-  .room-bar { padding: var(--space-2) var(--space-4); }
-  .room-bar__select { flex: 1 1 auto; }
+@media (max-width: 768px) {
+  .room-picker--topbar { display: none; }
+  .room-picker--card   { display: inline-flex; flex: 1 1 100%; }
+  .room-picker--card .room-picker__select { flex: 1; max-width: none; }
 }

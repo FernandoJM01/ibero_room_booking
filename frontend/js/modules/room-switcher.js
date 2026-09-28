@@ -38,5 +38,20 @@ const RoomSwitcher = (() => {
     if (selectedId) sel.value = selectedId;
   };
 
-  return { getStored, setStored, pickInitial, populateSelect };
+  // Hay un selector en la barra superior (escritorio) y otro dentro de la
+  // tarjeta del calendario (móvil); CSS muestra solo uno. Aquí se rellenan
+  // todos, se mantienen sincronizados y se avisa con el id elegido.
+  const bind = (rooms, selectedId, onChange) => {
+    const selects = document.querySelectorAll('[data-room-select]');
+    selects.forEach(sel => {
+      populateSelect(sel, rooms, selectedId);
+      sel.addEventListener('change', () => {
+        selects.forEach(o => { o.value = sel.value; });
+        setStored(sel.value);
+        onChange(sel.value);
+      });
+    });
+  };
+
+  return { getStored, setStored, pickInitial, populateSelect, bind };
 })();

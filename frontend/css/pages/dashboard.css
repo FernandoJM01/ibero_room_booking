@@ -88,6 +88,8 @@
 
 .calendar-widget__header {
   display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
@@ -97,6 +99,14 @@
 .calendar-widget__title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.calendar-widget__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .cal-quick-nav {
@@ -313,7 +323,8 @@
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
   }
-  .calendar-widget__header > div {
+  .calendar-widget__heading { flex-wrap: wrap; width: 100%; }
+  .calendar-widget__header > div:not(.calendar-widget__heading) {
     flex-wrap: wrap;
     width: 100%;
     justify-content: space-between;

@@ -433,17 +433,6 @@
   vertical-align: middle;
 }
 
-/* En móvil la columna Sala se oculta; la sala se muestra bajo la fecha */
-.cell-room {
-  display: none;
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--color-secondary-light);
-}
-@media (max-width: 768px) {
-  .cell-room { display: block; }
-}
-
 /* Filtros: búsqueda en su propia fila; el resto se reparte parejo */
 @media (min-width: 641px) {
   .history-filters .filter-group--search { flex: 1 1 100%; }

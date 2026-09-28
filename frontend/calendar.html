@@ -4,15 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calendario — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css?v=34" />
-  <link rel="stylesheet" href="css/reset.css?v=34" />
-  <link rel="stylesheet" href="css/base.css?v=34" />
-  <link rel="stylesheet" href="css/layout.css?v=34" />
-  <link rel="stylesheet" href="css/components/calendar.css?v=34" />
-  <link rel="stylesheet" href="css/components/modals.css?v=34" />
-  <link rel="stylesheet" href="css/components/forms.css?v=34" />
-  <link rel="stylesheet" href="css/pages/calendar-view.css?v=34" />
-  <link rel="stylesheet" href="css/responsive.css?v=34" />
+  <link rel="stylesheet" href="css/variables.css?v=36" />
+  <link rel="stylesheet" href="css/reset.css?v=36" />
+  <link rel="stylesheet" href="css/base.css?v=36" />
+  <link rel="stylesheet" href="css/layout.css?v=36" />
+  <link rel="stylesheet" href="css/components/calendar.css?v=36" />
+  <link rel="stylesheet" href="css/components/modals.css?v=36" />
+  <link rel="stylesheet" href="css/components/forms.css?v=36" />
+  <link rel="stylesheet" href="css/pages/calendar-view.css?v=36" />
+  <link rel="stylesheet" href="css/responsive.css?v=36" />
   <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
 <body>
@@ -44,6 +44,10 @@
         <span aria-current="page">Calendario</span>
       </nav>
       <div class="topbar__actions">
+        <div class="room-picker room-picker--topbar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          <select class="room-picker__select" data-room-select aria-label="Sala mostrada"></select>
+        </div>
         <span id="topbar-role-badge" class="badge badge-primary topbar__badge-role">Secretaria</span>
       </div>
     </header>
@@ -65,12 +69,6 @@
 
       <!-- Calendar card -->
       <div class="cal-card">
-
-        <!-- Sala mostrada (ver docs/changes/2026-09-27-multi-room-support.md) -->
-        <div class="room-bar">
-            <label class="room-bar__label" for="room-switcher"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg><span>Sala</span></label>
-            <select id="room-switcher" class="room-bar__select" aria-label="Sala mostrada"></select>
-        </div>
 
 
         <!-- Toolbar -->
@@ -100,6 +98,11 @@
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
+            </div>
+            <!-- Sala mostrada (ver docs/changes/2026-09-27-multi-room-support.md) -->
+            <div class="room-picker room-picker--card">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+              <select class="room-picker__select" data-room-select aria-label="Sala mostrada"></select>
             </div>
           </div>
 
@@ -154,23 +157,23 @@
 <div id="modal-container"></div>
 
 <!-- Scripts -->
-<script src="js/core/utils.js?v=34"></script>
-<script src="js/core/api.js?v=34"></script>
-<script src="js/core/store.js?v=34"></script>
-<script src="js/components/toast.js?v=34"></script>
-<script src="js/components/sidebar.js?v=34"></script>
-<script src="js/components/change-password-modal.js?v=34"></script>
-<script src="js/components/calendar-grid.js?v=34"></script>
-<script src="js/components/calendar-week.js?v=34"></script>
-<script src="js/components/modal.js?v=34"></script>
-<script src="js/components/reservation-modal.js?v=34"></script>
-<script src="js/modules/notifications.js?v=34"></script>
-<script src="js/modules/auth.js?v=34"></script>
-<script src="js/modules/reservations.js?v=34"></script>
-<script src="js/modules/recurring.js?v=34"></script>
-<script src="js/modules/room-switcher.js?v=34"></script>
-<script src="js/modules/calendar.js?v=34"></script>
-<script src="js/pages/calendar-page.js?v=34"></script>
+<script src="js/core/utils.js?v=36"></script>
+<script src="js/core/api.js?v=36"></script>
+<script src="js/core/store.js?v=36"></script>
+<script src="js/components/toast.js?v=36"></script>
+<script src="js/components/sidebar.js?v=36"></script>
+<script src="js/components/change-password-modal.js?v=36"></script>
+<script src="js/components/calendar-grid.js?v=36"></script>
+<script src="js/components/calendar-week.js?v=36"></script>
+<script src="js/components/modal.js?v=36"></script>
+<script src="js/components/reservation-modal.js?v=36"></script>
+<script src="js/modules/notifications.js?v=36"></script>
+<script src="js/modules/auth.js?v=36"></script>
+<script src="js/modules/reservations.js?v=36"></script>
+<script src="js/modules/recurring.js?v=36"></script>
+<script src="js/modules/room-switcher.js?v=36"></script>
+<script src="js/modules/calendar.js?v=36"></script>
+<script src="js/pages/calendar-page.js?v=36"></script>
 
 </body>
 </html>
