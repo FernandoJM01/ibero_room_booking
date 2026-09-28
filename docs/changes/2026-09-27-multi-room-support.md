@@ -50,3 +50,46 @@ new Salas tab), adds `reservations.room_id` nullable, backfills every existing r
 that seeded room, then sets the column `NOT NULL`. One file, idempotent (migrations
 re-run on every backend start, matching the existing convention), so it's safe however
 many times it applies.
+
+## Status
+
+All 8 phases implemented on branch `feat/multi-room-support`; each was verified live
+against the local Docker stack when it landed.
+
+Final backend pass (phase 8), run against the live API with two active rooms:
+
+| Check | Result |
+|---|---|
+| Same time slot, different room | 201 (rooms don't block each other) |
+| Overlapping slot, same room (create, both rooms) | 409 |
+| Create without `room_id` | 400 |
+| Edit into an overlap in the same room | 409 |
+| Edit that moves a booking to another room into that room's overlap | 409 |
+| Edit that moves a booking to another room's free slot | 200, response carries the new room |
+| `POST /multi` with one conflicting interval | 409 (nothing saved) |
+| Create / single cancel / bulk cancel emails | Sala row rendered (builders unit-checked; SMTP auth fails locally by design) |
+
+## Deploy checklist (Dokploy)
+
+1. **Back up first** — Admin → Respaldos → "Descargar respaldo SQL" (or `pg_dump`). The
+   migration rewrites `reservations` (adds a `NOT NULL` column), so keep a copy.
+2. Deploy the branch. The backend applies `009_rooms.sql` on start; look for
+   `[Migrate] Applied 009_rooms.sql` in the logs.
+3. Sanity check: `SELECT count(*) FROM reservations WHERE room_id IS NULL;` → `0`.
+4. Log in as a super admin → **Salas**: rename "Sala Principal" to the real name and add
+   the second room.
+5. Hard-refresh browsers once (assets are cache-busted at `?v=31`, so this normally
+   isn't needed).
+
+**Rollback:** the migration is additive (new table + new column), so the previous
+release keeps working against the migrated DB; restore the backup only if data itself
+must be reverted.
+
+## Known limits / follow-ups
+
+- "Solicitudes" (modification requests) screens are dormant and were only
+  signature-updated for `checkOverlap`, not functionally re-tested.
+- Emails for that dormant flow show the room only when the row carries `room_name`.
+- No per-room permissions or opening hours: every secretaria can book any active room.
+- Deactivating a room hides it from selectors but keeps its history and existing
+  bookings.
