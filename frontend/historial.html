@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script>try{var d=document.documentElement;d.classList.add("no-sidebar-anim");if(localStorage.getItem("ibero_sidebar_collapsed")==="1")d.classList.add("sidebar-collapsed")}catch(e){}</script>
   <title>Historial — Sala de Juntas Ibero</title>
-  <link rel="stylesheet" href="css/variables.css?v=39" />
-  <link rel="stylesheet" href="css/reset.css?v=39" />
-  <link rel="stylesheet" href="css/base.css?v=39" />
-  <link rel="stylesheet" href="css/layout.css?v=39" />
-  <link rel="stylesheet" href="css/components/tables.css?v=39" />
-  <link rel="stylesheet" href="css/components/forms.css?v=39" />
-  <link rel="stylesheet" href="css/components/modals.css?v=39" />
-  <link rel="stylesheet" href="css/responsive.css?v=39" />
+  <link rel="stylesheet" href="css/variables.css?v=43" />
+  <link rel="stylesheet" href="css/reset.css?v=43" />
+  <link rel="stylesheet" href="css/base.css?v=43" />
+  <link rel="stylesheet" href="css/layout.css?v=43" />
+  <link rel="stylesheet" href="css/components/tables.css?v=43" />
+  <link rel="stylesheet" href="css/components/forms.css?v=43" />
+  <link rel="stylesheet" href="css/components/modals.css?v=43" />
+  <link rel="stylesheet" href="css/pages/history.css?v=43" />
+  <link rel="stylesheet" href="css/responsive.css?v=43" />
   <link rel="icon" type="image/png" href="assets/img/ibero-logo.png" />
 </head>
 <body>
@@ -71,136 +72,169 @@
     <!-- Page body -->
     <main class="page-content" role="main">
 
-      <!-- ── Barra de filtros ── -->
-      <div class="history-toolbar" role="search" aria-label="Filtros de búsqueda">
-        <div class="history-filters">
+      <div class="hist-page">
 
-          <div class="filter-group filter-group--search">
-            <label for="filter-search">Buscar por</label>
-            <div class="filter-search-row">
-              <select id="filter-field" class="filter-select filter-select--auto" aria-label="Seleccionar campo de búsqueda">
-                <option value="all">Todos los campos</option>
-                <option value="responsible">Responsable</option>
-                <option value="area">Nombre de la junta</option>
-                <option value="creator">Creado por</option>
-                <option value="observations">Observaciones</option>
-              </select>
-              <input type="search" id="filter-search" class="filter-input filter-input--search filter-input--flex"
-                     placeholder="Escribe para buscar..."
-                     aria-label="Término de búsqueda" />
+        <!-- ── Barra de filtros ── -->
+        <div class="hist-toolbar" role="search" aria-label="Filtros de búsqueda">
+
+          <div class="hist-search">
+            <span class="hist-search__icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="search" id="filter-search" class="hist-search__input"
+                   placeholder="Buscar reservaciones…" aria-label="Término de búsqueda" />
+            <select id="filter-field" class="hist-search__field" aria-label="Buscar en">
+              <option value="all">Todos los campos</option>
+              <option value="responsible">Responsable</option>
+              <option value="area">Nombre de la junta</option>
+              <option value="creator">Creado por</option>
+              <option value="observations">Observaciones</option>
+            </select>
+          </div>
+
+          <div class="hist-pop-wrap">
+            <button type="button" class="hist-btn" id="btn-date-range"
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="pop-dates">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="date-range-label">Fechas</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="hist-pop" id="pop-dates" role="dialog" aria-label="Rango de fechas" hidden>
+              <div class="hist-pop__title">Rango de fechas</div>
+              <div class="hist-presets" id="date-presets">
+                <button type="button" data-preset="today">Hoy</button>
+                <button type="button" data-preset="week">Esta semana</button>
+                <button type="button" data-preset="month">Este mes</button>
+                <button type="button" data-preset="year">Este año</button>
+                <button type="button" data-preset="last30">Últimos 30 días</button>
+                <button type="button" data-preset="next30">Próximos 30 días</button>
+                <button type="button" data-preset="all" class="hist-presets__all">Todas las fechas</button>
+              </div>
+              <div class="hist-pop__row">
+                <div class="filter-group">
+                  <label for="filter-date-from">Desde</label>
+                  <input type="date" id="filter-date-from" class="filter-input" aria-label="Fecha desde" />
+                </div>
+                <div class="filter-group">
+                  <label for="filter-date-to">Hasta</label>
+                  <input type="date" id="filter-date-to" class="filter-input" aria-label="Fecha hasta" />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="filter-group filter-group--date">
-            <label for="filter-date-from">Desde</label>
-            <input type="date" id="filter-date-from" class="filter-input filter-input--date"
-                   aria-label="Fecha desde" />
-          </div>
-
-          <div class="filter-group filter-group--date">
-            <label for="filter-date-to">Hasta</label>
-            <input type="date" id="filter-date-to" class="filter-input filter-input--date"
-                   aria-label="Fecha hasta" />
-          </div>
-
-          <div class="filter-group">
-            <label for="filter-status">Estado</label>
-            <select id="filter-status" class="filter-select" aria-label="Filtrar por estado">
-              <option value="all">Todas</option>
-              <option value="active">Activas</option>
-              <option value="cancelled">Canceladas</option>
+          <label class="hist-select" for="filter-room">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+            <select id="filter-room" aria-label="Filtrar por sala">
+              <option value="all">Todas las salas</option>
             </select>
+          </label>
+
+          <div class="hist-pop-wrap">
+            <button type="button" class="hist-btn" id="btn-more-filters"
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="pop-more" aria-label="Más filtros">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Filtros</span><span class="hist-btn__count" id="more-filters-count" hidden>1</span>
+            </button>
+            <div class="hist-pop hist-pop--right" id="pop-more" role="dialog" aria-label="Más filtros" hidden>
+              <div class="hist-pop__title">Más filtros</div>
+              <div class="filter-group">
+                <label id="type-seg-label">Tipo de responsable</label>
+                <div class="hist-seg" id="type-seg" role="group" aria-labelledby="type-seg-label">
+                  <button type="button" data-type="all" class="is-active">Todos</button>
+                  <button type="button" data-type="internals">Internos</button>
+                  <button type="button" data-type="externals">Externos</button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="filter-group">
-            <label for="filter-type">Tipo</label>
-            <select id="filter-type" class="filter-select" aria-label="Filtrar por tipo">
-              <option value="all">Todos</option>
-              <option value="internals">Internos</option>
-              <option value="externals">Externos</option>
-            </select>
-          </div>
+          <button type="button" class="btn btn-ghost btn-sm hist-clear" id="btn-clear-filters"
+                  aria-label="Limpiar filtros" hidden>Limpiar</button>
+        </div>
 
-          <div class="filter-group filter-group--room">
-            <label for="filter-room">Sala</label>
-            <select id="filter-room" class="filter-select" aria-label="Filtrar por sala">
-              <option value="all">Todas</option>
-            </select>
-          </div>
+        <!-- Filtros activos -->
+        <div class="hist-chips" id="filter-chips" aria-label="Filtros activos" hidden></div>
 
-          <div class="filter-group filter-group--actions">
-            <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-filters"
-                    aria-label="Limpiar filtros">
-              Limpiar
+        <!-- ── Tabla ── -->
+        <section class="hist-table-card" aria-label="Resultados">
+
+          <div class="hist-tabs" role="tablist" aria-label="Filtrar por estado">
+            <button type="button" role="tab" class="hist-tab is-active" data-status="all" aria-selected="true">
+              Todas <span class="hist-tab__count" id="tab-count-all">0</span>
+            </button>
+            <button type="button" role="tab" class="hist-tab" data-status="active" aria-selected="false">
+              Activas <span class="hist-tab__count" id="tab-count-active">0</span>
+            </button>
+            <button type="button" role="tab" class="hist-tab" data-status="cancelled" aria-selected="false">
+              Canceladas <span class="hist-tab__count" id="tab-count-cancelled">0</span>
             </button>
           </div>
 
-        </div>
-      </div>
+          <!-- Barra de acciones masivas (aparece al seleccionar) -->
+          <div class="bulk-bar hidden" id="bulk-bar" role="toolbar" aria-label="Acciones sobre selección">
+            <label class="bulk-bar__select-all" for="select-all-chk">
+              <input type="checkbox" id="select-all-chk"
+                     aria-label="Seleccionar o deseleccionar todas las reservaciones activas" />
+              Seleccionar todas
+            </label>
+            <span class="bulk-bar__count" id="selection-count" aria-live="polite">0 seleccionadas</span>
+            <button type="button" class="btn btn-danger btn-sm" id="btn-bulk-cancel">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+              </svg>
+              Cancelar seleccionadas (<span id="bulk-count">0</span>)
+            </button>
+          </div>
 
-      <!-- ── Barra de acciones masivas (aparece al seleccionar) ── -->
-      <div class="bulk-bar hidden" id="bulk-bar" role="toolbar" aria-label="Acciones sobre selección">
-        <label class="bulk-bar__select-all" for="select-all-chk">
-          <input type="checkbox" id="select-all-chk"
-                 aria-label="Seleccionar o deseleccionar todas las reservaciones activas" />
-          Seleccionar todas
-        </label>
-        <span class="bulk-bar__count" id="selection-count" aria-live="polite">0 seleccionadas</span>
-        <button type="button" class="btn btn-danger btn-sm" id="btn-bulk-cancel">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-          </svg>
-          Cancelar seleccionadas (<span id="bulk-count">0</span>)
-        </button>
-      </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="reservations-table" aria-label="Reservaciones">
+              <thead>
+                <tr>
+                  <th class="col-check" scope="col">
+                    <input type="checkbox" id="select-all-top"
+                           aria-label="Seleccionar todas las activas" />
+                  </th>
+                  <th class="sortable" data-sort="date" scope="col">Fecha y horario</th>
+                  <th class="sortable" data-sort="roomName" scope="col">Sala</th>
+                  <th class="sortable" data-sort="responsible" scope="col">Responsable</th>
+                  <th class="sortable hide-on-mobile" data-sort="creatorName" scope="col">Creado por</th>
+                  <th class="sortable" data-sort="area" scope="col">Nombre de la junta</th>
+                  <th class="sortable" data-sort="status" scope="col">Estado</th>
+                  <th class="col-actions" scope="col">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- JS renderiza aquí -->
+              </tbody>
+            </table>
 
-      <!-- ── Tabla ── -->
-      <div class="table-wrapper">
-        <table class="data-table" id="reservations-table" aria-label="Reservaciones">
-          <thead>
-            <tr>
-              <th class="col-check" scope="col">
-                <input type="checkbox" id="select-all-top"
-                       aria-label="Seleccionar todas las activas" />
-              </th>
-              <th class="sortable" data-sort="date" scope="col">Fecha</th>
-              <th class="sortable" data-sort="roomName" scope="col">Sala</th>
-              <th class="sortable" data-sort="responsible" scope="col">Responsable</th>
-              <th class="sortable hide-on-mobile" data-sort="creatorName" scope="col">Creado por</th>
-              <th class="sortable" data-sort="area" scope="col">Nombre de la junta</th>
-              <th class="sortable" data-sort="startTime" scope="col">Horario</th>
-              <th class="sortable" data-sort="status" scope="col">Estado</th>
-              <th class="col-actions" scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-            <!-- JS renderiza aquí -->
-          </tbody>
-        </table>
+            <!-- Estado vacío -->
+            <div class="table-empty hidden" id="table-empty" role="status">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.5"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <p>No hay reservaciones que coincidan con los filtros.</p>
+            </div>
+          </div>
 
-        <!-- Estado vacío -->
-        <div class="table-empty hidden" id="table-empty" role="status">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.5"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <p>No hay reservaciones que coincidan con los filtros.</p>
-        </div>
+          <div class="hist-footer">
+            <span id="table-footer" aria-live="polite"></span>
+            <div class="hist-pop-wrap">
+              <button type="button" class="hist-footer__info" id="btn-retention"
+                      aria-haspopup="dialog" aria-expanded="false" aria-controls="pop-retention">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Política de retención</span>
+              </button>
+              <div class="hist-pop hist-pop--up hist-pop--right hist-pop--text" id="pop-retention" role="dialog"
+                   aria-label="Política de retención" hidden>
+                <strong>Política de retención:</strong> La información de reservaciones y registros históricos se conserva de forma segura por un periodo de <strong>18 meses</strong>. Los registros más antiguos son eliminados o anonimizados automáticamente de acuerdo con nuestras normativas de privacidad.
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <!-- Cargando -->
-        <div class="table-footer" id="table-footer" aria-live="polite"></div>
-      </div>
-
-      <!-- Retention Notice -->
-      <div class="retention-notice" style="margin-top: 1.5rem; padding: 1rem; background-color: var(--color-surface-hover, #f8f9fa); border-radius: var(--radius-md, 8px); font-size: 0.85rem; color: var(--color-text-muted, #6c757d); text-align: center; border: 1px solid var(--color-border, #e9ecef);">
-        <strong>Política de retención:</strong> La información de reservaciones y registros históricos se conserva de forma segura por un periodo de <strong>18 meses</strong>. Los registros más antiguos son eliminados o anonimizados automáticamente de acuerdo con nuestras normativas de privacidad.
-      </div>
+      </div><!-- /.hist-page -->
 
     </main>
   </div><!-- /.main-content -->
@@ -216,24 +250,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- Scripts -->
-<script src="js/core/utils.js?v=39"></script>
-<script src="js/core/api.js?v=39"></script>
-<script src="js/core/store.js?v=39"></script>
-<script src="js/components/toast.js?v=39"></script>
-<script src="js/components/sidebar.js?v=39"></script>
-<script src="js/components/change-password-modal.js?v=39"></script>
-<script src="js/modules/notifications.js?v=39"></script>
-<script src="js/modules/auth.js?v=39"></script>
-<script src="js/modules/reservations.js?v=39"></script>
-<script src="js/components/modal.js?v=39"></script>
-<script src="js/components/reservation-modal.js?v=39"></script>
-<script src="js/components/reservation-history-modal.js?v=39"></script>
-<script src="js/components/modification-request-modal.js?v=39"></script>
-<script src="js/components/history-modification-request-modal.js?v=39"></script>
-<script src="js/modules/recurring.js?v=39"></script>
-<script src="js/modules/search.js?v=39"></script>
-<script src="js/modules/export.js?v=39"></script>
-<script src="js/pages/history-page.js?v=39"></script>
+<script src="js/core/utils.js?v=43"></script>
+<script src="js/core/api.js?v=43"></script>
+<script src="js/core/store.js?v=43"></script>
+<script src="js/components/toast.js?v=43"></script>
+<script src="js/components/sidebar.js?v=43"></script>
+<script src="js/components/change-password-modal.js?v=43"></script>
+<script src="js/modules/notifications.js?v=43"></script>
+<script src="js/modules/auth.js?v=43"></script>
+<script src="js/modules/reservations.js?v=43"></script>
+<script src="js/components/modal.js?v=43"></script>
+<script src="js/components/reservation-modal.js?v=43"></script>
+<script src="js/components/reservation-history-modal.js?v=43"></script>
+<script src="js/components/modification-request-modal.js?v=43"></script>
+<script src="js/components/history-modification-request-modal.js?v=43"></script>
+<script src="js/modules/recurring.js?v=43"></script>
+<script src="js/modules/search.js?v=43"></script>
+<script src="js/modules/export.js?v=43"></script>
+<script src="js/pages/history-page.js?v=43"></script>
 
 </body>
 </html>
