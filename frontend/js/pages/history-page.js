@@ -368,8 +368,8 @@ const init = async () => {
     return `
       <tr class="${rowCls}" data-id="${r.id}">
         ${checkCell}
-        <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}</td>
-        <td class="hide-on-mobile">${r.roomName ? Utils.escapeHTML(r.roomName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
+        <td style="white-space:nowrap;">${Utils.formatDateShort(r.date)}${r.roomName ? `<span class="cell-room">${Utils.escapeHTML(r.roomName)}</span>` : ''}</td>
+        <td class="hide-on-mobile">${r.roomName ? `<span class="room-chip">${Utils.escapeHTML(r.roomName)}</span>` : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${responsibleHTML}</td>
         <td class="hide-on-mobile">${r.creatorName ? Utils.escapeHTML(r.creatorName) : '<span style="color:var(--color-secondary-light)">—</span>'}</td>
         <td>${Utils.escapeHTML(Utils.truncate(r.area, 32))}</td>

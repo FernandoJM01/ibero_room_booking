@@ -1083,3 +1083,54 @@
   background: var(--cal-holiday);
   color: #fff;
 }
+
+/* ── BARRA DE SALA (selector de sala sobre el calendario) ──
+   Fila propia encima de la barra de controles: así no empuja título,
+   navegación ni toggle Mes/Semana cuando cambia el nombre de la sala. */
+.room-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.room-bar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.room-bar__select {
+  flex: 0 1 280px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.room-bar__select:hover { border-color: var(--color-primary); }
+.room-bar__select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+@media (max-width: 640px) {
+  .room-bar { padding: var(--space-2) var(--space-4); }
+  .room-bar__select { flex: 1 1 auto; }
+}

@@ -304,3 +304,19 @@
     box-shadow: 0 6px 20px rgba(239,62,66,0.5);
   }
 }
+
+/* Encabezado del calendario: en móvil los controles pasan a una segunda fila
+   en lugar de salirse de la pantalla. */
+@media (max-width: 640px) {
+  .calendar-widget__header {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .calendar-widget__header > div {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+    row-gap: var(--space-2);
+  }
+}

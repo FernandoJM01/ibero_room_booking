@@ -415,3 +415,47 @@
     flex: 1;
   }
 }
+
+/* ── SALA en Historial ── */
+.room-chip {
+  display: inline-block;
+  max-width: 140px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* En móvil la columna Sala se oculta; la sala se muestra bajo la fecha */
+.cell-room {
+  display: none;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-secondary-light);
+}
+@media (max-width: 768px) {
+  .cell-room { display: block; }
+}
+
+/* Filtros: búsqueda en su propia fila; el resto se reparte parejo */
+@media (min-width: 641px) {
+  .history-filters .filter-group--search { flex: 1 1 100%; }
+  .history-filters .filter-group:not(.filter-group--search):not(.filter-group--actions) {
+    flex: 1 1 130px;
+    min-width: 130px;
+  }
+  .history-filters .filter-select,
+  .history-filters .filter-input--date { width: 100%; min-width: 0; }
+  .history-filters .filter-select--auto { width: auto; }
+}
+
+@media (max-width: 640px) {
+  .filter-group--room { grid-column: 1 / -1; }
+}
