@@ -90,14 +90,14 @@ const Sidebar = (() => {
 
     const navHTML = sections.map(section => `
       <div class="sidebar__nav-section">
-        <p class="sidebar__nav-label">${section.label}</p>
+        <p class="sidebar__nav-label"><span>${section.label}</span></p>
         ${section.items.map(item => `
           <a href="${item.href}"
              id="sidebar-nav-${item.id}"
              class="nav-item${item.id === activeId ? ' active' : ''}"
              ${item.id === activeId ? 'aria-current="page"' : ''}>
             ${_icon(item.icon)}
-            ${item.label}
+            <span class="nav-item__label">${item.label}</span>
           </a>`).join('')}
       </div>`).join('');
 
@@ -107,6 +107,7 @@ const Sidebar = (() => {
         <img src="assets/img/logo-ibero-white.png"
              alt="Universidad Iberoamericana"
              class="sidebar__brand-img" />
+        <span class="sidebar__brand-mark" aria-hidden="true">I</span>
       </a>
 
       <nav class="sidebar__nav" aria-label="Menú principal">
@@ -180,12 +181,123 @@ const Sidebar = (() => {
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', Auth.logout);
 
-    // Mobile toggle
+    // Collapse/expand (desktop) + mobile drawer toggle
+    _initCollapse(mountEl);
     _initMobileToggle(mountId);
     _initPJAX(mountId);
 
     // Refresh admin requests badge
     refreshBadge();
+  };
+
+  /* ── CONTRAER / EXPANDIR (escritorio) ──
+     El estado vive en la clase html.sidebar-collapsed (la aplica un script
+     en <head> antes del primer pintado) y se recuerda en localStorage.
+     En móvil el menú sigue siendo un cajón (drawer). */
+  const COLLAPSE_KEY = 'ibero_sidebar_collapsed';
+  const _isDesktop   = () => window.innerWidth > 768;
+  const _isCollapsed = () => document.documentElement.classList.contains('sidebar-collapsed');
+
+  const _syncToggleA11y = () => {
+    const collapsed = _isCollapsed() && _isDesktop();
+    const label = _isDesktop() ? (collapsed ? 'Expandir menú' : 'Contraer menú') : 'Abrir menú';
+    const top  = document.getElementById('sidebar-toggle');
+    const edge = document.getElementById('sidebar-edge-toggle');
+    if (top) {
+      top.setAttribute('aria-label', label);
+      top.setAttribute('title', label);
+      if (_isDesktop()) top.setAttribute('aria-expanded', String(!collapsed));
+    }
+    if (edge) {
+      edge.setAttribute('aria-label', label);
+      edge.setAttribute('aria-expanded', String(!collapsed));
+    }
+  };
+
+  const _hideTooltip = () => document.getElementById('sidebar-tooltip')?.classList.remove('is-visible');
+
+  const _setCollapsed = (collapsed) => {
+    document.documentElement.classList.toggle('sidebar-collapsed', collapsed);
+    try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch { /* ignore */ }
+    // Close the profile menu: its layout differs between both states
+    const btn = document.getElementById('profile-dropdown-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    const menu = document.getElementById('profile-dropdown-menu');
+    if (menu) menu.style.display = 'none';
+    _hideTooltip();
+    _syncToggleA11y();
+  };
+
+  const _toggleCollapsed = () => _setCollapsed(!_isCollapsed());
+
+  const _initCollapse = (sidebarEl) => {
+    if (document.getElementById('sidebar-edge-toggle')) return; // already wired
+
+    // Edge handle (visible on sidebar hover)
+    const edge = document.createElement('button');
+    edge.id = 'sidebar-edge-toggle';
+    edge.type = 'button';
+    edge.className = 'sidebar-edge-toggle';
+    edge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/></svg>`;
+    edge.addEventListener('click', _toggleCollapsed);
+    sidebarEl.insertAdjacentElement('afterend', edge);
+
+    // Tooltip for the compact rail (lives in <body> so the sidebar's
+    // overflow:hidden can't clip it)
+    const tip = document.createElement('div');
+    tip.id = 'sidebar-tooltip';
+    tip.className = 'sidebar-tooltip';
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+
+    const showTip = (e) => {
+      if (!_isCollapsed() || !_isDesktop()) return;
+      const target = e.target.closest?.('.sidebar__nav .nav-item, .sidebar__user-profile');
+      if (!target) return;
+      if (target.classList.contains('sidebar__user-profile') &&
+          target.getAttribute('aria-expanded') === 'true') return;
+      if (target.classList.contains('nav-item')) {
+        tip.textContent = target.querySelector('.nav-item__label')?.textContent?.trim() || '';
+      } else {
+        const name = target.querySelector('.sidebar__user-name')?.textContent || '';
+        const role = target.querySelector('.sidebar__user-role')?.textContent || '';
+        tip.innerHTML = `${Utils.escapeHTML(name)}<small>${Utils.escapeHTML(role)}</small>`;
+      }
+      const r = target.getBoundingClientRect();
+      tip.style.left = `${r.right + 10}px`;
+      tip.style.top  = `${r.top + r.height / 2 - tip.offsetHeight / 2}px`;
+      tip.classList.add('is-visible');
+      // offsetHeight is only right once the text is set: re-center
+      tip.style.top  = `${r.top + r.height / 2 - tip.offsetHeight / 2}px`;
+    };
+    sidebarEl.addEventListener('mouseover', showTip);
+    sidebarEl.addEventListener('focusin', showTip);
+    sidebarEl.addEventListener('mouseleave', _hideTooltip);
+    sidebarEl.addEventListener('focusout', _hideTooltip);
+    sidebarEl.addEventListener('click', _hideTooltip);
+    sidebarEl.addEventListener('mouseout', (e) => {
+      if (!e.relatedTarget?.closest?.('.sidebar__nav .nav-item, .sidebar__user-profile')) _hideTooltip();
+    });
+
+    // Ctrl/⌘ + B
+    document.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'b' || e.altKey || e.shiftKey) return;
+      if (!_isDesktop()) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      e.preventDefault();
+      _toggleCollapsed();
+    });
+
+    window.addEventListener('resize', _syncToggleA11y);
+    _syncToggleA11y();
+
+    // Enable animations only after the first paint with the restored state
+    const _enableAnim = () => document.documentElement.classList.remove('no-sidebar-anim');
+    requestAnimationFrame(() => requestAnimationFrame(_enableAnim));
+    setTimeout(_enableAnim, 400); // fallback if rAF is throttled (background tab)
   };
 
   /* ── MOBILE TOGGLE ── */
@@ -212,9 +324,11 @@ const Sidebar = (() => {
       toggleBtn.setAttribute('aria-expanded', 'false');
     };
 
-    toggleBtn.addEventListener('click', () =>
-      sidebar.classList.contains('is-open') ? close() : open()
-    );
+    toggleBtn.addEventListener('click', () => {
+      // Desktop: collapse/expand the sidebar. Mobile: open/close the drawer.
+      if (_isDesktop()) { _toggleCollapsed(); return; }
+      sidebar.classList.contains('is-open') ? close() : open();
+    });
 
     overlay?.addEventListener('click', close);
 
