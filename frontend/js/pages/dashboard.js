@@ -979,7 +979,7 @@ function _openHolidayPopover(anchorEl, dateStr) {
         <div class="rmodal__field">
           <label class="hpop__label">Tipo</label>
           <div class="hpop__type-group">
-            <label class="hpop__type-opt">
+            <label class="hpop__type-opt" title="Solo resalta el día; se puede reservar">
               <input type="radio" name="holiday-pop-type" value="holiday" checked />
               <span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -990,7 +990,7 @@ function _openHolidayPopover(anchorEl, dateStr) {
                 Festivo
               </span>
             </label>
-            <label class="hpop__type-opt">
+            <label class="hpop__type-opt" title="Bloquea reservaciones ese día">
               <input type="radio" name="holiday-pop-type" value="closure" />
               <span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1001,7 +1001,7 @@ function _openHolidayPopover(anchorEl, dateStr) {
                 Cierre
               </span>
             </label>
-            <label class="hpop__type-opt">
+            <label class="hpop__type-opt" title="Solo informativo; se puede reservar">
               <input type="radio" name="holiday-pop-type" value="evento" />
               <span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1234,7 +1234,7 @@ async function _executeDragMove(id, reservation, target, moveSeries, dropX, drop
       );
 
       if (dayDelta !== 0) {
-        const holidaySet = new Set((Store.getState().holidays || []).map(h => h.date));
+        const holidaySet = new Set((Store.getState().holidays || []).filter(h => h.type === 'closure').map(h => h.date));
         const blocked = group.filter(r => {
           const d = new Date(`${r.date}T00:00:00`);
           d.setDate(d.getDate() + dayDelta);
@@ -1245,7 +1245,7 @@ async function _executeDragMove(id, reservation, target, moveSeries, dropX, drop
           Modal.confirm(
             {
               title:       'Fechas no disponibles',
-              message:     `${blocked.length} instancia${blocked.length !== 1 ? 's caerían' : ' caería'} en fin de semana o día festivo. Mueve solo esta instancia o elige otro día.`,
+              message:     `${blocked.length} instancia${blocked.length !== 1 ? 's caerían' : ' caería'} en fin de semana o cierre institucional. Mueve solo esta instancia o elige otro día.`,
               confirmText: 'Entendido',
             },
             () => {}

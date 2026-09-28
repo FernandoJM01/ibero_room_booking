@@ -766,12 +766,12 @@ const ReservationModal = (() => {
     if (!instances.length) {
       previewEl.innerHTML = `<p class="rmodal__recur-preview-empty">
         Con estas opciones no se crearía ninguna reservación: todas las fechas
-        caen en un día no disponible, festivo o con traslape.
+        caen en un día no disponible, cierre institucional o con traslape.
       </p>`;
       return;
     }
 
-    const reasonLabel = { weekend: 'domingo', holiday: 'festivo/cierre', overlap: 'traslape' };
+    const reasonLabel = { weekend: 'domingo', closure: 'cierre institucional', overlap: 'traslape' };
     const skippedCounts = {};
     skipped.forEach(s => { skippedCounts[s.reason] = (skippedCounts[s.reason] || 0) + 1; });
     const skippedText = Object.entries(skippedCounts)
@@ -1076,7 +1076,7 @@ const ReservationModal = (() => {
     });
 
     if (!instances.length) {
-      errEl.textContent = 'No se generaron instancias. Todos los días están ocupados, son festivos o fin de semana.';
+      errEl.textContent = 'No se generaron instancias. Todos los días están ocupados, son cierres institucionales o fin de semana.';
       errEl.classList.remove('hidden');
       return;
     }

@@ -94,8 +94,9 @@ const CalendarWeek = (() => {
     const days       = _buildDays(weekStart);
     const todayStr   = Utils.today();
     const holidayMap  = new Map(holidays.map(h => [h.date, h]));
-    // Only blocking types (holiday, closure) disable slots — eventos do not
-    const holidaySet  = new Set(holidays.filter(h => h.type !== 'evento').map(h => h.date));
+    // Only closures disable slots — holidays and eventos are just highlighted.
+    // See docs/changes/2026-09-28-holiday-bookable.md.
+    const holidaySet  = new Set(holidays.filter(h => h.type === 'closure').map(h => h.date));
 
     // Limpiar selección de slots fuera de la semana visible (no de esta semana)
     const visibleDates = new Set(days.map(d => d.iso));
@@ -246,7 +247,7 @@ const CalendarWeek = (() => {
   /* ── COLUMNA DE DÍA ── */
   const _buildDayCol = (d, reservations, holidayMap, editable, todayStr, highlightDate) => {
     const hol        = holidayMap.get(d.iso);
-    const isDisabled = d.isWeekend || (!!hol && hol.type !== 'evento');
+    const isDisabled = d.isWeekend || hol?.type === 'closure';
     const cls = [
       'cal-wk__day-col',
       d.iso === todayStr      ? 'is-today'     : '',
@@ -557,7 +558,6 @@ const CalendarWeek = (() => {
 
     if (!col ||
         col.classList.contains('is-disabled') ||
-        col.classList.contains('is-holiday') ||
         col.classList.contains('is-closure')) return;
 
     const rect      = col.getBoundingClientRect();

@@ -41,7 +41,8 @@ const Recurring = (() => {
       createdAt:      new Date().toISOString(),
     };
 
-    const holidaySet = new Set(Store.getState().holidays.map(h => h.date));
+    // Only closures are skipped; a holiday is highlighted but bookable.
+    const holidaySet = new Set(Store.getState().holidays.filter(h => h.type === 'closure').map(h => h.date));
     const userId     = Store.getUser()?.id ?? 'unknown';
     const maxCount   = Math.min(count, MAX_INSTANCES);
 
@@ -71,7 +72,7 @@ const Recurring = (() => {
       }
 
       if (holidaySet.has(dateStr)) {
-        skipped.push({ date: dateStr, reason: 'holiday' });
+        skipped.push({ date: dateStr, reason: 'closure' });
         _advance(current, frequency);
         continue;
       }

@@ -85,7 +85,6 @@
 /* Día festivo */
 .cal-day.is-holiday {
   background: var(--color-warning-bg);
-  cursor: not-allowed;
 }
 .cal-day.is-holiday .cal-day__number {
   background: var(--cal-holiday);
@@ -404,7 +403,6 @@
 }
 
 .cal-week__cell:hover { background: var(--color-primary-bg); }
-.cal-week__cell.is-holiday,
 .cal-week__cell.is-closed  { background: var(--color-bg-alt); cursor: not-allowed; }
 .cal-week__cell.is-weekend { background: var(--color-bg-alt); cursor: not-allowed; }
 

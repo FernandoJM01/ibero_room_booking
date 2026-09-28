@@ -111,7 +111,9 @@ const CalendarGrid = (() => {
     // See docs/changes/2026-09-22-secretary-feedback.md #5.
     const isWeekend = dayOfWeek === 0;
     const isToday   = dateStr === todayStr;
-    const isClickable = editable && !isHoliday && !isClosed && !isWeekend;
+    // A holiday is only highlighted — it stays bookable. Only a closure blocks
+    // the day. See docs/changes/2026-09-28-holiday-bookable.md.
+    const isClickable = editable && !isClosed && !isWeekend;
 
     const classes = [
       'cal-day',

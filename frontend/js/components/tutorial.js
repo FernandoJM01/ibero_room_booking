@@ -117,7 +117,7 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
       body:     `Haz <strong>clic derecho</strong> sobre una celda vacía del calendario semanal para:
 <ul class="tut__list">
   <li>Pegar una reservación copiada o cortada en ese horario exacto</li>
-  <li>Marcar ese día como <strong>festivo</strong> o <strong>cierre institucional</strong></li>
+  <li>Marcar ese día como <strong>festivo</strong> (solo se resalta) o <strong>cierre institucional</strong> (bloquea reservaciones)</li>
   <li>Volver rápidamente a la vista mensual del mes mostrado</li>
 </ul>`,
     },
