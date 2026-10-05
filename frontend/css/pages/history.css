@@ -360,6 +360,24 @@
 .hist-footer__info:hover,
 .hist-footer__info[aria-expanded="true"] { background: var(--color-bg-hover); color: var(--color-secondary); }
 
+/* ── COLUMNA DE ACCIONES FIJA ──
+   Con el menú lateral expandido en pantallas de ~1440px la tabla es más
+   ancha que el espacio disponible; sin esto los botones de editar/cancelar
+   quedaban fuera de vista tras un scroll horizontal. */
+.hist-table-card .data-table .col-actions {
+  position: sticky;
+  right: 0;
+  background: var(--color-bg);
+  box-shadow: -1px 0 0 var(--color-border);
+}
+.hist-table-card .data-table thead th.col-actions {
+  background: var(--color-bg-alt);
+  z-index: 11;
+}
+.hist-table-card .data-table tbody td.col-actions { z-index: 1; }
+.hist-table-card .data-table tbody tr:hover td.col-actions { background: var(--color-bg-alt); }
+.hist-table-card .data-table tbody tr.is-selected td.col-actions { background: var(--color-primary-bg); }
+
 /* ── CELDAS COMPACTAS ── */
 .hist-dt { display: block; white-space: nowrap; line-height: 1.35; }
 .hist-dt strong { display: block; font-weight: var(--font-weight-semibold); }
@@ -368,7 +386,7 @@
 
 .hist-trunc {
   display: block;
-  max-width: 200px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
