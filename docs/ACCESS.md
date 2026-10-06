@@ -16,9 +16,9 @@ graduates or leaves, the team can see what must be transferred.
 | System | Used for | Account type / owner (role) | Credentials stored in | Recovery / backup owner | Notes |
 | ------ | -------- | --------------------------- | --------------------- | ----------------------- | ----- |
 | Server `reservadeii` (SSH) | Operating the host, `sudo` | Personal account `acardena`, via jump host `antares.dci.uia.mx` | TBD | TBD | Institutional server; changes to network or firewall go through university IT |
-| Dokploy admin UI | Deploys, domains, environment variables | TBD (admin account) | TBD | TBD | Reached through an SSH tunnel to port 3000 |
-| Microsoft account for the Dev Tunnel | Owns tunnel `ibero-reservas.usw3`; its login is cached for user `acardena` | **`antonio.cardena@ibero.mx`** (single owner; tunnels cannot be transferred) | TBD | TBD | Single point of failure, see [DEPLOYMENT.md](DEPLOYMENT.md#account-dependencies) |
-| Cloudflare account | Worker `plain-glitter-53dd`, DNS zone `deii-salas.uk` | **`p18731@correo.uia.mx`** (single administrator) | TBD | TBD | Add teammates under Manage Account, Members |
+| Dokploy admin UI | Deploys, domains, environment variables | Account **`antonio.cardena@ibero.mx`** (login used so far). Password: **not recorded here**; it is temporary and must be changed at first use | Team password manager | TBD | Reached through an SSH tunnel to port 3000 |
+| Microsoft account for the Dev Tunnel | Owns tunnel `ibero-reservas.usw3`; its login is cached for user `acardena` | **`p18731@correo.uia.mx`** (single owner; tunnels cannot be transferred; the same account as Cloudflare) | TBD | TBD | Single point of failure, see [DEPLOYMENT.md](DEPLOYMENT.md#account-dependencies) |
+| Cloudflare account | Worker `plain-glitter-53dd`, DNS zone `deii-salas.uk` | **`p18731@correo.uia.mx`** (single administrator; the same account as the Dev Tunnel) | TBD | TBD | Add teammates under Manage Account, Members |
 | Domain registrar for `deii-salas.uk` | Domain renewal and nameservers | TBD | TBD | TBD | Registrar and renewal date not yet documented |
 | GitHub repository | Source, deploys pulled by Dokploy | Repository `FernandoJM01/ibero_room_booking` | TBD | TBD | Consider an organisation or additional owners |
 | SMTP mailbox | Outgoing email from the API (`SMTP_*`) | TBD | Dokploy environment | TBD | See [SMTP_ADMIN_GUIDE](SMTP_ADMIN_GUIDE.md) |

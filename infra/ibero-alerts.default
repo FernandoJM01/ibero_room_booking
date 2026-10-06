@@ -3,7 +3,7 @@
 # (at most 2 minutes for the watchdog) reads it.
 #
 # WHO RECEIVES THE E-MAILS (comma separated, no spaces):
-ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx
+ALERT_TO=p18731@correo.uia.mx,a231592a@correo.uia.mx
 #
 # OPTIONAL dead-man's-switch ping (e.g. a Healthchecks.io URL), called after every healthy check:
 #HEARTBEAT_URL=https://hc-ping.com/your-uuid-here

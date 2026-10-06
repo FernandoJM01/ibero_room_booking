@@ -342,7 +342,7 @@ def build():
         "<b>devtunnel user login -d</b>, completa el inicio de sesión con el código en un navegador usando la cuenta propietaria y reinicia el servicio.")
     m.h3("Cómo se evita ahora")
     m.p("Desde el <b>6-oct-2026</b> hay vigilancia automática (sección 6.1). Quedan pendientes el <b>monitor externo</b> (un servicio gratuito que consulte "
-        "https://deii-salas.uk/api/health y avise por correo a las dos personas) y, a mediano plazo, pedir a TI una publicación estable sin depender de una cuenta individual.")
+        "https://deii-salas.uk/api/health y avise por correo a las dos personas; guía paso a paso en <b>docs/EXTERNAL_MONITOR.md</b>) y, a mediano plazo, pedir a TI una publicación estable sin depender de una cuenta individual.")
 
     m.h2("6.1 Vigilancia automática: watchdog, correos y respaldos (instalado el 6-oct-2026)")
     m.p("No modifica la aplicación, Docker, Dokploy, Traefik, la unidad del túnel, el Worker ni Cloudflare: solo agrega temporizadores en el servidor. "
@@ -356,7 +356,7 @@ def build():
     m.h3("Dónde cambiar los correos")
     m.code(["sudo nano /etc/default/ibero-alerts",
             "# cambia la línea ALERT_TO (direcciones separadas por coma, sin espacios):",
-            "#   ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx",
+            "#   ALERT_TO=p18731@correo.uia.mx,a231592a@correo.uia.mx",
             "# no hay que reiniciar nada; para probar:",
             "sudo /usr/local/sbin/devtunnel-notify.sh \"[IberoReservas] TEST\" \"Prueba\""], "Destinatarios (watchdog y respaldo)")
     m.p("El monitor externo, cuando exista, tiene su propia lista de destinatarios en su panel: cámbiala también.")

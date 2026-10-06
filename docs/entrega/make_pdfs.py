@@ -296,8 +296,8 @@ def hoja_servidor():
     rows = [
         ["Servidor (SSH)", "reservadeii · <b>&lt;IP del servidor&gt;</b>", "<b>&lt;usuario personal&gt;</b>", "", "Llave SSH preferida; contraseña en el gestor", "", ""],
         ["Servidor intermedio (salto SSH)", "antares.dci.uia.mx", "<b>&lt;usuario institucional&gt;</b>", "", "Gestor de contraseñas", "", ""],
-        ["Dokploy (panel)", "http://localhost:3000 (por túnel SSH -L 3000)", "<b>&lt;administrador de Dokploy&gt;</b>", "", "Gestor de contraseñas", "", ""],
-        ["Cuenta del Dev Tunnel", "login.microsoft.com (cuenta institucional)", "antonio.cardena@ibero.mx", "", "Gestor + MFA", "", ""],
+        ["Dokploy (panel)", "http://localhost:3000 (por túnel SSH -L 3000)", "antonio.cardena@ibero.mx", "", "Gestor de contraseñas", "", ""],
+        ["Cuenta del Dev Tunnel", "login.microsoft.com (cuenta institucional)", "p18731@correo.uia.mx", "", "Gestor + MFA", "", ""],
         ["Cuenta del sistema que ejecuta el túnel", "reservadeii", "acardena", "", "No tiene contraseña de uso diario; ver RUNBOOK", "", ""],
         ["Cloudflare (Worker y DNS)", "dash.cloudflare.com", "p18731@correo.uia.mx", "", "Gestor + MFA", "", ""],
         ["Registrador del dominio", "<b>&lt;proveedor&gt;</b> · deii-salas.uk", "<b>&lt;cuenta&gt;</b>", "", "Gestor + MFA", "", ""],
