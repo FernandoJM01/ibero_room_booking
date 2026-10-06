@@ -28,7 +28,7 @@ class Browser:
     def page(self, role=None, w=1440, h=900, tutorial=False, collapsed=False, mobile=False):
         ctx = self.b.new_context(viewport={"width": w, "height": h}, device_scale_factor=self.scale, locale="es-MX",
                                  timezone_id="America/Mexico_City", has_touch=mobile, is_mobile=mobile)
-        init = "try{" + ("" if tutorial else "localStorage.setItem('sjibero_tutorial_v1','1');") +                "localStorage.setItem('ibero_selected_room','a10e1300-0000-4000-8000-000000000001');" +                ("localStorage.setItem('ibero_sidebar_collapsed','1');" if collapsed else "") + "}catch(e){}"
+        init = "try{" + ("" if tutorial else "localStorage.setItem('sjibero_tutorial_v2','1');") +                "localStorage.setItem('ibero_selected_room','a10e1300-0000-4000-8000-000000000001');" +                ("localStorage.setItem('ibero_sidebar_collapsed','1');" if collapsed else "") + "}catch(e){}"
         ctx.add_init_script(init)
         if role:
             auth = self.auth(role)

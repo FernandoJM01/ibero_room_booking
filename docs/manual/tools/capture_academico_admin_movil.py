@@ -11,6 +11,10 @@ def S(*a, **k):
 def blank(pg): pg.mouse.click(760, 40)
 
 # ───────── Académico ─────────
+# Recorrido de bienvenida (paso 2: selector de sala resaltado)
+pg = B.page("academico", tutorial=True); settle(pg, 1600)
+pg.click("text=Siguiente"); settle(pg, 800)
+S(pg, "acad_tutorial_1")
 pg = B.page("academico"); settle(pg, 1400)
 S(pg, "acad_calendar", marks=[("#readonly-banner","1","tl"),(".room-picker--topbar","2","bl"),("#view-month","3","bl"),("#cal-prev","4","bl"),("#cal-body","5","tl")])
 S(pg, "common_sidebar_academico", clip_sel="#sidebar", pad=22, crop=(0,0.08,1,0.4), marks=[("#sidebar-nav-calendar","1","r"),("#sidebar-nav-historial","2","r")])

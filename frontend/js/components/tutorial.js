@@ -69,7 +69,7 @@ Se abre el formulario: <strong>responsable</strong> (persona del sistema o conta
     {
       target: '#calendar-body', position: 'top', icon: _I.copy,
       title: 'Reservaciones recurrentes',
-      body:  `En el formulario activa <strong>Recurrente</strong> para crear una serie (diaria, semanal o mensual). Las series se ven en <strong>morado</strong>.
+      body:  `En el formulario activa <strong>Recurrente</strong> para crear una serie (diaria, semanal, quincenal o mensual). Las series se ven en <strong>morado</strong>.
 <div class="tut__tip">El responsable recibe <strong>un solo correo</strong> con todas las fechas. Para mover o cancelar puedes elegir <strong>solo esa fecha</strong> o <strong>toda la serie</strong>.</div>`,
     },
     {

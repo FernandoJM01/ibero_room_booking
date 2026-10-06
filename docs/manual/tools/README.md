@@ -31,6 +31,9 @@ for f in capture_secretaria_1 capture_secretaria_2 capture_academico_admin_movil
   .venv/bin/python docs/manual/tools/$f.py
 done
 
+# 3b. Imagen del correo de invitación (simulación; no envía nada)
+.venv/bin/python docs/manual/tools/capture_invitation_email.py
+
 # 4. PDF → docs/manual/*.pdf
 .venv/bin/python docs/manual/tools/build_manuals.py
 
