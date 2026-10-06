@@ -1,7 +1,9 @@
 # Accounts and Access Register
 
 Which accounts and credentials keep IberoReservations running, what each one is
-used for, and who is responsible for it. Its purpose is continuity: when someone
+used for, and who is responsible for it. For *where each piece of configuration is
+stored* (files, Dokploy, Traefik, Cloudflare), see
+[SERVER_CONFIGURATION](SERVER_CONFIGURATION.md). Its purpose is continuity: when someone
 graduates or leaves, the team can see what must be transferred.
 
 > **Never put secrets in this file or anywhere in the repository:** no

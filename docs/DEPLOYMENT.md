@@ -2,8 +2,9 @@
 
 Production deployment of IberoReservations on the university server
 `reservadeii`. For local development see the [README](../README.md); for day-2
-operations see the [RUNBOOK](RUNBOOK.md); for the reasoning behind the choices
-see the [ADRs](adr/README.md).
+operations see the [RUNBOOK](RUNBOOK.md); for where each piece of configuration is
+stored see [SERVER_CONFIGURATION](SERVER_CONFIGURATION.md); for the reasoning behind
+the choices see the [ADRs](adr/README.md).
 
 ```mermaid
 flowchart LR

@@ -21,8 +21,8 @@ algunas preferencias (ver más abajo).
 | `index.html` | Inicio de sesión y recuperación de contraseña | Todos |
 | `reset-password.html` | Define una contraseña nueva desde el enlace del correo | Todos |
 | `dashboard.html` | **Reservar**: calendario mensual/semanal, estadísticas rápidas y próximas reservaciones | Secretaría |
-| `calendar.html` | **Calendario** de consulta (solo lectura) | Académico |
-| `historial.html` | Historial con filtros, edición, cancelación y exportación | Secretaría y académico (el académico solo ve lo suyo y sin acciones) |
+| `calendar.html` | **Calendario** de consulta (solo lectura): sus reservaciones completas y las de otras personas como franjas «Ocupado» | Académico |
+| `historial.html` | Historial con filtros, edición, cancelación y exportación | Secretaría y académico (el académico solo ve lo suyo y sin acciones; otras personas nunca aparecen aquí) |
 | `estadisticas.html` | Indicadores y gráficas por periodo y sala | Secretaría |
 | `admin.html` | Administración por pestañas: Usuarios, Salas, Calendario (festivos/cierres y semestre), Notificaciones, Respaldos | Secretaría; **Salas** y **Respaldos** solo Super Administrador |
 | `ai-panel.html` | Asistente IA para proponer reservaciones. **Oculto**: no aparece en el menú y está desactivado en el formulario | Secretaría (solo por URL) |

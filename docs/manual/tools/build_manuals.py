@@ -94,9 +94,10 @@ def secretaria():
     ])
     m.h2("Quién puede hacer qué")
     m.table(["", "Académico", "Secretaria", "Super Administrador"], [
-        ["Ver su calendario y su historial", "Sí (solo lo suyo)", "Sí (todo)", "Sí (todo)"],
+        ["Ver el calendario", "Sí (sus reservaciones y las franjas «Ocupado»)", "Sí (todo, con detalle)", "Sí (todo, con detalle)"],
+        ["Ver el historial", "Solo lo suyo", "Sí (todo)", "Sí (todo)"],
         ["Crear, editar, mover y cancelar reservaciones", "No", "Sí", "Sí"],
-        ["Historial completo, estadísticas y exportaciones", "Solo su historial", "Sí", "Sí"],
+        ["Estadísticas y exportación del historial completo", "No", "Sí", "Sí"],
         ["Crear y desactivar usuarios", "No", "Sí (no Super Administradores)", "Sí"],
         ["Marcar festivos y cierres", "No", "Sí", "Sí"],
         ["Fechas del semestre, salas, respaldos, diagnóstico de correo", "No", "No", "Sí"],
@@ -176,7 +177,7 @@ def secretaria():
 
     m.h2("El formulario «Nueva reservación»")
     m.fig("sec_modal_filled", "Formulario completo.", max_h=6.2 * inch, max_w=3.7 * inch)
-    m.legend(["<b>Sala</b> (obligatoria). Aunque estés viendo una sala en el calendario, elígela aquí otra vez.",
+    m.legend(["<b>Sala</b> (obligatoria). Aparece <b>la sala que estabas viendo</b> en el calendario; puedes cambiarla aquí.",
               "<b>Hora de inicio y de fin</b>; puedes ajustarlas.",
               "<b>Aviso de disponibilidad</b>: «Horario disponible» o el nombre de quien ya ocupa esa franja.",
               "<b>Tipo de responsable</b>: usuario interno o solicitante externo.",
@@ -316,10 +317,9 @@ def secretaria():
              "Escribe nombre, correo institucional, elige el rol (<b>Académico</b> o <b>Secretaria</b>) y una contraseña.",
              "Pulsa <b>Crear usuario</b>."])
     m.fig("sec_user_new", "Formulario de nuevo usuario.", max_h=4.2 * inch, max_w=3.5 * inch)
-    m.warn("El campo de contraseña viene con una contraseña temporal <b>precargada que es la misma para todos los usuarios nuevos</b>. "
-           "Escribe una <b>distinta para cada persona</b> (8+ caracteres con mayúscula, minúscula, número y símbolo) y "
-           "entrégasela por un medio privado: el correo de bienvenida <b>no</b> incluye la contraseña. Pídele que la "
-           "cambie en su primer acceso.")
+    m.note("El campo de contraseña viene con una <b>contraseña temporal precargada</b>; puedes dejarla o escribir otra "
+           "(8+ caracteres con mayúscula, minúscula, número y símbolo). El correo de bienvenida <b>no</b> incluye la contraseña: "
+           "entrégasela a la persona por un medio privado y pídele que la cambie en su primer acceso con <b>Cambiar Contraseña</b>.")
     m.bullets(["<b>Editar</b>: cambia nombre, correo o rol; deja la contraseña vacía para no cambiarla. También sirve para dar una contraseña nueva a quien la olvidó.",
                "<b>Desactivar</b>: la persona ya no puede entrar, pero sus reservaciones se conservan. Se puede <b>reactivar</b> después. No puedes desactivar tu propia cuenta.",
                "Las cuentas de <b>Super Administrador</b> solo las puede modificar otro Super Administrador."])
@@ -364,6 +364,7 @@ def secretaria():
         ["La persona dice que no le llegó el correo", "Revisa spam y la pestaña Notificaciones: si dice «Omitido», el correo no está configurado; avisa al Super Administrador."],
         ["Me equivoqué y cancelé una reservación", "No se puede deshacer. Crea una nueva con los mismos datos."],
         ["Quiero reservar una sala que no aparece", "Solo el Super Administrador puede dar de alta o reactivar salas."],
+        ["Se abre el formulario con otra sala distinta a la que quería", "Se preselecciona la sala que estás viendo en el calendario; cámbiala en el campo «Sala» del formulario."],
         ["Veo una pantalla vieja después de una actualización", "Recarga forzada: Ctrl + Mayús + R (en Mac, Cmd + Mayús + R)."],
         ["No me deja entrar tras varios intentos", "Espera 15 minutos o pide ayuda al Super Administrador."],
     ], [2.9, 4.6])
@@ -396,12 +397,14 @@ def academico():
     m.h2("Qué puedes y qué no puedes hacer")
     m.table(["Puedes", "No puedes"], [
         ["Entrar con tu correo institucional y cambiar tu contraseña", "Crear, editar, mover o cancelar reservaciones"],
-        ["Ver en el calendario tus reservaciones (mes o semana)", "Ver las reservaciones de otras personas"],
-        ["Ver el detalle de cada reservación", "Entrar a Estadísticas ni a Administración"],
+        ["Ver en el calendario tus reservaciones (mes o semana)", "Ver quién reservó, para qué o las notas de otra persona"],
+        ["Ver <b>cuándo está ocupada</b> cada sala (franjas «Ocupado»)", "Entrar a Estadísticas ni a Administración"],
+        ["Ver el detalle de tus reservaciones", ""],
         ["Buscar y filtrar tu historial, y exportarlo a Excel, PDF o CSV", ""],
     ], [3.8, 3.7])
-    m.note("El sistema solo te muestra las reservaciones <b>en las que eres el responsable o que se registraron a tu nombre</b>. "
-           "Aunque el calendario diga «modo consulta», <b>no</b> sirve para ver si la sala está libre: para eso consulta a la secretaría.")
+    m.note("En el calendario ves <b>tus</b> reservaciones completas (las que tienen tu nombre como responsable o que se registraron a tu nombre) "
+           "y, de las demás personas, <b>solo que el horario está ocupado</b>, sin nombres ni temas. Así puedes ver qué horarios están libres antes de pedir una sala. "
+           "Tu <b>Historial</b> solo muestra tus propias reservaciones.")
 
     m.h1("2. Primeros pasos")
     acceso(m, "academico")
@@ -414,22 +417,26 @@ def academico():
     m.h1("3. Calendario")
     m.fig("acad_calendar", "Calendario en vista mensual.", max_h=4.3 * inch)
     m.legend(["Aviso de <b>modo consulta</b>: no puedes crear ni modificar nada desde aquí.",
-              "<b>Selector de sala</b>: el calendario muestra una sala a la vez.",
+              "<b>Selector de sala</b>: el calendario muestra una sala a la vez; la disponibilidad es <b>de esa sala</b>.",
               "<b>Mes / Semana</b>: cambia la vista.",
               "Flechas para ir al periodo anterior o siguiente (y <b>Hoy</b> para volver a la fecha actual).",
-              "El calendario con <b>tus</b> reservaciones."])
+              "El calendario: tus reservaciones en rojo y las franjas <b>grises «Ocupado»</b> de otras personas."])
     m.h2("Qué significa cada color")
     m.table(["Color", "Significado"], [
         ["Rojo", "Una de tus reservaciones"],
+        ["Gris con rayas «Ocupado»", "La sala está <b>ocupada</b> en ese horario por otra persona. Solo ves el horario"],
         ["Morado", "Una reservación tuya que forma parte de una serie que se repite"],
         ["Azul verdoso", "El día de hoy"],
         ["Amarillo", "Día festivo (solo informativo)"],
         ["Gris", "Cierre institucional: ese día no se hacen reservaciones"],
     ], [1.6, 5.9])
     m.h2("Ver el detalle de una reservación")
-    m.p("Haz clic en cualquiera de tus reservaciones: se abre una ventana con la fecha, el horario, el responsable, el "
+    m.p("Haz clic en una de <b>tus</b> reservaciones: se abre una ventana con la fecha, el horario, el responsable, el "
         "nombre de la junta, quién la registró y su estado. Ciérrala con la <b>x</b> o con la tecla Esc.")
-    m.fig("acad_popup", "Detalle de una reservación (solo lectura).", max_h=3.4 * inch, max_w=5.6 * inch)
+    m.fig("acad_popup", "Detalle de una de tus reservaciones (solo lectura).", max_h=3.4 * inch, max_w=5.6 * inch)
+    m.p("Si haces clic en una franja <b>«Ocupado»</b>, el sistema solo indica la fecha, el horario y la sala, y que está "
+        "reservada por otra persona.")
+    m.fig("acad_busy_popup", "Franja ocupada por otra persona: no se muestran nombres ni temas.", max_h=2.2 * inch, max_w=4.6 * inch)
     m.h2("Vista semanal")
     m.p("Con el botón <b>Semana</b> ves tus reservaciones por hora, de lunes a domingo.")
     m.fig("acad_week", "Vista semanal.", max_h=3.4 * inch)
@@ -448,7 +455,8 @@ def academico():
     m.note("Los registros se conservan <b>18 meses</b>; después se eliminan automáticamente.")
 
     m.h1("5. ¿Cómo pido una reservación?")
-    m.p("Las reservaciones las hace la secretaría. Para agilizarlo, ten a la mano:")
+    m.p("Las reservaciones las hace la secretaría. <b>Antes de pedir</b>, revisa en el Calendario qué horarios de la sala "
+        "están libres (sin franjas «Ocupado»). Para agilizarlo, ten a la mano:")
     m.bullets(["La <b>sala</b> que necesitas (si hay más de una).",
                "La <b>fecha</b> y la <b>hora de inicio y de fin</b>.",
                "El <b>nombre de la junta</b> (por ejemplo, «Consejo académico»).",
@@ -468,7 +476,8 @@ def academico():
     m.h1("7. Preguntas frecuentes", newpage=False)
     m.table(["Si te pasa esto…", "Qué hacer"], [
         ["No veo una junta mía en el calendario", "Revisa que estés en la <b>sala</b> correcta (selector superior) y en el mes o semana adecuados. Si aun así no aparece, pregunta a la secretaría si ya la registró."],
-        ["No veo reservaciones de otras personas", "Es así por privacidad: solo ves las tuyas."],
+        ["Veo franjas grises que dicen «Ocupado»", "Son reservaciones de otras personas: por privacidad solo ves que ese horario no está libre, no quién ni para qué."],
+        ["Quiero saber quién tiene reservada la sala", "El sistema no lo muestra a los académicos; pregúntalo a la secretaría."],
         ["Quiero cambiar o cancelar una reservación", "Pídeselo a la secretaría; desde tu cuenta no es posible."],
         ["Olvidé mi contraseña", "Pulsa «¿Olvidaste tu contraseña?» en la pantalla de inicio. Si el correo no llega, pide a la secretaría que te asigne una nueva."],
         ["La sesión se cerró sola", "Es normal tras 30 minutos sin actividad. Vuelve a entrar."],
@@ -537,15 +546,15 @@ def administrador():
               "Tarjeta de una persona: nombre, correo, rol, estado, último acceso y acciones. Las cuentas con la etiqueta <b>Super Admin</b> las ves marcadas."])
     m.h2("Crear un usuario")
     m.steps(["Pulsa <b>Nuevo usuario</b>.", "Escribe nombre completo y correo institucional.",
-             "Elige el <b>rol</b>: <b>Académico</b> (solo consulta) o <b>Secretaria</b>.",
+             "Elige el <b>rol</b>: <b>Académico</b> (consulta su calendario y la disponibilidad de las salas) o <b>Secretaria</b>.",
              "Si la persona debe ser <b>Super Administrador</b>, marca la casilla correspondiente (solo tú la ves).",
              "Escribe una contraseña y pulsa <b>Crear usuario</b>."])
     m.fig("adm_user_new", "Formulario de nuevo usuario con la casilla «Super Administrador».", max_h=4.4 * inch, max_w=3.6 * inch)
     m.legend(["Rol de la cuenta.", "<b>Super Administrador</b>: además de las funciones de Secretaria, gestiona respaldos, el semestre y cuentas de Super Administrador. Siempre conserva el rol de Secretaria.",
               "Contraseña inicial."])
-    m.warn("El campo de contraseña viene <b>precargado con una contraseña temporal igual para todos los usuarios nuevos</b>. "
-           "Escribe una <b>distinta para cada persona</b> y entrégasela por un medio privado: el correo de bienvenida "
-           "<b>no</b> incluye la contraseña. Debe tener 8+ caracteres con mayúscula, minúscula, número y símbolo.")
+    m.note("El campo de contraseña viene con una <b>contraseña temporal precargada</b>; puedes dejarla o escribir otra "
+           "(8+ caracteres con mayúscula, minúscula, número y símbolo). El correo de bienvenida <b>no</b> incluye la contraseña: "
+           "entrégasela a la persona por un medio privado y pídele que la cambie en su primer acceso.")
     m.h2("Editar, cambiar contraseña, desactivar y reactivar")
     m.bullets([
         "<b>Editar</b> permite cambiar nombre, correo, rol y (solo tú) la casilla de Super Administrador. Para dar una contraseña nueva a quien olvidó la suya, escríbela en el campo; si lo dejas vacío no cambia. No puedes quitarte a ti mismo el rol de Super Administrador.",

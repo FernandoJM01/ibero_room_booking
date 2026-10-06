@@ -6,7 +6,7 @@ IberoReservations. Están pensadas para personas sin conocimientos técnicos.
 | Manual | Para quién | Páginas |
 | ------ | ---------- | ------- |
 | [Manual de la Secretaria](Manual_Secretaria.pdf) | Quien crea y administra las reservaciones (incluye una guía de arranque para quien entra por primera vez) | 32 |
-| [Manual del Académico](Manual_Academico.pdf) | Quien solo consulta sus reservaciones | 12 |
+| [Manual del Académico](Manual_Academico.pdf) | Quien consulta sus reservaciones y la disponibilidad de las salas | 14 |
 | [Manual del Administrador](Manual_Administrador.pdf) | Super Administrador: usuarios, salas, calendario, correo y respaldos | 20 |
 
 Las capturas usan **datos ficticios** de una pila de demostración (personas
@@ -19,7 +19,7 @@ inventadas, dos salas y reservaciones de octubre de 2026); no contienen datos re
   editar, mover y cancelar, Historial (filtros, acciones, exportación), Estadísticas,
   Usuarios, Festivos y cierres, Notificaciones, uso en celular y preguntas frecuentes.
 - **Académico**: qué puede y qué no puede hacer, calendario y detalle de sus
-  reservaciones, Historial, cómo pedir una reservación a la secretaría y qué correos recibirá.
+  reservaciones y la disponibilidad (franjas «Ocupado»), Historial, cómo pedir una reservación a la secretaría y qué correos recibirá.
 - **Administrador**: lista de arranque, usuarios y Super Administradores, salas,
   festivos/cierres/semestre, correo (diagnóstico y registro), respaldos, políticas
   de datos y rutinas recomendadas.

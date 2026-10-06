@@ -115,5 +115,5 @@ with no default, so the old code's `INSERT`s fail. Pick one:
 - **Día festivo vs. Cierre.** Unrelated to rooms but shipped on the same branch: a
   festivo is now only highlighted and stays bookable; only a cierre blocks the day
   (`2026-09-28-holiday-bookable.md`).
-- **Known gap.** The reservation form does not pre-select the room currently shown
-  in the calendar; the secretary chooses it again in the form.
+- **Room pre-selected in the form** (2026-10-06). A new reservation opens on the
+  room the calendar is showing; the secretary can still change it.

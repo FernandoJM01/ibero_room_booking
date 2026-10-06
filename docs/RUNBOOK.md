@@ -279,6 +279,73 @@ In Dokploy, open the application, change the **Environment** tab, then
 **Deploy**. Variable names are listed in
 [DEPLOYMENT.md, section 2](DEPLOYMENT.md#2-service-configuration-dokploy).
 
+### Verify the login rate limit (shared by everyone, or per client?)
+
+**Why.** The API allows **5 failed login attempts per 15 minutes per IP address**
+(`backend/routes/auth.js`; successful logins do not count). The "IP address" is whatever
+the API believes the client is, and the API trusts exactly one proxy hop
+(`app.set('trust proxy', 1)`). In production the request goes Cloudflare Worker, then the
+Dev Tunnel, then Traefik, then the API, so the API may see **the same address for every
+visitor** (for instance Traefik's or the tunnel's). If so, five wrong passwords from
+anyone would lock **all** users out for 15 minutes. It may also be possible to bypass the
+limit by sending a made-up `X-Forwarded-For` header. This procedure tells you which case
+applies. It was rehearsed on a local copy of the system, where the headers below are what
+the API returns.
+
+**Side effects.** Only failed attempts count, and they are keyed by IP, not by account, so
+**no real user is blocked** unless the bucket is shared. Use a made-up email. The whole
+procedure uses at most **4 of the 5** attempts (2 per test). Do it when nobody is logging in. Counters
+live in the API's memory and reset by themselves after the time shown in `RateLimit-Reset`
+(seconds), or immediately if the API service is restarted
+([Restart a service](#restart-a-service-without-redeploying)).
+
+**Test A: is the counter shared between different people?**
+
+1. On computer A (for example your laptop on the university network) run:
+   ```bash
+   curl -si -X POST https://deii-salas.uk/api/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{"email":"prueba-limite@example.com","password":"Incorrecta1!"}' \
+     | grep -iE '^(HTTP|ratelimit)'
+   ```
+   Expected: `HTTP/2 401` and `RateLimit-Remaining: 4`.
+2. From a **different network**: a phone on mobile data with Wi-Fi turned off, or any
+   computer outside the university. Run the same command (a phone terminal app or a
+   curl-capable site works; any device that sends the request from another address).
+3. Read `RateLimit-Remaining` in the second answer:
+
+| Second answer | Meaning |
+| ------------- | ------- |
+| `3` (it continued counting) | **Shared.** The API cannot tell visitors apart, so five failures from anyone lock everybody out. |
+| `4` (it started again) | **Per client.** Working as intended. |
+
+**Test B (optional): can the limit be bypassed with a forged header?** On the server, send
+the request straight to Traefik twice, changing only the forged address:
+
+```bash
+for ip in 203.0.113.9 203.0.113.10; do
+  curl -si -X POST http://127.0.0.1/api/auth/login \
+    -H 'Host: npbkpmwc-80.usw3.devtunnels.ms' \
+    -H 'Content-Type: application/json' -H "X-Forwarded-For: $ip" \
+    -d '{"email":"prueba-limite@example.com","password":"Incorrecta1!"}' \
+    | grep -iE '^(HTTP|ratelimit-remaining)'
+done
+```
+
+| Result | Meaning |
+| ------ | ------- |
+| `RateLimit-Remaining` keeps going down | Traefik ignores the forged header. Good. |
+| It shows the same high number both times | **Bypassable**: an attacker can rotate the header to guess passwords without hitting the limit. |
+
+(The tunnel host in the command is the current one; use the host shown in
+[DEPLOYMENT §3](DEPLOYMENT.md#3-routing--reverse-proxy-traefik) if it has changed.)
+
+**If Test A says "shared" or Test B says "bypassable"** write the result in
+[DEPLOYMENT, observations](DEPLOYMENT.md#7-observations--recommendations) and ask for the
+change: key the limiter by account (email plus IP) instead of IP alone, and/or configure
+the number of trusted proxies to match the real chain. Both are small changes in
+`backend/routes/auth.js` and `backend/server.js`.
+
 ## Troubleshooting
 
 Work from the outside in: public URL, tunnel, Traefik, services, database.
