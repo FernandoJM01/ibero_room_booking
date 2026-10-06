@@ -26,7 +26,7 @@ GET https://npbkpmwc-80.usw3.devtunnels.ms/api/health        (the public tunnel 
 | `[IberoReservas] ACTION NEEDED` | Automatic restarts did not help (usually the Microsoft login expired) | `devtunnel user login -d` as `acardena`, restart the unit (the mail has the commands) |
 | `[IberoReservas] ALERT: the application is down` | The tunnel is fine but the API/Traefik/DB is not | Look at the Swarm services (the mail has the commands) |
 
-**Recipients:** `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx` (`ALERT_TO`, comma separated).
+**Recipients:** `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx`, set in **one file on the server**, `/etc/default/ibero-alerts` (see [Where to change the e-mails](#where-to-change-the-e-mails)).
 
 **How the e-mail is sent.** `devtunnel-notify.sh` runs a small `nodemailer` call **inside the API container**, which
 already holds the SMTP settings. Nothing secret is copied to the host or stored by the watchdog, and nothing is
@@ -38,6 +38,36 @@ showed both `sent` and `failed` rows in the email log.
 **What it cannot do.** Renew an expired Microsoft login (a person must), see a dead server/network/Cloudflare
 (use the external monitor), or extend the tunnel's expiry. Every decision is written to the journal:
 `journalctl -t devtunnel-watchdog`.
+
+## What is installed on the server
+
+| Path | What it is |
+| ---- | ---------- |
+| `/usr/local/sbin/devtunnel-watchdog.sh` | The watchdog (the logic above) |
+| `/usr/local/sbin/devtunnel-notify.sh` | Sends an e-mail through the API container's SMTP account |
+| `/etc/systemd/system/devtunnel-watchdog.service` and `.timer` | Runs the watchdog 3 min after boot and then every 2 min, as root |
+| `/etc/default/ibero-alerts` | **Settings you may edit**: recipients and optional heartbeat URL |
+| `/run/devtunnel-watchdog.*` | Its short-term memory (failure counters, last restart, last alert); resets at reboot |
+| Journal | `journalctl -t devtunnel-watchdog` (needs `sudo` or the `adm` group) |
+
+It does **not** change the application, Docker/Swarm, Dokploy, Traefik, the tunnel's own unit, the Worker or Cloudflare.
+The nightly backup ([`../db-backup/`](../db-backup/README.md)) shares the same recipients file.
+
+## Where to change the e-mails
+
+Edit **one file** on the server:
+
+```bash
+sudo nano /etc/default/ibero-alerts        # change the ALERT_TO line: addresses separated by commas, no spaces
+sudo /usr/local/sbin/devtunnel-notify.sh "[IberoReservas] TEST" "Test after changing recipients"   # optional check
+```
+
+No restart is needed: the next run reads the file. The same file sets `HEARTBEAT_URL` (uncomment and paste the
+Healthchecks.io ping URL). If the file is deleted the scripts fall back to the two original addresses. Remember the
+**external monitor's** recipients are separate: change them in that service's dashboard.
+
+In the repository the template is [`../ibero-alerts.default`](../ibero-alerts.default); the installer creates the
+server file only if it does not exist, so re-running the installer never overwrites your edits.
 
 ## Tests (no server needed)
 
@@ -83,15 +113,14 @@ To abort: `sudo systemctl kill -s CONT devtunnel-reservations`.
 
 ## Configure
 
-Edit the `Environment=` lines in the service file (`sudo systemctl edit devtunnel-watchdog.service`), then
-`sudo systemctl daemon-reload`: `WATCHDOG_URL`, `TUNNEL_HOST` (if the tunnel host ever changes), `ALERT_TO`,
-`THRESHOLD` (2), `MIN_INTERVAL` (600 s), `ESCALATE_AFTER` (2), `ALERT_EVERY` (3600 s), `HEARTBEAT_URL` (optional ping
-to a dead-man's-switch service after each healthy run).
+Recipients and heartbeat: `/etc/default/ibero-alerts` (above). The rest are `Environment=` lines in the service file
+(`sudo systemctl edit devtunnel-watchdog.service`, then `sudo systemctl daemon-reload`): `WATCHDOG_URL` and `TUNNEL_HOST`
+(if the tunnel host ever changes), `THRESHOLD` (2), `MIN_INTERVAL` (600 s), `ESCALATE_AFTER` (2), `ALERT_EVERY` (3600 s).
 
 ## Remove
 
 ```bash
 sudo systemctl disable --now devtunnel-watchdog.timer
-sudo rm /etc/systemd/system/devtunnel-watchdog.{service,timer} /usr/local/sbin/devtunnel-{watchdog,notify}.sh
+sudo rm /etc/systemd/system/devtunnel-watchdog.{service,timer} /usr/local/sbin/devtunnel-{watchdog,notify}.sh   # keep /etc/default/ibero-alerts if the backup stays
 sudo systemctl daemon-reload
 ```

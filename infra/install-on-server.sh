@@ -22,12 +22,16 @@ install -m 0644 tunnel-watchdog/devtunnel-watchdog.timer   /etc/systemd/system/d
 install -m 0755 db-backup/db-backup.sh /usr/local/sbin/db-backup.sh
 install -m 0644 db-backup/ibero-db-backup.service /etc/systemd/system/ibero-db-backup.service
 install -m 0644 db-backup/ibero-db-backup.timer   /etc/systemd/system/ibero-db-backup.timer
+# recipients file: created once, never overwritten (local edits are kept)
+[ -f /etc/default/ibero-alerts ] || install -m 0644 ibero-alerts.default /etc/default/ibero-alerts
+echo "   recipients now: $(grep '^ALERT_TO=' /etc/default/ibero-alerts)"
 systemctl daemon-reload
 
 echo "== 3. First database backup (before anything else changes)"
 /usr/local/sbin/db-backup.sh || echo "   !! backup failed: fix before continuing"
 
 echo "== 4. Test e-mail to the two people (check both inboxes, also spam)"
+set -a; . /etc/default/ibero-alerts; set +a
 /usr/local/sbin/devtunnel-notify.sh "[IberoReservas] TEST" "Test of the watchdog e-mail from $(hostname). No action needed."
 
 echo "== 5. One manual watchdog run (no output = tunnel healthy)"
