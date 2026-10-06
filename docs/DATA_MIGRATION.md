@@ -34,13 +34,16 @@ Decisions taken with the client:
 | Creator | Every booking shows as created by the administrator account you pass with `--admin-email` |
 | Emails | **None are sent** by the load (it writes straight to the database) |
 
-**Still needed from the client** before the real load:
+Already settled:
 
-1. The 4 **institutional emails** (one per person).
-2. The **spelling with accents** of the 4 names (the file is in capitals without accents), e.g. Gerónimo, Girón, Jiménez.
-3. The real **room name**.
-4. Whether **2 Nov 2026** (a seeded festivo) really has the 13:00–17:00 Monday booking; the other Monday that is missing from the pattern, 16 Nov, is the public holiday.
-5. The real **calendar**: festivos, institutional closures and semester dates (see [section 4](#4-step-by-step-in-production)).
+- The 4 **institutional emails** were provided (kept in the git-ignored `private/people.csv`).
+- **Festivos are bookable.** Only an institutional closure blocks a day, so the booking on 2 Nov 2026 (a seeded festivo) is valid. The tool's `--holiday-dates` option only prints a reminder and is optional.
+
+**Still needed before the real load:**
+
+1. The **spelling with accents** of the 4 names (the file is in capitals without accents), e.g. Gerónimo, Girón, Jiménez, René; they go in the `nombre_mostrar` column of the people CSV.
+2. The real **room name**.
+3. The real **calendar**: festivos, institutional closures and semester dates (see [section 4](#4-step-by-step-in-production)). Pass any closure that falls between 6 Oct and 3 Dec to `--closure-dates` and the tool will refuse to load a booking on it.
 
 ## 2. Why this is not part of the seed or a migration
 
@@ -86,11 +89,10 @@ Do it outside working hours and tell the secretaries not to book meanwhile.
      --xlsx scripts/import-sessions/private/sesiones.xlsx \
      --people scripts/import-sessions/private/people.csv \
      --room-name "Real room name" --admin-email admin.email@ibero.mx \
-     --closure-dates <cierres separados por coma> --holiday-dates <festivos separados por coma> \
+     --closure-dates <cierres separados por coma> \
      --out-dir scripts/import-sessions/private
    ```
-   Read the report: expected **45 reservations, 5 series, 3 single bookings, 4 people**. Warnings about
-   festivos are normal; errors stop everything. Open `import.sql` if you want to read it.
+   Read the report: expected **45 reservations, 5 series, 3 single bookings, 4 people**. Errors stop everything; a warning only asks you to double-check. Open `import.sql` if you want to read it.
 6. **Copy it to the server and apply it** (the file has names and emails; delete the copy afterwards):
    ```bash
    scp -J <user>@antares.dci.uia.mx scripts/import-sessions/private/import.sql <user>@<server-ip>:~/
