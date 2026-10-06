@@ -30,6 +30,33 @@ const RESERVATION_WITH_NAMES = `
   LEFT JOIN external_contacts ec ON ec.id = r.external_responsible_id
   LEFT JOIN rooms rm ON rm.id = r.room_id`;
 
+// ── Academic visibility ────────────────────────────────────────────────────
+// An academic may see WHEN each room is busy, but never WHO booked it or WHY.
+// Their own reservations (created for them or naming them as responsible) stay
+// complete; anyone else's active reservation is reduced to an anonymous
+// "Ocupado" slot. See docs/changes/2026-10-06-academic-availability.md.
+const isOwnReservation = (row, userId) =>
+  row.created_by === userId || row.responsible_id === userId;
+
+const toBusySlot = (row) => ({
+  id:               row.id,
+  room_id:          row.room_id,
+  room_name:        row.room_name,
+  start_time:       row.start_time,
+  end_time:         row.end_time,
+  status:           'active',
+  busy_only:        true,
+  responsible_name: 'Ocupado',
+  area:             'Ocupado',
+  observations:     null,
+  is_recurring:     false,
+  recurring_group:  null,
+});
+
+const forAcademic = (rows, userId) => rows
+  .filter(r => isOwnReservation(r, userId) || r.status === 'active')
+  .map(r => (isOwnReservation(r, userId) ? r : toBusySlot(r)));
+
 const fetchWithNames = async (db, id) =>
   (await db.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id])).rows[0];
 
@@ -75,6 +102,9 @@ router.get('/', async (req, res) => {
       WHERE 1=1`;
     const params = [];
     let paramCount = 1;
+    // Academics: default = only their own reservations; ?availability=1 adds
+    // everyone else's active bookings as anonymous busy slots.
+    const academicAvailability = req.user.role === 'academico' && req.query.availability === '1';
 
     if (req.query.room_id) {
       query += ` AND r.room_id = $${paramCount}`;
@@ -100,14 +130,15 @@ router.get('/', async (req, res) => {
       paramCount++;
     }
 
-    if (responsible) {
+    // (ignored in availability mode so it can't be used to probe other people's bookings)
+    if (responsible && !academicAvailability) {
       query += ` AND r.responsible_name ILIKE $${paramCount}`;
       params.push(`%${responsible}%`);
       paramCount++;
     }
 
     // Security: Academics should only see reservations they own or created
-    if (req.user.role === 'academico') {
+    if (req.user.role === 'academico' && !academicAvailability) {
       query += ` AND (r.created_by = $${paramCount} OR r.responsible_id = $${paramCount})`;
       params.push(req.user.id);
       paramCount++;
@@ -116,7 +147,7 @@ router.get('/', async (req, res) => {
     query += ' ORDER BY r.start_time ASC';
 
     const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(academicAvailability ? forAcademic(result.rows, req.user.id) : result.rows);
   } catch (err) {
     console.error('Error fetching reservations:', err);
     res.status(500).json({ error: 'Server error' });
@@ -156,7 +187,7 @@ router.get('/week', async (req, res) => {
     );
     res.json({
       weekStart: weekStart.toISOString().slice(0, 10),
-      reservations: result.rows
+      reservations: req.user.role === 'academico' ? forAcademic(result.rows, req.user.id) : result.rows
     });
   } catch (err) {
     console.error('Error fetching week reservations:', err);
@@ -357,6 +388,10 @@ router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(`${RESERVATION_WITH_NAMES} WHERE r.id = $1`, [id]);
     if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+    // An academic can only open their own reservations
+    if (req.user.role === 'academico' && !isOwnReservation(result.rows[0], req.user.id)) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
     res.json(result.rows[0]);

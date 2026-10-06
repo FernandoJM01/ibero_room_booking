@@ -87,6 +87,7 @@ const API = (() => {
       recurringGroupId: r.recurring_group,
       roomId:           r.room_id ?? null,
       roomName:         r.room_name ?? null,
+      busyOnly:         !!r.busy_only,
     };
   };
 

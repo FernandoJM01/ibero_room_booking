@@ -176,6 +176,13 @@
   background: var(--cal-recurring);
 }
 
+/* Franja ocupada por otra persona (vista de un académico): sin nombres, solo el horario */
+.cal-reservation.is-busy {
+  background: repeating-linear-gradient(135deg, #8b95a1, #8b95a1 6px, #9aa3ae 6px, #9aa3ae 12px);
+  color: #fff;
+  border-left-color: rgba(0,0,0,0.2);
+}
+
 .cal-reservation.is-cancelled {
   background: var(--cal-closed);
   text-decoration: line-through;

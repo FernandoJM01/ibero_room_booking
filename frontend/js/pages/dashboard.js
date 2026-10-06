@@ -579,6 +579,7 @@ function _openReservationModalFromSelection() {
   }
   ReservationModal.open({
     intervals,
+    roomId: _currentRoomId,
     onSaved: async () => {
       // Refrescar datos del store y re-renderizar
       try {
@@ -712,6 +713,7 @@ async function _pasteReservation(dateStr, startTime) {
   } else {
     ReservationModal.open({
       intervals: [{ date: dateStr, startTime, endTime }],
+      roomId: _currentRoomId,
       prefill: {
         responsible_id: _clipboard.responsible_id,
         area:           _clipboard.area,

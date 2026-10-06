@@ -24,8 +24,10 @@ const init = async () => {
 
   // Load fresh data from API (API is source of truth)
   try {
+    // An academic also receives everyone else's bookings as anonymous "Ocupado"
+    // slots, so they can see when each room is free (they still can't book).
     const [reservations, holidays, rooms] = await Promise.all([
-      API.getReservations(),
+      API.getReservations(user.role === 'academico' ? { availability: 1 } : {}),
       API.getHolidays(),
       API.getRooms()
     ]);
@@ -109,6 +111,48 @@ function _onDayClick(dateStr) {
   Calendar.renderWeek(new Date(y, m - 1, d));
 }
 
+/* ── POPUP "SALA OCUPADA" (reservación de otra persona, vista de académico) ── */
+function _showBusyPopup(r, rect) {
+  const popup = document.createElement('div');
+  popup.id        = 'cal-popup';
+  popup.className = 'cal-popup';
+  popup.setAttribute('role',       'dialog');
+  popup.setAttribute('aria-label', 'Sala ocupada');
+  popup.setAttribute('tabindex',   '-1');
+  popup.innerHTML = `
+    <div class="cal-popup__header">
+      <span class="cal-popup__title">Sala ocupada</span>
+      <button class="cal-popup__close" id="popup-close" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="cal-popup__body">
+      <div class="cal-popup__row">
+        <div>
+          <div class="cal-popup__label">${Utils.formatDateLong(r.date)}</div>
+          <div class="cal-popup__value">${r.startTime} – ${r.endTime}</div>
+        </div>
+      </div>
+      <div class="cal-popup__row" style="margin-bottom:0;">
+        <div class="cal-popup__value">${Utils.escapeHTML(r.roomName ?? '')} · Reservada por otra persona. Para solicitar un horario libre, contacta a la secretaría.</div>
+      </div>
+    </div>`;
+  document.body.appendChild(popup);
+  _positionPopup(popup, rect);
+  document.getElementById('popup-close')?.addEventListener('click', _closePopup);
+  const onKey     = (e) => { if (e.key === 'Escape') _closePopup(); };
+  const onOutside = (e) => { if (!popup.contains(e.target)) _closePopup(); };
+  document.addEventListener('keydown', onKey);
+  setTimeout(() => document.addEventListener('click', onOutside), 50);
+  popup._cleanup = () => {
+    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('click', onOutside);
+  };
+}
+
 /* ── CLICK EN RESERVACIÓN (ambos roles) — HU-06, HU-14 ── */
 function _onReservationClick(id, event) {
   const { reservations } = Store.getState();
@@ -120,6 +164,9 @@ function _onReservationClick(id, event) {
   const user        = Store.getUser();
   const isSecretary = user?.role === 'secretaria';
   const rect        = event.currentTarget.getBoundingClientRect();
+
+  // Someone else's booking: only when/where it is busy, nothing about who or why.
+  if (r.busyOnly) { _showBusyPopup(r, rect); return; }
 
   const popup = document.createElement('div');
   popup.id        = 'cal-popup';

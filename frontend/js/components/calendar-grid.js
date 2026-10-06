@@ -162,13 +162,19 @@ const CalendarGrid = (() => {
       'cal-reservation',
       r.isRecurring            ? 'is-recurring' : '',
       r.status === 'cancelled' ? 'is-cancelled' : '',
+      r.busyOnly               ? 'is-busy'      : '',
     ].filter(Boolean).join(' ');
+
+    // Someone else's booking, seen by an academic: time only, no names or subject
+    const tip = r.busyOnly
+      ? `Sala ocupada ${r.startTime}–${r.endTime}`
+      : `${Utils.escapeHTML(r.responsible)} · ${Utils.escapeHTML(r.area)}`;
 
     return `
       <div class="${cls}" data-id="${r.id}"
            role="button" tabindex="0"
            aria-label="${Utils.escapeHTML(r.responsible)} — ${r.startTime}–${r.endTime}"
-           title="${Utils.escapeHTML(r.responsible)} · ${Utils.escapeHTML(r.area)}">
+           title="${tip}">
         <span class="cal-reservation__time">${r.startTime}</span>
         <span class="cal-reservation__name">${Utils.escapeHTML(Utils.truncate(r.responsible, 18))}</span>
       </div>`;

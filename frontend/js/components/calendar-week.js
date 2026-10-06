@@ -321,6 +321,7 @@ const CalendarWeek = (() => {
     const cls = [
       'cal-wk__event cal-reservation',
       r.isRecurring ? 'is-recurring' : '',
+      r.busyOnly    ? 'is-busy'      : '',
     ].filter(Boolean).join(' ');
 
     const showTime = endMin - startMin >= 60;

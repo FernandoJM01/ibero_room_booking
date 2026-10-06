@@ -11,6 +11,7 @@ const ReservationModal = (() => {
   let _onSaved         = null;
   let _aiEnabled       = false;
   let _prefill         = null;  // { responsible_id, area, observations }
+  let _defaultRoomId   = null;  // sala que el calendario está mostrando: se preselecciona en una reservación nueva
   let _editReservation = null;  // full reservation object when editing
   let _readOnly        = false;
   let _semesterSettings = {};   // { semester_start, semester_end } — prefetched on open()
@@ -23,12 +24,13 @@ const ReservationModal = (() => {
    * @param {Function} [opts.onSaved]          — (savedArray) => void
    * @param {boolean}  [opts.readOnly]         — true to disable fields and hide save button
    */
-  const open = async ({ intervals = [], editReservation = null, onSaved = null, prefill = null, readOnly = false } = {}) => {
+  const open = async ({ intervals = [], editReservation = null, onSaved = null, prefill = null, readOnly = false, roomId = null } = {}) => {
     if (_overlay) close();
 
     _editReservation = editReservation ?? null;
     _onSaved         = onSaved;
     _prefill         = prefill;
+    _defaultRoomId   = roomId ? String(roomId) : null;
     _readOnly        = readOnly;
 
     if (_editReservation) {
@@ -519,6 +521,13 @@ const ReservationModal = (() => {
       const obsEl  = overlay.querySelector('#rmodal-obs');
       if (areaEl && _prefill.area)         areaEl.value = _prefill.area;
       if (obsEl  && _prefill.observations) obsEl.value  = _prefill.observations;
+    }
+
+    // New reservation: start on the room the calendar is showing (the secretary
+    // can still change it). Never overrides an edit, and ignores a room that is
+    // no longer active.
+    if (!_editReservation && roomSel && _defaultRoomId && _rooms.some(rm => String(rm.id) === _defaultRoomId)) {
+      roomSel.value = _defaultRoomId;
     }
 
     _wireEvents();
