@@ -115,6 +115,9 @@ Browser ─HTTPS─► Cloudflare (DNS + Worker "plain-glitter-53dd", domain dei
 
 ## 5. Verify it on the server (read-only)
 
+**Shortcut:** [`scripts/server-audit/collect.sh`](../scripts/server-audit/README.md) runs the
+read-only checks below (and more) and writes a Markdown report with secrets masked.
+
 Run these as an administrator of `reservadeii` (for example over the SSH session described
 in the [RUNBOOK](RUNBOOK.md#connect-to-the-server-and-open-dokploy)). **None of them
 changes anything and none prints a secret value.** Compare each result with the "expected"

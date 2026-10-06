@@ -34,6 +34,29 @@ graduates or leaves, the team can see what must be transferred.
   system (server, Dokploy, Cloudflare, domain, GitHub).
 - **Rotate** any credential that was shared in chat, email or a screenshot.
 
+## How credentials are handled (standard)
+
+1. **One source of truth.** Real values live only in a **shared password manager** that **at
+   least two named people** can open. Never in Git, chat, email, tickets or screenshots, and never
+   in documents like this one, which only say *which* account exists and *where* its secret is.
+2. **Handover sheet.** When access is passed on, use the blank
+   [`docs/entrega/PLANTILLA_Hoja_traspaso_accesos_servidor.pdf`](entrega/PLANTILLA_Hoja_traspaso_accesos_servidor.pdf).
+   It lists every system with the **password column intentionally empty**; the value is delivered
+   through the password manager, by a channel different from the one that carried the username.
+3. **Temporary credentials** are used once, expire, and are **changed at first login**. Record the
+   delivery date, never the value.
+4. **Prefer keys and MFA to passwords.** SSH with keys; two-step verification on Microsoft, Cloudflare,
+   GitHub and the domain registrar.
+5. **Personal accounts for people, service credentials for systems.** Nobody shares a personal login.
+   Service secrets (`JWT_SECRET`, `DB_PASSWORD`, `SMTP_PASSWORD`, `AI_API_KEY`) are set in Dokploy and
+   copied to the password manager.
+6. **Rotate** when a secret is exposed, when someone with access leaves, and at least yearly. Rotating
+   `JWT_SECRET` signs everyone out; rotating `DB_PASSWORD` must be done in the database service and in
+   the API variables together, then redeploy.
+7. **If a secret leaks** (pasted in a chat, committed, in a screenshot): treat it as compromised, rotate it
+   first, then clean up the place where it appeared. Deleting a Git commit does not make it safe again.
+8. **Review** this register at the start of each term and before any evaluation or delivery date.
+
 ## Offboarding checklist (when a team member leaves)
 
 1. Transfer or replace any account they own in the register above.
