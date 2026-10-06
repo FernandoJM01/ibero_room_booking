@@ -88,6 +88,11 @@ const init = async () => {
   });
 
   Auth.startInactivityWatcher();
+
+  // Tutorial: the ? button always works; it opens by itself the first time for academics (the secretaria's
+  // tour starts on the Reservar page). Steps depend on the role (see components/tutorial.js).
+  document.getElementById('btn-tutorial')?.addEventListener('click', Tutorial.start);
+  if (!isSecretary) Tutorial.autoStart();
 };
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('SPA:Navigated', init);
