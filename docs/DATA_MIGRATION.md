@@ -39,7 +39,7 @@ Decisions taken with the client:
 1. The 4 **institutional emails** (one per person).
 2. The **spelling with accents** of the 4 names (the file is in capitals without accents), e.g. Gerónimo, Girón, Jiménez.
 3. The real **room name**.
-4. Whether **2 Nov 2026** (a seeded festivo) really has Molano's 13:00–17:00 booking; the other Monday that is missing from the pattern, 16 Nov, is the public holiday.
+4. Whether **2 Nov 2026** (a seeded festivo) really has the 13:00–17:00 Monday booking; the other Monday that is missing from the pattern, 16 Nov, is the public holiday.
 5. The real **calendar**: festivos, institutional closures and semester dates (see [section 4](#4-step-by-step-in-production)).
 
 ## 2. Why this is not part of the seed or a migration
