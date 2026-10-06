@@ -1,0 +1,47 @@
+# Pila de DEMOSTRACIÓN para tomar las capturas de los manuales.
+# Es independiente del entorno de desarrollo: otro proyecto de Docker ("ibero-demo"),
+# otra base de datos (volumen demo_pg), puertos 8090/3090 y SIN correo (no hay SMTP).
+# Los secretos se toman del entorno; no hay valores por defecto a propósito.
+name: ibero-demo
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sala_juntas
+      POSTGRES_USER: ibero
+      POSTGRES_PASSWORD: ${DEMO_DB_PASSWORD:?define DEMO_DB_PASSWORD}
+    volumes:
+      - demo_pg:/var/lib/postgresql/data
+      - ../../../backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../../../backend/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ibero -d sala_juntas"]
+      interval: 5s
+      retries: 10
+  backend:
+    build: ../../../backend
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: sala_juntas
+      DB_USER: ibero
+      DB_PASSWORD: ${DEMO_DB_PASSWORD:?define DEMO_DB_PASSWORD}
+      JWT_SECRET: ${DEMO_JWT_SECRET:?define DEMO_JWT_SECRET}
+      APP_URL: http://localhost:8090
+      PORT: "3000"
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3090:3000"
+  frontend:
+    build: ../../../frontend
+    environment:
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "8090:80"
+    depends_on:
+      - backend
+volumes:
+  demo_pg:

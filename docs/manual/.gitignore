@@ -1,0 +1,3 @@
+# Archivos temporales de captura y compilación
+img/_*
+tools/__pycache__/
