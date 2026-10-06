@@ -19,7 +19,7 @@ Files: `/usr/local/sbin/{devtunnel-watchdog,devtunnel-notify,db-backup}.sh`,
 `/etc/systemd/system/{devtunnel-watchdog,ibero-db-backup}.{service,timer}`, `/etc/default/ibero-alerts`.
 Short-term memory of the watchdog (counters, last restart, last alert): `/run/devtunnel-watchdog.*`.
 Not covered (still needs a person): an expired Microsoft login, a dead server, network, Cloudflare Worker or domain.
-That is what the **external monitor** is for.
+That is what the **external monitor** is for ([setup guide](EXTERNAL_MONITOR.md)).
 
 ## 2. Settings
 
