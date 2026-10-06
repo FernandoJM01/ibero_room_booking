@@ -73,7 +73,8 @@ sudo journalctl -u devtunnel-reservations -n 100 --no-pager
 
 ### Deploy new code
 
-1. Merge to `main` on GitHub (`FernandoJM01/ibero_room_booking`).
+1. If any file under `frontend/js` or `frontend/css` changed, **bump the `?v=N` number in every `frontend/*.html`** (JS/CSS are cached for a year, `immutable`, keyed only by that number; without the bump, browsers that already visited keep running the old code, as happened on 2026-10-06 with the Salas fix). A one-liner: `sed -i 's/?v=47/?v=48/g' frontend/*.html`.
+   Merge to `main` on GitHub (`FernandoJM01/ibero_room_booking`).
 2. In Dokploy, open the application (`reservationsapi`, `reservationsweb`, or
    both if both changed) and click **Deploy**. Each one clones the repository
    and builds a local image.

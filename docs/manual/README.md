@@ -6,9 +6,9 @@ capturas de pantalla y están pensados para personas sin conocimientos técnicos
 
 | Manual | Para quién | Páginas |
 | ------ | ---------- | ------- |
-| [Manual de la Secretaria](Manual_Secretaria.pdf) | Quien crea y administra las reservaciones (incluye una guía de arranque para quien entra por primera vez) | 32 |
-| [Manual del Académico](Manual_Academico.pdf) | Quien consulta sus reservaciones y la disponibilidad de las salas | 14 |
-| [Manual del Administrador](Manual_Administrador.pdf) | Super Administrador: usuarios, salas, calendario, correo y respaldos | 20 |
+| [Manual de la Secretaria](Manual_Secretaria.pdf) | Quien crea y administra las reservaciones (incluye una guía de arranque para quien entra por primera vez) | 34 |
+| [Manual del Académico](Manual_Academico.pdf) | Quien consulta sus reservaciones y la disponibilidad de las salas | 16 |
+| [Manual del Administrador](Manual_Administrador.pdf) | Super Administrador: usuarios, salas, calendario, correo y respaldos | 21 |
 | [Manual del Administrador del Servidor](Manual_Administrador_Servidor.pdf) | Quien opera el servidor `reservadeii`: arquitectura con diagramas, Dokploy, Traefik, túnel, Cloudflare, respaldos, seguridad y recuperación (verificado en vivo el 6-oct-2026), incluida la vigilancia automática del túnel y los respaldos | 25 |
 
 Las capturas usan **datos ficticios** de una pila de demostración (personas
@@ -35,5 +35,5 @@ los pasos de [`tools/README.md`](tools/README.md). **No edites los PDF a mano.**
 Los números en círculos rojos de cada captura se explican en la lista que la
 acompaña en el texto; si cambias una captura, revisa esa lista.
 
-> Estos manuales describen la versión con **varias salas**, el selector de sala en
+> Estos manuales describen la versión con **varias salas**, el **recorrido de bienvenida** por rol (botón **?**), el **correo único por serie** y el **correo de invitación** para cuentas cargadas por migración, el selector de sala en
 > la barra superior, el menú lateral contraíble y el nuevo Historial (octubre de 2026).

@@ -35,6 +35,21 @@ def acceso(m, rol):
     m.note("Por seguridad, la sesión se cierra sola tras <b>30 minutos sin actividad</b>. Basta con volver a entrar; "
            "lo que no hayas guardado en un formulario se pierde.")
 
+    if rol == "academico":
+        m.h2("Tu primer acceso: el correo de invitación")
+        m.p("Si la secretaría cargó tus reservaciones al abrir el sistema, recibirás un correo con el asunto "
+            "<b>«Tu cuenta y tus reservaciones»</b>. Trae tu usuario, un botón para crear tu contraseña y la lista de tus reservaciones.")
+        m.steps([
+            "Abre el correo (revisa también la carpeta de spam) y pulsa <b>Crear mi contraseña</b> <b>(1)</b>.",
+            "Escribe tu contraseña nueva dos veces y guarda.",
+            "Entra al sistema con tu <b>correo</b> y esa contraseña.",
+        ])
+        m.fig("email_invitacion", "Correo de invitación (ejemplo con datos ficticios).", max_h=6.0 * inch, max_w=4.6 * inch)
+        m.legend(["Botón para crear tu contraseña: el enlace sirve <b>una sola vez</b> y vence a los <b>7 días</b>.",
+                  "Tus reservaciones: cada serie (por ejemplo, «Cada miércoles, 15:00 – 16:00») con todas sus fechas, y las reservaciones individuales."])
+        m.note("Si el enlace venció o no encuentras el correo, entra al sistema y usa <b>¿Olvidaste tu contraseña?</b> con el mismo correo. "
+               "Nadie te pedirá tu contraseña por correo ni por teléfono.")
+
     m.h2("Si olvidaste tu contraseña")
     m.steps([
         "En la pantalla de inicio pulsa <b>¿Olvidaste tu contraseña?</b> <b>(5)</b>.",
@@ -124,8 +139,20 @@ def secretaria():
         "mouse, o con el teclado: <b>Ctrl + B</b> (en Mac, <b>Cmd + B</b>). El sistema recuerda tu elección.")
     m.fig("common_sidebar_collapsed", "Menú contraído: al pasar el mouse sobre un ícono aparece su nombre.", max_h=3.6 * inch)
     m.h3("Tutorial de bienvenida")
-    m.p("La primera vez que entras aparece un recorrido guiado. Puedes avanzar con <b>Siguiente</b>, saltarlo con "
-        "<b>Saltar</b> y volver a verlo cuando quieras con el botón <b>?</b> de la barra superior de la pantalla <b>Reservar</b>.")
+    m.p("La primera vez que entras aparece un recorrido guiado de <b>9 pasos</b>. Avanza con <b>Siguiente</b>, sáltalo con "
+        "<b>Saltar</b> y vuelve a verlo cuando quieras con el botón <b>?</b> de la barra superior de la pantalla <b>Reservar</b>. "
+        "Cubre lo básico; el detalle está en este manual.")
+    m.table(["Paso", "Qué te enseña", "Dónde se explica aquí"], [
+        ["1. Bienvenida", "Para qué sirve el sistema y cómo repetir el recorrido", "Sección 1"],
+        ["2. Menú lateral", "Reservar, Historial, Estadísticas y Administración", "Sección 2"],
+        ["3. Elige la sala", "Cada sala tiene su propio calendario", "Sección 3"],
+        ["4. Lee el calendario", "Vistas Mes y Semana, flechas, Hoy y la leyenda de colores", "Sección 3"],
+        ["5. Crea una reservación", "Clic en un día o arrastrar horas; datos del formulario; aviso «Traslape»", "Sección 4"],
+        ["6. Reservaciones recurrentes", "Series (se ven en morado) y un solo correo con todas las fechas", "Sección 4"],
+        ["7. Ver, editar y cancelar", "El detalle de una reservación y sus acciones", "Sección 5"],
+        ["8. Festivos y cierres", "El festivo se puede reservar; el cierre institucional bloquea el día", "Secciones 3 y 8.2"],
+        ["9. Historial y correos", "Quién cambió qué y qué correos se envían", "Secciones 6 y 8.3"],
+    ], [1.9, 4.1, 1.5])
     m.fig("common_tutorial_1", "Tutorial interactivo (primer paso).", max_h=3.3 * inch)
 
     # ── 3
@@ -220,6 +247,7 @@ def secretaria():
     m.bullets([
         "La reservación aparece de inmediato en el calendario y en el Historial.",
         "Si el servicio de correo está activo y la persona responsable tiene correo, recibe una <b>confirmación</b> con sala, fecha y horario.",
+        "En una <b>serie recurrente</b> el responsable recibe <b>un solo correo</b> con la lista de todas las fechas, no uno por fecha.",
         "Queda registrado quién la creó.",
     ])
 
@@ -242,7 +270,8 @@ def secretaria():
              "Confirma en la ventana de advertencia."])
     m.fig("sec_cancel_confirm", "Confirmación de cancelación.", max_h=2.2 * inch, max_w=4.4 * inch)
     m.warn("Cancelar <b>no se puede deshacer</b>. La reservación no se borra: pasa a estado «Cancelada» y sigue en el "
-           "Historial, y se avisa por correo al responsable. Para recuperar el horario hay que crear una reservación nueva.")
+           "Historial, y se avisa por correo al responsable. Para recuperar el horario hay que crear una reservación nueva. "
+           "Si cancelas <b>varias de la misma persona a la vez</b> (por ejemplo, toda una serie), recibe <b>un solo correo</b> con las fechas canceladas.")
     m.h2("Mover arrastrando")
     m.p("En la vista semanal puedes <b>arrastrar</b> una reservación a otro horario o día. El sistema pregunta "
         "<b>«¿Confirmar movimiento?»</b> mostrando la nueva fecha y hora; confirma o cancela. Si el horario nuevo está ocupado "
@@ -362,6 +391,8 @@ def secretaria():
         ["No veo una reservación que sé que existe", "Revisa que estés viendo la <b>sala</b> correcta (selector superior) y, en Historial, que no haya filtros activos."],
         ["La sesión se cerró sola", "Es normal tras 30 minutos sin actividad. Vuelve a entrar."],
         ["La persona dice que no le llegó el correo", "Revisa spam y la pestaña Notificaciones: si dice «Omitido», el correo no está configurado; avisa al Super Administrador."],
+        ["Creé una serie de 9 fechas y solo llegó un correo", "Es lo esperado: el responsable recibe <b>un resumen con todas las fechas</b>, no un correo por fecha."],
+        ["Una persona nueva dice que no puede entrar", "Si recibió el correo «Tu cuenta y tus reservaciones», debe pulsar <b>Crear mi contraseña</b> (vale 7 días). Si venció, que use «¿Olvidaste tu contraseña?». Si no tiene correo, un Super Administrador puede asignarle una contraseña en <b>Usuarios</b>."],
         ["Me equivoqué y cancelé una reservación", "No se puede deshacer. Crea una nueva con los mismos datos."],
         ["Quiero reservar una sala que no aparece", "Solo el Super Administrador puede dar de alta o reactivar salas."],
         ["Se abre el formulario con otra sala distinta a la que quería", "Se preselecciona la sala que estás viendo en el calendario; cámbiala en el campo «Sala» del formulario."],
@@ -413,6 +444,20 @@ def academico():
     m.legend(["<b>Calendario</b>: tus reservaciones.", "<b>Historial</b>: lista de tus reservaciones con búsqueda y exportación."])
     m.p("En la computadora puedes <b>contraer el menú</b> para ganar espacio con el botón de tres rayitas de la barra "
         "superior o con <b>Ctrl + B</b> (en Mac, <b>Cmd + B</b>). El sistema recuerda tu elección.")
+
+    m.h2("Recorrido de bienvenida")
+    m.p("La primera vez que entras aparece un recorrido guiado de <b>7 pasos</b> (Siguiente, Anterior o Saltar). Puedes volver a verlo "
+        "cuando quieras con el botón <b>?</b> de la barra superior. Te enseña:")
+    m.fig("acad_tutorial_1", "Recorrido de bienvenida.", max_h=3.3 * inch)
+    m.table(["Paso", "Qué te enseña"], [
+        ["1. Bienvenida", "Qué puedes hacer: consultar el calendario, tus reservaciones y tu historial"],
+        ["2. Elige la sala", "Cada sala tiene su propio calendario"],
+        ["3. Mes y Semana", "Cambiar de vista y moverte con las flechas y <b>Hoy</b>"],
+        ["4. Qué ves en el calendario", "Tus reservaciones con detalle; las de otras personas como «Ocupado»; festivos y cierres"],
+        ["5. El detalle de tu reservación", "Se abre con un clic y es solo lectura"],
+        ["6. Historial", "Tus reservaciones, activas o canceladas, y los filtros"],
+        ["7. Pedir una reservación y tu cuenta", "Contactar a la secretaría, los correos que recibirás y cómo cambiar tu contraseña"],
+    ], [2.4, 5.1])
 
     m.h1("3. Calendario")
     m.fig("acad_calendar", "Calendario en vista mensual.", max_h=4.3 * inch)
@@ -466,9 +511,10 @@ def academico():
         "podrás ver la reservación en tu Calendario.")
     m.h2("Correos que puedes recibir")
     m.p("Si el servicio de correo de la universidad está activo, recibirás un aviso cuando:")
-    m.bullets(["se <b>registre</b> una reservación a tu nombre (confirmación con sala, fecha y horario);",
+    m.bullets(["se <b>registre</b> una reservación a tu nombre (confirmación con sala, fecha y horario). Si es una <b>serie</b> que se repite, recibes <b>un solo correo</b> con todas las fechas;",
                "se <b>modifique</b> (por ejemplo, cambio de hora o de sala);",
-               "se <b>cancele</b>;", "te creen la cuenta o cambien tu contraseña."])
+               "se <b>cancele</b> (si se cancelan varias a la vez, un solo correo con las fechas);",
+               "te creen la cuenta (correo <b>«Tu cuenta y tus reservaciones»</b>, sección 2) o cambien tu contraseña."])
 
     m.h1("6. Usar el sistema en el celular")
     celular(m, "academico")
@@ -480,6 +526,7 @@ def academico():
         ["Quiero saber quién tiene reservada la sala", "El sistema no lo muestra a los académicos; pregúntalo a la secretaría."],
         ["Quiero cambiar o cancelar una reservación", "Pídeselo a la secretaría; desde tu cuenta no es posible."],
         ["Olvidé mi contraseña", "Pulsa «¿Olvidaste tu contraseña?» en la pantalla de inicio. Si el correo no llega, pide a la secretaría que te asigne una nueva."],
+        ["Recibí «Tu cuenta y tus reservaciones» pero el enlace ya no funciona", "Venció (dura 7 días) o ya se usó. Pulsa «¿Olvidaste tu contraseña?» con el mismo correo y recibirás uno nuevo."],
         ["La sesión se cerró sola", "Es normal tras 30 minutos sin actividad. Vuelve a entrar."],
         ["No me deja entrar tras varios intentos", "Espera 15 minutos antes de intentarlo de nuevo."],
         ["Veo una pantalla vieja", "Recarga forzada: Ctrl + Mayús + R (en Mac, Cmd + Mayús + R)."],
@@ -567,6 +614,22 @@ def administrador():
     m.p("La pestaña <b>Contactos Externos</b> guarda a las personas ajenas a la universidad que pueden figurar como responsables "
         "de una reservación (nombre, correo y organización); se pueden agregar y editar.")
 
+    m.h2("Personas cargadas con una migración (primer acceso)")
+    m.p("Cuando las reservaciones se cargan desde un archivo (migración), las cuentas de las personas se crean <b>sin contraseña utilizable</b> y "
+        "el sistema <b>no envía ningún correo</b> en ese momento. Nadie puede entrar hasta que se le dé acceso. Hay dos caminos:")
+    m.table(["Camino", "Cuándo usarlo", "Qué recibe la persona"], [
+        ["<b>Correo de invitación</b> (lo envía el equipo técnico con un comando, una sola vez)",
+         "La persona tiene un buzón que revisa. Es la opción recomendada",
+         "Un correo «Tu cuenta y tus reservaciones» con el botón <b>Crear mi contraseña</b> (enlace de un solo uso, vale 7 días) y la lista de sus reservaciones"],
+        ["<b>Contraseña desde Usuarios › Editar</b>", "La persona no tiene correo o prefieres dárselo en persona",
+         "Una contraseña que le entregas por un medio privado; debe cambiarla en su primer acceso"],
+    ], [2.4, 2.6, 2.5])
+    m.note("Nunca se envía una contraseña por correo. Si el enlace vence, la persona usa <b>¿Olvidaste tu contraseña?</b> con el mismo correo. "
+           "No inventes direcciones de correo para quien no tiene: las confirmaciones y cancelaciones se envían a esa dirección. "
+           "Si todavía no hay una real, corrige el correo después en <b>Usuarios › Editar</b>; sus reservaciones se conservan.")
+    m.fig("email_invitacion", "Correo de invitación (ejemplo con datos ficticios).", max_h=5.2 * inch, max_w=4.0 * inch)
+    m.p("Los comandos para enviar las invitaciones están en <b>docs/DATA_MIGRATION.md</b> (sección 4b); primero hay una simulación que muestra a quién se enviaría qué.", small)
+
     m.h1("5. Salas")
     m.p("Cada reservación pertenece a <b>una sala</b>, y los traslapes se revisan <b>dentro de la misma sala</b>. Solo el Super "
         "Administrador administra la lista de salas.")
@@ -604,7 +667,10 @@ def administrador():
     m.p("El sistema envía correos automáticos para que las personas estén enteradas:")
     m.table(["Evento", "Quién recibe el correo"], [
         ["Reservación creada, modificada o cancelada (incluye la sala)", "El responsable de la junta; si otra persona editó o canceló, también la secretaria que la creó"],
+        ["Serie de reservaciones creada (varias fechas)", "El responsable: <b>un solo correo</b> con todas las fechas"],
+        ["Varias reservaciones canceladas a la vez (por ejemplo, una serie)", "El responsable: <b>un solo correo</b> con las fechas canceladas"],
         ["Cuenta creada, desactivada o reactivada", "La persona afectada"],
+        ["Invitación a cuentas cargadas por migración (una sola vez)", "Cada persona: cuenta, enlace para crear su contraseña y sus reservaciones"],
         ["Contraseña cambiada o restablecida", "La persona afectada"],
         ["Enlace para restablecer contraseña (válido 60 minutos)", "Quien lo solicita"],
     ], [4.2, 3.8])

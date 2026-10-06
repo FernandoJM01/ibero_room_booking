@@ -32,8 +32,10 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
-    # 4. SPA fallback
+    # 4. SPA fallback. HTML is never cached without revalidation: the pages carry the ?v= cache-busting numbers of
+    #    the JS/CSS above (cached for a year, immutable), so a stale page would keep loading stale scripts.
     location / {
+        add_header Cache-Control "no-cache";
         try_files $uri $uri/ /index.html;
     }
 }

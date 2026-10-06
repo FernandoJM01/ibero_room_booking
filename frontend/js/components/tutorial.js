@@ -5,7 +5,7 @@
 
 const Tutorial = (() => {
 
-  const STORAGE_KEY = 'sjibero_tutorial_v1';
+  const STORAGE_KEY = 'sjibero_tutorial_v2';   // bumped: the tour was rewritten, everyone sees it once more
   const PAD         = 10;   // px padding around spotlight
   const GAP         = 14;   // px gap between spotlight and tooltip
 
@@ -20,140 +20,125 @@ const Tutorial = (() => {
     copy:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
     upcoming: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
     nav:      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+    room:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>`,
+    mail:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
     done:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
   };
 
   /* ── Steps ─────────────────────────────────────────────── */
-  const STEPS = [
-    /* 0 — Welcome */
-    {
-      target:   null,
-      position: 'center',
-      icon:     _I.welcome,
-      title:    'Bienvenido al sistema de reservaciones',
-      body:     'Este es el sistema de reservaciones de la Sala de Juntas de la Universidad Iberoamericana. En los siguientes pasos te mostramos todo lo que necesitas saber para empezar.',
-    },
+  // Basic tour only: the manuals (docs/manual/*.pdf) hold the detail. One list per role.
+  // `target` is a CSS selector; if it matches several elements (e.g. the room picker exists in the topbar AND in
+  // the calendar card, one of them hidden by the layout) the first VISIBLE one is used; if none, the tip is centred.
 
-    /* 1 — Stats */
+  const _SECRETARY = [
     {
-      target:   '.stats-grid',
-      position: 'bottom',
-      icon:     _I.stats,
-      title:    'Resumen de actividad',
-      body:     'Un vistazo rápido al estado actual: total de reservaciones del mes, activas en los próximos 7 días, las de hoy y las series recurrentes en curso.',
+      target: null, position: 'center', icon: _I.welcome,
+      title: 'Bienvenida al sistema de reservaciones',
+      body:  `Aquí registras y administras las reservaciones de la <strong>Sala de Juntas</strong> para los académicos y para personas externas.
+<div class="tut__tip">Este recorrido de 9 pasos te da lo básico. El detalle está en los manuales. Puedes repetirlo cuando quieras con el botón <strong>?</strong> de la barra superior.</div>`,
     },
-
-    /* 2 — Monthly: click to reserve */
     {
-      target:   '#calendar-body',
-      position: 'top',
-      icon:     _I.calendar,
-      title:    'Crear una reservación — vista mensual',
-      body:     `Haz clic en cualquier día del calendario para abrir el formulario de reservación. Puedes seleccionar múltiples días a la vez manteniendo <kbd>Ctrl</kbd> y haciendo clic.
-<div class="tut__tip">El formulario te pide: responsable, área, horario de inicio y fin, observaciones, y si la reservación es recurrente (diaria, semanal o mensual).</div>`,
-    },
-
-    /* 3 — Weekly view switch + drag-to-select */
-    {
-      target:   '.calendar-widget__view-toggle',
-      position: 'bottom',
-      icon:     _I.week,
-      title:    'Vista semanal — selección de horas',
-      onEnter:  () => document.getElementById('view-week')?.click(),
-      body:     `Cambia a <strong>Semana</strong> para ver el horario hora a hora. En esta vista puedes:
-<ul class="tut__list">
-  <li>Arrastrar sobre las celdas de tiempo para seleccionar un rango de horas</li>
-  <li>Mantener <kbd>Shift</kbd> y hacer clic para ampliar la selección</li>
-  <li>Hacer clic directo en una celda para una sola hora</li>
+      target: '#sidebar', position: 'right', icon: _I.nav,
+      title: 'Menú lateral',
+      body:  `<ul class="tut__list">
+  <li><strong>Reservar</strong> — el calendario donde creas reservaciones</li>
+  <li><strong>Historial</strong> y <strong>Estadísticas</strong></li>
+  <li><strong>Administración</strong> — usuarios, festivos y cierres, notificaciones</li>
 </ul>
-Una barra aparece en la parte superior del calendario con el botón <strong>Reservar selección</strong>.`,
+Quien es Super Administrador ve además <strong>Salas</strong> y <strong>Respaldos</strong>.`,
     },
-
-    /* 4 — Move (drag-to-reschedule) */
     {
-      target:   '#calendar-body',
-      position: 'top',
-      icon:     _I.move,
-      title:    'Mover reservaciones',
-      body:     `En vista semanal, arrastra cualquier bloque de reservación a un nuevo día u horario. Una ventana de confirmación aparece antes de guardar.
-<div class="tut__tip">Para reservaciones recurrentes puedes elegir mover <strong>solo esta instancia</strong> o <strong>toda la serie</strong>. El sistema verifica automáticamente si el destino está disponible.</div>`,
+      target: '[data-room-select]', position: 'bottom', icon: _I.room,
+      title: 'Elige la sala',
+      body:  'Cada sala tiene su propio calendario. Lo que reserves quedará en la <strong>sala que estés viendo</strong>.',
     },
-
-    /* 5 — Resize */
     {
-      target:   '#calendar-body',
-      position: 'top',
-      icon:     _I.move,
-      title:    'Ajustar duración',
-      body:     `Arrastra el <strong>borde inferior</strong> de cualquier bloque hacia arriba o abajo para cambiar su hora de fin sin tener que editar el formulario.
-<div class="tut__tip">También funciona en reservaciones recurrentes: elige si ajustar solo esta instancia o toda la serie.</div>`,
+      target: '.calendar-widget__header', position: 'bottom', icon: _I.week,
+      onEnter: () => document.getElementById('view-month')?.click(),
+      title: 'Lee el calendario',
+      body:  `<strong>Mes</strong> te da el panorama y <strong>Semana</strong> muestra las horas. Muévete con las flechas y <strong>Hoy</strong>.
+<div class="tut__tip">Los colores se explican en la leyenda, debajo del calendario.</div>`,
     },
-
-    /* 6 — Right-click on block: copy, cut */
     {
-      target:   '#calendar-body',
-      position: 'top',
-      icon:     _I.copy,
-      title:    'Copiar, cortar y pegar',
-      body:     `Haz <strong>clic derecho</strong> sobre un bloque de reservación para ver las opciones:
-<ul class="tut__list">
-  <li><strong>Copiar</strong> — duplica la reservación en el horario que elijas</li>
-  <li><strong>Cortar</strong> — la marca como "en espera"; clic derecho en una celda libre para moverla</li>
-</ul>
-También puedes usar el teclado (pasa el cursor sobre el bloque primero):
-<div class="tut__shortcuts">
-  <span><kbd>Ctrl</kbd>+<kbd>C</kbd><span class="tut__shortcut-label">Copiar</span></span>
-  <span><kbd>Ctrl</kbd>+<kbd>X</kbd><span class="tut__shortcut-label">Cortar</span></span>
-  <span><kbd>Ctrl</kbd>+<kbd>V</kbd><span class="tut__shortcut-label">Pegar en el slot bajo el cursor</span></span>
-</div>`,
+      target: '#calendar-body', position: 'top', icon: _I.calendar,
+      title: 'Crea una reservación',
+      body:  `En <strong>Mes</strong>, haz clic en un día. En <strong>Semana</strong>, arrastra sobre las horas.
+Se abre el formulario: <strong>responsable</strong> (persona del sistema o contacto externo), nombre de la junta, sala, horario y observaciones.
+<div class="tut__tip">Si el horario ya está ocupado, el sistema avisa <strong>«Traslape»</strong> y no guarda.</div>`,
     },
-
-    /* 7 — Right-click on empty cell */
     {
-      target:   '#calendar-body',
-      position: 'top',
-      icon:     _I.calendar,
-      title:    'Menú contextual de celda',
-      body:     `Haz <strong>clic derecho</strong> sobre una celda vacía del calendario semanal para:
-<ul class="tut__list">
-  <li>Pegar una reservación copiada o cortada en ese horario exacto</li>
-  <li>Marcar ese día como <strong>festivo</strong> (solo se resalta) o <strong>cierre institucional</strong> (bloquea reservaciones)</li>
-  <li>Volver rápidamente a la vista mensual del mes mostrado</li>
-</ul>`,
+      target: '#calendar-body', position: 'top', icon: _I.copy,
+      title: 'Reservaciones recurrentes',
+      body:  `En el formulario activa <strong>Recurrente</strong> para crear una serie (diaria, semanal, quincenal o mensual). Las series se ven en <strong>morado</strong>.
+<div class="tut__tip">El responsable recibe <strong>un solo correo</strong> con todas las fechas. Para mover o cancelar puedes elegir <strong>solo esa fecha</strong> o <strong>toda la serie</strong>.</div>`,
     },
-
-    /* 8 — Upcoming panel */
     {
-      target:   '.upcoming-panel',
-      position: 'left',
-      icon:     _I.upcoming,
-      title:    'Próximas reservaciones',
-      body:     'Lista cronológica de las reservaciones más cercanas. Haz clic en cualquiera para ir a esa fecha en el calendario y ver el detalle completo con opciones de edición.',
+      target: '#calendar-body', position: 'top', icon: _I.form,
+      title: 'Ver, editar y cancelar',
+      body:  'Haz clic en una reservación para ver su detalle. Desde ahí puedes <strong>editarla</strong> o <strong>cancelarla</strong>.',
     },
-
-    /* 9 — Sidebar */
     {
-      target:   '#sidebar',
-      position: 'right',
-      icon:     _I.nav,
-      title:    'Menú de navegación',
-      body:     `Desde el menú lateral accedes a:
-<ul class="tut__list">
-  <li><strong>Historial</strong> — todas las reservaciones pasadas y canceladas</li>
-  <!-- <li><strong>Asistente IA</strong> — captura reservaciones con lenguaje natural</li> -->
-  <li><strong>Administración</strong> — gestión de usuarios y solicitudes de cambio</li>
-</ul>`,
+      target: '.cal-legend', position: 'top', icon: _I.calendar,
+      title: 'Festivos y cierres',
+      body:  `Un <strong>día festivo</strong> solo se resalta: <strong>sí se puede reservar</strong>. Un <strong>cierre institucional</strong> bloquea el día: no admite reservaciones.
+<div class="tut__tip">Se administran en <strong>Administración › Festivos / Cierres</strong>.</div>`,
     },
-
-    /* 10 — Done */
     {
-      target:   null,
-      position: 'center',
-      icon:     _I.done,
-      title:    '¡Todo listo para empezar!',
-      body:     'Ya conoces las funciones principales del sistema. Puedes repetir este tutorial en cualquier momento haciendo clic en el botón <strong>?</strong> de la barra superior.',
+      target: '#sidebar-nav-historial', position: 'right', icon: _I.mail,
+      title: 'Historial y correos',
+      body:  `<strong>Historial</strong> lista las reservaciones activas y canceladas, con filtros y exportación. <strong>Ver cambios</strong> muestra quién modificó qué y cuándo.
+<div class="tut__tip">El responsable recibe un correo al crear, cambiar o cancelar su reservación (uno solo por serie). Tú recibes aviso si otra persona modifica una reservación que creaste.</div>`,
     },
   ];
+
+  const _ACADEMIC = [
+    {
+      target: null, position: 'center', icon: _I.welcome,
+      title: 'Bienvenido al sistema de reservaciones',
+      body:  `Aquí consultas el <strong>calendario de la Sala de Juntas</strong>, tus reservaciones y tu historial. Las reservaciones las registra la secretaría.
+<div class="tut__tip">Este recorrido de 7 pasos te da lo básico. El detalle está en el manual. Puedes repetirlo con el botón <strong>?</strong> de la barra superior.</div>`,
+    },
+    {
+      target: '[data-room-select]', position: 'bottom', icon: _I.room,
+      title: 'Elige la sala',
+      body:  'Cada sala tiene su propio calendario. Cambia de sala aquí para ver cuándo está libre u ocupada.',
+    },
+    {
+      target: '.cal-view-toggle', position: 'bottom', icon: _I.week,
+      onEnter: () => document.getElementById('view-month')?.click(),
+      title: 'Mes y Semana',
+      body:  '<strong>Mes</strong> te da el panorama y <strong>Semana</strong> muestra las horas. Muévete con las flechas y el botón <strong>Hoy</strong>.',
+    },
+    {
+      target: '.cal-grid-container', position: 'top', icon: _I.calendar,
+      title: 'Qué ves en el calendario',
+      body:  `Tus reservaciones aparecen con su detalle. Las de otras personas se muestran como <strong>«Ocupado»</strong>, sin nombres ni motivos.
+<div class="tut__tip">También ves los <strong>festivos</strong> y los <strong>cierres institucionales</strong>; la leyenda está debajo del calendario.</div>`,
+    },
+    {
+      target: '.cal-grid-container', position: 'top', icon: _I.form,
+      title: 'El detalle de tu reservación',
+      body:  'Haz clic en una de tus reservaciones para ver su detalle. Es <strong>solo lectura</strong>: no puedes editarla desde aquí.',
+    },
+    {
+      target: '#sidebar-nav-historial', position: 'right', icon: _I.upcoming,
+      title: 'Historial',
+      body:  'Aquí ves todas tus reservaciones, si siguen <strong>activas</strong> o fueron <strong>canceladas</strong>, y puedes filtrarlas.',
+    },
+    {
+      target: '#profile-dropdown-btn', position: 'right', icon: _I.mail,
+      title: 'Pedir una reservación y tu cuenta',
+      body:  `Para <strong>reservar, cambiar o cancelar</strong>, contacta a la secretaría: ella lo registra y recibes un correo (uno solo por serie).
+<div class="tut__tip">Cambia tu contraseña desde este menú de tu perfil. Si la olvidas, usa <strong>«¿Olvidaste tu contraseña?»</strong> al iniciar sesión.</div>`,
+    },
+  ];
+
+  let _steps = _SECRETARY;
+  const _stepsForRole = () => {
+    let role = 'secretaria';
+    try { role = (typeof Store !== 'undefined' && Store.getUser && Store.getUser()?.role) || role; } catch (_) { /* default */ }
+    return role === 'academico' ? _ACADEMIC : _SECRETARY;
+  };
 
   /* ── State ─────────────────────────────────────────────── */
   let _step      = 0;
@@ -172,6 +157,7 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
     if (_active) return;
     _active = true;
     _step   = 0;
+    _steps  = _stepsForRole();
     _mount();
     _showStep(0);
   };
@@ -227,15 +213,15 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
      ════════════════════════════════════════ */
 
   const _showStep = (idx) => {
-    const step    = STEPS[idx];
+    const step    = _steps[idx];
     const isFirst = idx === 0;
-    const isLast  = idx === STEPS.length - 1;
+    const isLast  = idx === _steps.length - 1;
 
     // Run optional step hook (e.g. switch to weekly view)
     step.onEnter?.();
 
     /* ── Spotlight ── */
-    const targetEl = step.target ? document.querySelector(step.target) : null;
+    const targetEl = _findTarget(step.target);
     const visible  = _isVisible(targetEl);
 
     if (visible) {
@@ -261,7 +247,7 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
     void _tooltip.offsetWidth;
     _tooltip.style.animation = '';
 
-    const dots = STEPS.map((_, i) => {
+    const dots = _steps.map((_, i) => {
       const cls = i === idx ? 'is-active' : (i < idx ? 'is-done' : '');
       return `<span class="tut__dot ${cls}"></span>`;
     }).join('');
@@ -275,8 +261,8 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
       <div class="tut__footer">
         <div class="tut__progress"
              role="progressbar"
-             aria-valuenow="${idx + 1}" aria-valuemin="1" aria-valuemax="${STEPS.length}"
-             aria-label="Paso ${idx + 1} de ${STEPS.length}">${dots}</div>
+             aria-valuenow="${idx + 1}" aria-valuemin="1" aria-valuemax="${_steps.length}"
+             aria-label="Paso ${idx + 1} de ${_steps.length}">${dots}</div>
         <div class="tut__actions">
           ${!isFirst ? `<button class="btn btn-ghost btn-sm" id="tut-prev" aria-label="Paso anterior">Anterior</button>` : ''}
           ${!isLast
@@ -339,13 +325,17 @@ También puedes usar el teclado (pasa el cursor sobre el bloque primero):
     _tooltip.style.top  = `${top}px`;
   };
 
+  // First VISIBLE match (the same control can exist twice, one copy hidden by the responsive layout).
+  const _findTarget = (sel) => sel ? [...document.querySelectorAll(sel)].find(_isVisible) || null : null;
+
   const _isVisible = (el) => {
     if (!el) return false;
     const r = el.getBoundingClientRect();
-    return r.width > 0 && r.height > 0 && r.top < window.innerHeight && r.bottom > 0;
+    // inside the viewport on BOTH axes (the sidebar sits off-screen to the left on phones: then the tip is centred)
+    return r.width > 0 && r.height > 0 && r.top < window.innerHeight && r.bottom > 0 && r.left < window.innerWidth && r.right > 0;
   };
 
-  const _next = () => { if (_step < STEPS.length - 1) _showStep(++_step); };
+  const _next = () => { if (_step < _steps.length - 1) _showStep(++_step); };
   const _prev = () => { if (_step > 0)                _showStep(--_step); };
 
   return { start, stop, autoStart };
