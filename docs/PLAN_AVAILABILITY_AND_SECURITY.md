@@ -10,10 +10,10 @@ the API code.
 | -------- | ----------- |
 | **The architecture does not change.** Browser, Cloudflare Worker, Microsoft Dev Tunnel, Traefik, API, PostgreSQL stay as they are | Every item below is an addition (a timer, an alert, a backup, a setting) or a hygiene fix. Nothing replaces a component |
 | `cloudflared` is **not an option**: the university blocks TCP 7844 ([ADR 0003](adr/0003-institutional-network-egress-restrictions.md)) | The structural alternatives that were discussed (Cloudflare Tunnel, a campus inbound path, other hosting) are **out of scope** |
-| Alert recipients: **antonio.cardena@ibero.mx** and **a231592a@correo.uia.mx** | Used by the watchdog e-mails and by the external monitor |
+| Alert recipients: **antonio.cardena@ibero.mx** and **a231592a@correo.uia.mx** | The same two people receive the watchdog e-mails and the **external monitor's** alerts |
 | The 2026-10-06 deploy of `74efe0c` was **made by the project owner** | Recorded in [DEPLOYMENT](DEPLOYMENT.md#change-history); no further action |
-| **Database: not a full reset.** Keep the calendar; leave only the administrator, like the seed, then run the migration | Cleanup **Option C** ([section 7](#7-database-cleanup-and-migration-in-order)) |
-| Cloudflare and the Microsoft tunnel account have **one administrator each** | A continuity risk handled in [section 4](#4-people-and-continuity-the-two-single-owners) |
+| **Database: not a full reset.** Keep the calendar; leave **only one administrator** (`julieta.esquinca@ibero.mx`), like the seed, then run the migration | Cleanup **Option C** ([section 7](#7-database-cleanup-and-migration-in-order)); the second super administrator is removed |
+| Accounts: the **Microsoft login of the tunnel is `antonio.cardena@ibero.mx`** (also an alert recipient); **Cloudflare has one administrator, `p18731@correo.uia.mx`**. Each has a single owner | A continuity risk handled in [section 4](#4-people-and-continuity-the-two-single-owners); recorded in [ACCESS](ACCESS.md) |
 
 ## 1. Why the site goes down
 
@@ -83,10 +83,9 @@ architecture:
 
 | Risk | Mitigation (no architecture change) |
 | ---- | ----------------------------------- |
-| **Cloudflare:** one member on the account | The owner invites a second member (**Manage Account › Members**, [RUNBOOK](RUNBOOK.md#add-team-members-to-the-cloudflare-account)); a department mailbox as recovery/billing contact; note the domain **registrar** and renewal date (not yet known) |
-| **Microsoft account for the tunnel:** a tunnel can only be used by its creator, no ownership transfer ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) | Ask the owner to (1) set a **recovery e-mail/phone** that a second person controls, (2) store the credentials in the handover sheet ([ACCESS](ACCESS.md), password column left blank in the repo and delivered in the sealed/offline channel), (3) agree that the `ACTION NEEDED` mail is answered by whoever sees it first **together with the owner** (the device-code login needs the owner's approval), (4) once, rehearse the documented "new tunnel under another account" procedure so it is known to work |
+| **Cloudflare:** one administrator, `p18731@correo.uia.mx`; nobody else can fix the Worker or the domain | That person invites a second member, ideally one of the two alert recipients (**Manage Account › Members**, [RUNBOOK](RUNBOOK.md#add-team-members-to-the-cloudflare-account)); enable two-step verification and set a recovery contact; note the domain **registrar** and renewal date (not yet known) |
+| **Microsoft account for the tunnel:** `antonio.cardena@ibero.mx`. A tunnel can only be used by its creator, no ownership transfer ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) | He is also an alert recipient, so the `ACTION NEEDED` mail reaches the person who can approve the device-code login. Remaining risk: if he is unreachable, `a231592a@correo.uia.mx` cannot act alone. Mitigate by (1) a recovery e-mail/phone on the account that the second person controls, (2) the handover sheet ([ACCESS](ACCESS.md)), (3) rehearsing once the documented "new tunnel under another account" procedure so it is known to work |
 | Server access by **named people**: `admlocal` has no owner | Assign or lock it; one account per person |
-| Both people on alerts are the ones who can fix? | **Open:** confirm that at least one of the two alert recipients can actually complete the Microsoft login (or reach the account owner) |
 
 ## 5. Phased implementation plan
 
@@ -101,7 +100,7 @@ server administrator's password, typed by that person.
 | P0-2 | **Create the external monitor** (layer A) with the two e-mails | A test alert arrives at both |
 | P0-3 | **Test the app's SMTP** (*Notificaciones › Enviar correo de prueba*) to both addresses | Both receive it; if not, fix SMTP first ([SMTP guide](SMTP_ADMIN_GUIDE.md)) |
 | P0-4 | **Run the login rate-limit test** with a phone on mobile data ([RUNBOOK](RUNBOOK.md#verify-the-login-rate-limit-shared-by-everyone-or-per-client)) | Result written down (decides P2-2) |
-| P0-5 | Ask the Cloudflare owner to invite a second member and set up recovery (section 4) | Second member can log in |
+| P0-5 | Ask the Cloudflare administrator (`p18731@correo.uia.mx`) to invite a second member and enable two-step verification (section 4); ask the Microsoft account owner to add a recovery contact | Second member can log in |
 
 ### Phase 1: this week, maintenance window (**[sudo]**, about half a day)
 
@@ -186,8 +185,8 @@ calendar dates, 43 history entries and 31 email-log rows. Do it in one window ou
    series, requests, history, email log, external contacts. It **refuses to run** unless every email in `keep_emails` is an
    active administrator, shows exactly which accounts it will delete, and warns if the administrator still has the seed's
    public password. Rehearsed on a copy of a populated database.
-   **Decide first:** production has *two* super administrators. The default is to keep only
-   `julieta.esquinca@ibero.mx`; pass both emails in `keep_emails` (comma separated) if the second must stay.
+   Production has *two* super administrators; by decision only one stays, so pass just
+   `-v keep_emails=julieta.esquinca@ibero.mx` (the other account is deleted and shown in the list beforehand).
 3. If the output says the public default password is in use, set a private one right away (*Usuarios › Editar*, or
    `scripts/import-sessions/admin_password_sql.js`).
 4. Generate and apply `import.sql` ([DATA_MIGRATION §4, steps 5-6](DATA_MIGRATION.md#4-step-by-step-in-production)).
@@ -198,8 +197,7 @@ calendar dates, 43 history entries and 31 email-log rows. Do it in one window ou
 
 ## 8. Open items that need a person
 
-1. Is the second super administrator to be kept or removed (step 2)?
-2. Can one of the two alert recipients complete the Microsoft device-code login, or reach the account owner quickly?
-3. Who is the Cloudflare second member, and which registrar holds `deii-salas.uk` (renewal date)?
-4. Where do off-server backups go?
-5. Which external monitor service to use (any free one with e-mail alerts works).
+1. Who becomes the second Cloudflare member (suggested: one of the two alert recipients) and which registrar holds `deii-salas.uk` (renewal date)?
+2. Does the Microsoft account have a recovery contact that a second person controls?
+3. Where do off-server backups go?
+4. Which external monitor service to use (any free one with e-mail alerts to the two recipients works).

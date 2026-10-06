@@ -17,8 +17,8 @@ graduates or leaves, the team can see what must be transferred.
 | ------ | -------- | --------------------------- | --------------------- | ----------------------- | ----- |
 | Server `reservadeii` (SSH) | Operating the host, `sudo` | Personal account `acardena`, via jump host `antares.dci.uia.mx` | TBD | TBD | Institutional server; changes to network or firewall go through university IT |
 | Dokploy admin UI | Deploys, domains, environment variables | TBD (admin account) | TBD | TBD | Reached through an SSH tunnel to port 3000 |
-| Microsoft account for the Dev Tunnel | Owns tunnel `ibero-reservas.usw3`; its login is cached for user `acardena` | **Individual institutional account** | TBD | TBD | Single point of failure, see [DEPLOYMENT.md](DEPLOYMENT.md#account-dependencies) |
-| Cloudflare account | Worker `plain-glitter-53dd`, DNS zone `deii-salas.uk` | **Individual institutional account** | TBD | TBD | Add teammates under Manage Account, Members |
+| Microsoft account for the Dev Tunnel | Owns tunnel `ibero-reservas.usw3`; its login is cached for user `acardena` | **`antonio.cardena@ibero.mx`** (single owner; tunnels cannot be transferred) | TBD | TBD | Single point of failure, see [DEPLOYMENT.md](DEPLOYMENT.md#account-dependencies) |
+| Cloudflare account | Worker `plain-glitter-53dd`, DNS zone `deii-salas.uk` | **`p18731@correo.uia.mx`** (single administrator) | TBD | TBD | Add teammates under Manage Account, Members |
 | Domain registrar for `deii-salas.uk` | Domain renewal and nameservers | TBD | TBD | TBD | Registrar and renewal date not yet documented |
 | GitHub repository | Source, deploys pulled by Dokploy | Repository `FernandoJM01/ibero_room_booking` | TBD | TBD | Consider an organisation or additional owners |
 | SMTP mailbox | Outgoing email from the API (`SMTP_*`) | TBD | Dokploy environment | TBD | See [SMTP_ADMIN_GUIDE](SMTP_ADMIN_GUIDE.md) |
@@ -26,7 +26,7 @@ graduates or leaves, the team can see what must be transferred.
 | PostgreSQL credentials | Application database | Service credentials (`DB_*`, `POSTGRES_*`) | Dokploy environment | TBD | Not needed by people day to day |
 | Server local accounts | `acardena` (uid 1001, sudo) and **`admlocal`** (uid 1000, sudo), found on 2026-10-06; no SSH keys installed, password login enabled | Team password manager | TBD | Owner of `admlocal` is not recorded |
 | Dokploy internal secrets | Dokploy's own database and auth secrets | Docker secrets on the server | TBD | Not needed by people day to day |
-| Microsoft account behind the Dev Tunnel | Institutional `correo.uia.mx` account; its login token is cached in `/home/acardena/DevTunnels/` | Individual account | TBD | Verified 2026-10-06; see [SERVER_CONFIGURATION](SERVER_CONFIGURATION.md) |
+| Microsoft login cache for the Dev Tunnel | The token of the Microsoft account above is cached in `/home/acardena/DevTunnels/` (not the password) | Same single owner | TBD | Verified 2026-10-06; see [SERVER_CONFIGURATION](SERVER_CONFIGURATION.md) |
 | Application super administrator | Managing users in the app | Seeded default account | Team password manager | TBD | Default password from the seed must be changed |
 
 ## Rules
