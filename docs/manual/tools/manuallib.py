@@ -16,6 +16,7 @@ from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
                                 TableStyle, Image, KeepTogether, PageBreak, NextPageTemplate,
                                 ListFlowable, ListItem, CondPageBreak, FrameBreak)
 from reportlab.platypus.tableofcontents import TableOfContents
+from reportlab.graphics.shapes import Drawing
 
 RED = colors.HexColor("#ef3e42")
 RED_DARK = colors.HexColor("#c62d30")
@@ -180,6 +181,29 @@ class Manual:
         framed.hAlign = "CENTER"
         self.s.append(KeepTogether([Spacer(1, 3), framed, Paragraph("Figura %d. %s" % (self._fig, text), caption)]))
 
+
+    # ── bloques de código y diagramas (manual del administrador del servidor)
+    def code(self, lines, title=None):
+        """Bloque de comandos en monoespaciado (Courier). `lines`: lista de str."""
+        from reportlab.platypus import Preformatted
+        mono = ParagraphStyle("mono", fontName="Courier", fontSize=8, leading=10.4, textColor=colors.HexColor("#1b1b1b"))
+        txt = "\n".join(lines)
+        t = Table([[Preformatted(txt, mono)]], colWidths=[CONTENT_W])
+        t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f1f3f5")),
+                               ("BOX", (0, 0), (-1, -1), 0.5, LINE),
+                               ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+        items = ([Paragraph("<b>%s</b>" % title, small)] if title else []) + [t, Spacer(1, 8)]
+        self.s.append(KeepTogether(items))
+
+    def drawing(self, d, caption):
+        """Inserta un reportlab Drawing escalado al ancho útil, con pie de figura."""
+        k = min(1.0, CONTENT_W / d.width)
+        d.width *= k; d.height *= k; d.scale(k, k)
+        self._fig += 1
+        d.hAlign = "CENTER"
+        self.s.append(KeepTogether([Spacer(1, 3), d, Paragraph("Figura %d. %s" % (self._fig, caption), caption_style())]))
+
     def build(self, out):
         toc = TableOfContents()
         toc.levelStyles = [
@@ -191,6 +215,10 @@ class Manual:
         doc = _Doc(out, self.footer_title, title=self.footer_title, author="Proyecto IberoReservations")
         doc._cover = self.cover
         doc.multiBuild(head + self.s)
+
+
+def caption_style():
+    return caption
 
 
 def _rule():

@@ -24,6 +24,9 @@ graduates or leaves, the team can see what must be transferred.
 | SMTP mailbox | Outgoing email from the API (`SMTP_*`) | TBD | Dokploy environment | TBD | See [SMTP_ADMIN_GUIDE](SMTP_ADMIN_GUIDE.md) |
 | AI provider key (optional) | AI assistant, currently hidden | TBD | Dokploy environment | TBD | Blank disables the feature |
 | PostgreSQL credentials | Application database | Service credentials (`DB_*`, `POSTGRES_*`) | Dokploy environment | TBD | Not needed by people day to day |
+| Server local accounts | `acardena` (uid 1001, sudo) and **`admlocal`** (uid 1000, sudo), found on 2026-10-06; no SSH keys installed, password login enabled | Team password manager | TBD | Owner of `admlocal` is not recorded |
+| Dokploy internal secrets | Dokploy's own database and auth secrets | Docker secrets on the server | TBD | Not needed by people day to day |
+| Microsoft account behind the Dev Tunnel | Institutional `correo.uia.mx` account; its login token is cached in `/home/acardena/DevTunnels/` | Individual account | TBD | Verified 2026-10-06; see [SERVER_CONFIGURATION](SERVER_CONFIGURATION.md) |
 | Application super administrator | Managing users in the app | Seeded default account | Team password manager | TBD | Default password from the seed must be changed |
 
 ## Rules

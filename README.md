@@ -258,7 +258,7 @@ curl http://localhost:8080/api/health
 | [`docs/changes/`](docs/changes)                     | Change plans and records (bug fixes, features, multi-room) |
 | [`docs/EMAIL_SYSTEM.md`](docs/EMAIL_SYSTEM.md)      | How email notifications work               |
 | [`docs/SMTP_ADMIN_GUIDE.md`](docs/SMTP_ADMIN_GUIDE.md) | Configuring SMTP                        |
-| [`docs/manual/`](docs/manual/README.md)             | User manuals (Spanish) with screenshots    |
+| [`docs/manual/`](docs/manual/README.md)             | User manuals (Spanish) with screenshots, plus the server administrator manual (architecture, operation, recovery) |
 | [`docs/notes/`](docs/notes)                         | Historical design and status notes (outdated) |
 
 ## Academic context and license

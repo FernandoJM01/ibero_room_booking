@@ -95,8 +95,8 @@ Running tasks have Swarm-style names, for example
 that clone the same repository (`https://github.com/FernandoJM01/ibero_room_booking.git`,
 branch `main`) into `/etc/dokploy/applications/<service>/code/` and build
 images **locally** on the server. There is no image registry, and both images
-use the mutable tag `:latest`. Currently deployed commit on both:
-**`f383663`** ("fix point nginx", 2026-09-11).
+use the mutable tag `:latest`. Commit deployed on both at the 2026-09-21 inspection:
+**`f383663`** ("fix point nginx", 2026-09-11). **On 2026-10-06 both were at `74efe0c`** (the multi-room release).
 
 **Service policies** (API service; the other two were not inspected):
 
@@ -361,6 +361,13 @@ for the team to decide on.
 | 15 | The Worker and the `deii-salas.uk` zone are owned by **one individual institutional Cloudflare account**, and the Worker source exists only in Cloudflare | Loss of that account means loss of the Worker and DNS control | Add department members to the Cloudflare account; keep the Worker source under version control |
 | 16 | The Worker's `workers.dev` URL is enabled and public | A second, unadvertised entry point to the same application | Disable it in the Worker's Domains settings if it is not needed |
 | 17 | Reboot persistence of the new tunnel login has not been tested | The tunnel might fail to authenticate after a reboot | Reboot in a maintenance window and confirm the unit is active and the public health check passes |
+| 18 | **Nothing monitors the tunnel.** Two outages (29 h and 91 h) went unnoticed; the process stays "running" while disconnected, so `Restart=always` does not help (verified 2026-10-06) | The public site is down without any alert | Add an external uptime monitor and a watchdog that restarts the unit ([RUNBOOK](RUNBOOK.md#tunnel-process-running-but-site-down)) |
+| 19 | SSH allows **password login**, no SSH keys are installed for any account, root login by key is allowed, X11 forwarding is on (verified 2026-10-06) | Passwords can be guessed from the institutional network | Install keys, set `PasswordAuthentication no`, `PermitRootLogin no`, `X11Forwarding no` (test a second session first) |
+| 20 | `ufw` allows port **3000 (Dokploy)** from anywhere, in addition to 22, 80 and 443 | The administration panel is reachable from the network (see observation 1) | Restrict it and keep using the `ssh -L` tunnel; remember Docker-published ports also pass through iptables |
+| 21 | A second sudo account, **`admlocal`**, exists and is not in [ACCESS](ACCESS.md) | Unknown owner of an administrator account | Record the owner and decide if it is still needed |
+| 22 | Only one database dump exists on the server (`~/backup-20260924.sql`, 26 KB); no scheduled backups; Dokploy's own database is not backed up | Loss of the server loses the data and the application settings | Automate dumps off the server; back up the `dokploy-postgres` volume |
+| 23 | Docker has no `/etc/docker/daemon.json`, so `json-file` logs have no size limit; 38 updates pending (0 security) and a **reboot is pending**; Ubuntu Pro not attached | Slow disk growth; stale kernel | Set log rotation; patch and reboot in a window |
+| 24 | Dokploy and Traefik: placeholder ACME email, retired `5x0zgl8x…` routes and `reservas.local → :8080` still defined; `cloudflared` leftovers in `~acardena` | Dead entry points and clutter | Clean up in Dokploy and the home folder |
 
 ## Change history
 
@@ -368,3 +375,6 @@ for the team to decide on.
 | ---------- | ------ |
 | 2026-09-21 | **Dev Tunnel migrated to a different account.** Old tunnel `neat-lake-34xq53c.usw3` (host `5x0zgl8x-80.usw3.devtunnels.ms`) replaced by `ibero-reservas.usw3` (host `npbkpmwc-80.usw3.devtunnels.ms`). Steps performed: new login, tunnel and port created, Dokploy domains added for the new host, end-to-end test, Cloudflare Worker `plain-glitter-53dd` repointed, then `devtunnel-reservations.service` repointed and restarted (backup of the old unit: `~/devtunnel-reservations.service.bak` on the server). The old tunnel is no longer hosted and expires on its own; its Dokploy routes were left in place pending cleanup. |
 | 2026-09-21 | ngrok routes removed from Dokploy. |
+| 2026-09-29 | **Tunnel outage (~29 h).** The `devtunnel host` process lost its connection and could not refresh its token ("Not authorized"); it stayed alive, so systemd did not restart it. Restored by a manual restart on 2026-09-30 06:13 UTC. |
+| 2026-10-02 | **Tunnel outage (~91 h)**, same cause, starting 10:06 UTC. Restored 2026-10-06 05:32 UTC by restarting the process ([RUNBOOK](RUNBOOK.md#tunnel-process-running-but-site-down)). |
+| 2026-10-06 | **Live re-inspection** with `scripts/server-audit/collect.sh` (results in [SERVER_CONFIGURATION](SERVER_CONFIGURATION.md)). The multi-room release (`74efe0c`, migrations `007`-`009`) was deployed at about 05:30 UTC. |

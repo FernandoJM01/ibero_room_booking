@@ -29,7 +29,7 @@ redact() {
   sed -E \
     -e 's/eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]*/<JWT-REDACTED>/g' \
     -e 's/(Bearer|Basic)[[:space:]]+[A-Za-z0-9._~+\/=-]{8,}/\1 <REDACTED>/Ig' \
-    -e 's/(pass(word|wd)?|secret|token|api[_-]?key|authorization|credential|private[_-]?key)([A-Za-z0-9_.-]*[[:space:]]*[:=][[:space:]]*)[^[:space:]'"'"'"]+/\1\3<REDACTED>/Ig' \
+    -e 's/(pass(word|wd|phrase)?|secret|token|api[_-]?key|authorization|credential|private[_-]?key)(([_.-][A-Za-z0-9_.-]*)?[[:space:]]*[:=][[:space:]]*)[^[:space:]'"'"'"]+/\1\3<REDACTED>/Ig' \
     -e 's/\$(2[aby]|apr1|1|5|6)\$[^[:space:]'"'"'"]+/<HASH-REDACTED>/g' \
     -e 's/[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/***@\1/g' \
     -e 's/\b[A-Fa-f0-9]{32,}\b/<HEX-REDACTED>/g' |
@@ -184,7 +184,15 @@ fi
 
 # ───────────── 10. aplicación y exposición pública ─────────────
 sec "10. Salud de la aplicación y exposición pública"
-tunnel_host() { grep -rhoP 'Host\(\x60\K[^\x60]+devtunnels\.ms(?=\x60\))' /etc/dokploy/traefik/dynamic/ 2>/dev/null | head -1; }
+tunnel_host() {
+  # host actual del túnel: el que reporta `devtunnel show`; si no, el primero de las rutas de Traefik
+  local h=""
+  if [ -n "${DT:-}" ] && [ -n "${DTUSER:-}" ]; then
+    h="$(runuser -u "$DTUSER" -- "$DT" show ibero-reservas.usw3 2>/dev/null | grep -oE 'https://[^/ ]+devtunnels\.ms' | head -1 | sed 's#https://##')"
+  fi
+  [ -n "$h" ] || h="$(grep -rhoP 'Host\(\x60\K[^\x60]+devtunnels\.ms(?=\x60\))' /etc/dokploy/traefik/dynamic/ 2>/dev/null | head -1)"
+  echo "$h"
+}
 TH="$(tunnel_host)"
 sub "Salud vía Traefik (host del túnel)"
 echo "host: ${TH:-no encontrado}"

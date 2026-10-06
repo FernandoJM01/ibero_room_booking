@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart the Dev Tunnel when it is silently disconnected
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/devtunnel-watchdog.sh
+# Adjust if the tunnel host changes (see docs/RUNBOOK.md):
+# Environment=WATCHDOG_URL=https://<tunnel-host>/api/health
+# Environment=TUNNEL_HOST=<tunnel-host>
