@@ -38,4 +38,4 @@ Coloca el Excel y el CSV en `scripts/import-sessions/private/` (ignorada por git
 | `--holiday-dates` | Solo advierte |
 | `--room-id` | Sala destino (por defecto la sala sembrada `a10e1300-…0001`) |
 
-`cleanup_reservations.sql` es la «Opción B» de limpieza (borra solo reservaciones e historial).
+`cleanup_reservations.sql` es la «Opción B» de limpieza (borra solo reservaciones e historial). `cleanup_keep_calendar.sql` es la «Opción C» (la elegida para producción): deja solo al administrador y conserva salas, festivos/cierres y fechas del semestre; ver `docs/DATA_MIGRATION.md`. `admin_password_sql.js` genera la instrucción SQL para poner una contraseña privada al administrador.

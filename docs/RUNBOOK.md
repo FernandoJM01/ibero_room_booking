@@ -129,9 +129,11 @@ Verified on 2026-10-06: after the restart the tunnel reported 1 host connection 
 If it fails again right away with *Not authorized*, the cached Microsoft login has expired: as `acardena` run
 `/home/acardena/bin/devtunnel user login -d`, finish the device-code login with the owning account, and restart again.
 
-**Prevention.** Nothing watches the tunnel today. See the proposal in
-[`infra/tunnel-watchdog/`](../infra/tunnel-watchdog/README.md) (a timer that restarts the unit when the tunnel health
-check fails twice) and add an **external uptime monitor** on `https://deii-salas.uk/api/health` that emails the team.
+**Prevention.** The [`infra/tunnel-watchdog/`](../infra/tunnel-watchdog/README.md) timer restarts the unit when the tunnel
+health check fails twice and e-mails the two people on call; an **external uptime monitor** on
+`https://deii-salas.uk/api/health` is the second, independent channel. Plan and status:
+[PLAN_AVAILABILITY_AND_SECURITY](PLAN_AVAILABILITY_AND_SECURITY.md). If you get the *ACTION NEEDED* e-mail, the
+automatic restarts did not help: do the login step above.
 
 ### Restart the tunnel
 

@@ -79,10 +79,10 @@ Do it outside working hours and tell the secretaries not to book meanwhile.
    `curl -s https://deii-salas.uk/api/health`.
 2. **Back up.** Download it from *Administración › Respaldos* **and** run the `pg_dump` command in the
    [RUNBOOK](RUNBOOK.md#backup-the-database). Copy it off the server. Both cleanup options are irreversible.
-3. **Clear the old data** with Option A or B ([section 5](#5-clearing-the-old-data-pick-one)).
+3. **Clear the old data** with Option C ([section 5](#5-clearing-the-old-data-option-c-is-the-one-chosen)); A and B remain as alternatives.
 4. **Re-create configuration the cleanup removed or that was never set**, as a Super Administrator:
-   - *Administración › Calendario*: the real **festivos and cierres**, and the **semester dates**.
-   - *Administración › Usuarios*: the secretary accounts (Option A removes them).
+   - *Administración › Calendario*: with Option C the existing festivos/cierres and semester dates are **kept**; only review them.
+   - *Administración › Usuarios*: the secretary accounts (Options A and C remove them).
 5. **Generate the SQL** on your computer (it needs the Excel and the people CSV):
    ```bash
    .venv/bin/python scripts/import-sessions/import_sessions.py \
@@ -108,7 +108,7 @@ Do it outside working hours and tell the secretaries not to book meanwhile.
 For a local copy, replace the `ssh`/`sudo docker exec` part with
 `docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < import.sql`.
 
-## 5. Clearing the old data (pick one)
+## 5. Clearing the old data (Option C is the one chosen)
 
 | | **Option A: clean database** | **Option B: only reservations and history** |
 | - | ---------------------------- | ------------------------------------------- |
@@ -123,12 +123,41 @@ For a local copy, replace the `ssh`/`sudo docker exec` part with
 
 ### Option A: clean database
 
-**Chosen for production (2026-10-06).** The ordered procedure, including setting a private administrator password before anyone can use the public default one, is in [PLAN_AVAILABILITY_AND_SECURITY §6](PLAN_AVAILABILITY_AND_SECURITY.md#6-the-database-reset-you-chose-option-a-in-this-order); the tool is [`admin_password_sql.js`](../scripts/import-sessions/admin_password_sql.js).
+*Not used for production:* the owner decided on 2026-10-06 to keep the calendar, so use **Option C** below.
 
 Follow [DEPLOYMENT §4](DEPLOYMENT.md#4-database-initialization) exactly: drop the schema inside the API
 container, reload `schema.sql` and `seed.sql`, then **restart or redeploy the API** so the migrations run.
 (Rehearsed: after the restart the log shows `Applied 009_rooms.sql`, the seed login works and the database
 holds 1 user, the room "Sala Principal" and no reservations.)
+
+### Option C: only the administrator, calendar kept (chosen for production, 2026-10-06)
+
+Leaves the database "like the seed" (only the administrator) **but keeps the calendar**:
+
+| Kept | Removed |
+| ---- | ------- |
+| The administrator account(s) you list, rooms, festivos/cierres, semester dates, backup records | Every other user, all reservations and series, change requests, change history, email log, external contacts |
+
+[`scripts/import-sessions/cleanup_keep_calendar.sql`](../scripts/import-sessions/cleanup_keep_calendar.sql) runs in one
+transaction and **refuses to do anything** unless every email in `keep_emails` is an existing, active administrator
+(or the variable is missing). It prints what is about to be deleted, the counts after, the rooms that remain, and
+warns if the administrator still uses the **public default password** of the seed. It is idempotent.
+
+```bash
+scp -J <user>@antares.dci.uia.mx scripts/import-sessions/cleanup_keep_calendar.sql <user>@<server-ip>:~/
+# on the server (after the backup):
+sudo docker exec -i $(sudo docker ps -qf "name=iberoreservationsdb") \
+  sh -c 'psql -v ON_ERROR_STOP=1 -v keep_emails=julieta.esquinca@ibero.mx -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < ~/cleanup_keep_calendar.sql
+shred -u ~/cleanup_keep_calendar.sql
+```
+
+If the output says `usa_contrasena_publica_por_defecto = t`, set a private password right away, either in the app
+(*Usuarios › Editar*) or with `node scripts/import-sessions/admin_password_sql.js julieta.esquinca@ibero.mx`, which asks
+for the password without echo and prints one `UPDATE` (bcrypt hash only) to apply the same way.
+Rehearsed on a copy of a populated development database (5 users, 16 reservations, 6 calendar dates, 2 rooms):
+afterwards 1 user, 0 reservations, 6 dates and 2 rooms; wrong or missing `keep_emails` changed nothing; a second run
+changed nothing.
 
 ### Option B: only reservations and history
 

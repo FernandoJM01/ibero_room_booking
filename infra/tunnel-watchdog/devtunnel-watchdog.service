@@ -1,10 +1,12 @@
 [Unit]
-Description=Restart the Dev Tunnel when it is silently disconnected
+Description=Restart the Dev Tunnel when it is silently disconnected (and e-mail the people on call)
 After=network-online.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/devtunnel-watchdog.sh
-# Adjust if the tunnel host changes (see docs/RUNBOOK.md):
+# Defaults live in the script. Override here only if needed (see README):
 # Environment=WATCHDOG_URL=https://<tunnel-host>/api/health
 # Environment=TUNNEL_HOST=<tunnel-host>
+# Environment=ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx
+# Environment=HEARTBEAT_URL=https://<dead-mans-switch-url>
