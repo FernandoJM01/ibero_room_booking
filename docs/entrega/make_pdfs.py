@@ -133,7 +133,7 @@ def resumen():
     s.append(P("Sistema de reservación de la sala de juntas · Universidad Iberoamericana CDMX", sub))
     s.append(P("<b>Curso:</b> Ingeniería de Software 2026 &nbsp;&nbsp; <b>Profesor:</b> Antonio Carlos Cardeña Matamoros<br/>"
                "<b>Líder de proyecto:</b> Wendy Elizabeth Guzmán Orta &nbsp;&nbsp; <b>Patrocinadora:</b> Julieta Esquinca Gómez<br/>"
-               "<b>Producción:</b> https://deii-salas.uk &nbsp;&nbsp; <b>Código:</b> github.com/FernandoJM01/ibero_room_booking &nbsp;&nbsp; <b>Fecha:</b> 21 de septiembre de 2026",
+               "<b>Producción:</b> https://deii-salas.uk &nbsp;&nbsp; <b>Código:</b> github.com/FernandoJM01/ibero_room_booking &nbsp;&nbsp; <b>Fecha:</b> 21 de septiembre de 2026 (funcionalidades actualizadas el 5 de octubre de 2026)",
                small))
 
     s.append(P("1. ¿Qué es?", h2))
@@ -145,8 +145,9 @@ def resumen():
     izq = bullets([
         "<b>Roles:</b> secretaría, académico (consulta) y super administrador.",
         "<b>Calendario</b> mensual y semanal con <b>detección de traslapes</b> en tiempo real.",
-        "<b>Reservaciones recurrentes</b> (semanal, quincenal y mensual).",
-        "<b>Solicitudes de cambio</b> entre áreas y gestión de contactos externos.",
+        "<b>Varias salas:</b> el super administrador da de alta las salas y cada reservación se hace en una sala elegida (los traslapes se revisan por sala).",
+        "<b>Reservaciones recurrentes</b> (diaria, semanal, quincenal y mensual) y reservaciones de varios horarios.",
+        "<b>Gestión de usuarios</b> y de contactos externos, y calendario de festivos y cierres institucionales.",
     ])
     der = bullets([
         "<b>Notificaciones</b> y recuperación de contraseña por correo (SMTP).",
@@ -227,6 +228,7 @@ def resumen():
         [P("<b>docs/RUNBOOK.md</b>", cell), P("Operación diaria, solución de problemas y reversa.", cell)],
         [P("<b>docs/adr/</b>", cell), P("Cuatro registros de decisiones de arquitectura (Dokploy, Traefik, restricciones de red y Worker).", cell)],
         [P("<b>docs/ACCESS.md</b>", cell), P("Registro de cuentas y responsables (sin contraseñas).", cell)],
+        [P("<b>docs/manual/</b>", cell), P("Manuales de usuario en español (secretaría, académico y administrador) con capturas de pantalla.", cell)],
     ], [1.7 * inch, W - 1.7 * inch], header=False))
     doc.build(s, onFirstPage=footer, onLaterPages=footer)
 

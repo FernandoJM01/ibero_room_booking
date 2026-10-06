@@ -180,9 +180,12 @@ container**, and migrations run automatically at every API start:
 1. `backend/db/schema.sql` and `backend/db/seed.sql` are present in the deployed
    clone and in the API image. Their SHA-256 hashes on the server match the
    repository at commit `f383663`
-   (`schema.sql` `eff2d7eb…4ad53b81`, `seed.sql` `da5d425d…d14bafd7`).
-2. On every start, the API applies `backend/db/migrations/001` to `006` in
-   order. They are idempotent.
+   (`schema.sql` `eff2d7eb…4ad53b81`, `seed.sql` `da5d425d…d14bafd7`). Both files
+   have changed since (rooms were added), so those hashes only describe that commit.
+2. On every start, the API applies every file in `backend/db/migrations/` in
+   order. They are idempotent. At the time of this inspection that was `001` to
+   `006`; the repository now also has `007` to `009` (app settings, audit index,
+   rooms), which will be applied by the next deploy.
 3. The initial load, and any full reset, was done with the procedure below.
 
 > **Destructive.** This drops **every table and all data** in the production
@@ -209,7 +212,7 @@ const pool = require('./db/pool');
 "
 
 # 3. Leave the container, then click Deploy on the API app in Dokploy
-#    so migrations 001-006 run against the fresh schema
+#    so the migrations run against the fresh schema
 exit
 ```
 

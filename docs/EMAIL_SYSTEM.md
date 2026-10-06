@@ -13,9 +13,10 @@ The email system is a synchronous, monolithic module responsible for notifying u
 
 The architecture consists of standard Express routes invoking a centralized Mailer utility.
 
-*   **Modules & Services:** `backend/utils/mailer.js` acts as the sole email service. Route controllers (`reservations.js`, `auth.js`, `users.js`, `modification-requests.js`) act as the business logic layer that triggers it.
+*   **Modules & Services:** `backend/utils/mailer.js` acts as the sole email service. Route controllers (`reservations.js`, `auth.js`, `users.js`, `modification-requests.js`, `diagnostics.js`) act as the business logic layer that triggers it.
 *   **Dependencies:** `nodemailer` is the only external dependency.
-*   **SMTP Initialization:** Occurs once on server startup. The `mailer.js` file reads environment variables synchronously. If they are present, it creates the Nodemailer transport. If missing, it gracefully degrades to a disabled state.
+*   **SMTP Initialization:** Occurs once on server startup. The `mailer.js` file reads environment variables synchronously. Email is enabled only when `SMTP_HOST`, `SMTP_USER` and `SMTP_PASSWORD` are all set; then it creates the Nodemailer transport (implicit TLS when `SMTP_PORT` is `465`; otherwise a plain connection upgraded with STARTTLS when the server offers it). If any is missing, it gracefully degrades to a disabled state.
+*   **Delivery log:** every attempt, including skipped ones, is written to the `notification_logs` table with status `sent`, `failed` or `skipped` (the "Notificaciones" tab of the admin panel shows it). Records are purged by the retention job after `DATA_RETENTION_MONTHS`.
 *   **Email Flow:** The routes construct data objects, pass them to template functions in `mailer.js` to generate subject and HTML, and finally pass the output to `sendEmail`.
 *   **Template Flow:** Templates are purely synchronous JavaScript functions returning string literals.
 
@@ -53,22 +54,26 @@ Recipient
 ### 2. `backend/routes/reservations.js`
 *   **Purpose:** Handles reservation CRUD operations.
 *   **Responsibilities:** Dispatches reservation-related emails upon successful database queries.
-*   **Current State:** Functional. Executes `sendEmail` as a fire-and-forget asynchronous call (without `await`), meaning HTTP responses aren't blocked, but failures cannot be reported to the user.
+*   **Current State:** Functional. Executes `sendEmail` as a fire-and-forget asynchronous call (without `await`), meaning HTTP responses aren't blocked, but failures cannot be reported to the user. The reservation passed to the templates is re-read with `fetchWithNames()` so the room name and responsible name are available (the "Sala" row appears only when the reservation has a room).
 
 ### 3. `backend/routes/auth.js`
 *   **Purpose:** Authentication and password recovery.
-*   **Responsibilities:** Dispatches password reset tokens and security alerts.
+*   **Responsibilities:** Dispatches password reset links (valid 60 minutes), "password changed" alerts and the SMTP test email (`POST /api/auth/test-email`).
 *   **Current State:** Functional. 
 
 ### 4. `backend/routes/users.js`
 *   **Purpose:** User management by admins.
-*   **Responsibilities:** Dispatches welcome emails to newly created users and deactivation notices.
+*   **Responsibilities:** Dispatches welcome emails to newly created users, "password changed" alerts, and account deactivation/reactivation notices.
 *   **Current State:** Functional.
 
 ### 5. `backend/routes/modification-requests.js`
 *   **Purpose:** Handles schedule changes requested by users.
 *   **Responsibilities:** Dispatches workflow emails to admins (pending request) and users (approved/rejected).
-*   **Current State:** Functional.
+*   **Current State:** The API routes and templates still exist, but the "Solicitudes" screens were removed from the interface (any secretary can now edit or cancel any reservation directly), so in practice these emails are not triggered. See `docs/changes/2026-09-22-secretary-feedback.md` #7.
+
+### 6. `backend/routes/diagnostics.js`
+*   **Purpose:** Super-administrator SMTP diagnostics (`GET/POST /api/diagnostics/smtp`).
+*   **Responsibilities:** Verifies the SMTP connection and sends a test email, classifying failures (`authentication_failed`, `timeout`, `connection_refused`, `host_unreachable`, `recipient_or_sender_rejected`, `tls_error`).
 
 ## SMTP Configuration
 
@@ -84,14 +89,15 @@ The system requires the following environment variables (found in `.env`):
 
 Emails are triggered immediately after a successful database `UPDATE` or `INSERT`.
 
-*   **Reservation created:** Triggered instantly in `POST /api/reservations`.
-*   **Reservation updated:** Triggered instantly in `PUT /api/reservations/:id`.
-*   **Reservation cancelled:** Triggered instantly in `PATCH /api/reservations/:id/cancel`.
-*   **Admin overridden reservation:** Triggered in `PUT /api/reservations/:id` when the modifier is an admin but the owner is a user.
-*   **Modification request submitted:** Triggered in `POST /api/modification-requests`.
-*   **Modification request approved/rejected:** Triggered in `POST /api/modification-requests/:id/approve` and `/reject`.
-*   **Password reset:** Triggered in `POST /api/auth/request-password-reset`.
-*   **User created:** Triggered in `POST /api/users`.
+*   **Reservation created:** `POST /api/reservations` and `POST /api/reservations/multi` (one email per interval) -> confirmation to the responsible person.
+*   **Reservation updated:** `PUT /api/reservations/:id` -> update email to the responsible person when a relevant field changed (including the room).
+*   **Reservation cancelled:** `DELETE /api/reservations/:id` and `DELETE /api/reservations/bulk` -> cancellation email to the responsible person.
+*   **Edited or cancelled by someone else:** the same `PUT` / `DELETE` also notify the secretary who created the reservation when a different user made the change (`reservationAdminModifiedEmail` / `reservationAdminCancelledEmail`).
+*   **Modification request submitted / approved / rejected:** `POST /api/modification-requests`, `PATCH /api/modification-requests/:id/approve` and `/reject` (dormant, see above).
+*   **Password reset:** `POST /api/auth/forgot-password` (link valid 60 minutes) and `POST /api/auth/reset-password` ("password changed" alert).
+*   **Password changed:** `PUT /api/auth/change-password` and `PUT /api/users/:id` when a password is set.
+*   **User created / deactivated / reactivated:** `POST /api/users`, `PATCH /api/users/:id/deactivate` and `/activate`.
+*   **SMTP test:** `POST /api/auth/test-email` and `POST /api/diagnostics/smtp`.
 
 *Note: Automated time-based emails (e.g., Reservation Reminders) are entirely missing because there is no cron job or scheduling system implemented.*
 
@@ -124,7 +130,7 @@ All templates reside inside `backend/utils/mailer.js`.
 
 ## Risks
 *   **Silent Failures:** If Microsoft 365 or Gmail rotates their SSL certificates or throttling occurs, emails will silently fail in production. Neither admins nor users will know.
-*   **Server Hangs:** `nodemailer` uses a 10-second timeout. If the SMTP provider is slow, the Node.js event loop will have pending promises stacking up, potentially leading to memory leaks or latency spikes.
+*   **Server Hangs:** the transport sets no explicit timeouts, so Nodemailer's defaults apply (about 2 minutes to connect, 30 seconds for the greeting, 10 minutes of socket inactivity). If the SMTP provider is slow, pending promises stack up in the event loop, which can cause latency spikes. Setting `connectionTimeout`, `greetingTimeout` and `socketTimeout` in `createTransport` would bound this.
 
 ## Production Readiness
 **Not fully production-ready.** While functional for low-volume, local setups, an enterprise application requires guaranteed delivery. Without a job queue (like BullMQ), persistent retry logic, and an administrative view of email failures, the current implementation risks critical business communications (like password resets) being silently dropped.

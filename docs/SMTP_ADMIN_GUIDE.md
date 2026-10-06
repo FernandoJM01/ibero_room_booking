@@ -1,7 +1,7 @@
 # SMTP_ADMIN_GUIDE.md
 
 ## Overview
-This application uses SMTP (Simple Mail Transfer Protocol) to send automated notifications to users. Emails are used for account creation, password resets, and updates regarding reservations (creations, approvals, cancellations). Without SMTP, the system will continue to work, but users will not receive any notifications.
+This application uses SMTP (Simple Mail Transfer Protocol) to send automated notifications to users. Emails are used for account creation and deactivation, password resets and changes, and updates regarding reservations (confirmations, changes and cancellations, including the room). Without SMTP, the system will continue to work, but users will not receive any notifications.
 
 ## Required Credentials
 To configure the email system, you must provide the following variables. These typically come from your IT department or email provider (Microsoft 365, Google Workspace, etc.).
@@ -60,6 +60,11 @@ To apply changes made to your `.env` file:
 *   **Symptoms:** Emails are not arriving. The UI error modal shows `authentication_failed` or SMTP logs show `535 5.7.8 Username and Password not accepted`.
 *   **Causes:** The password is wrong, or the account requires an "App Password" because MFA is enabled.
 *   **Action:** Generate an App Password in your Microsoft/Google account settings, update `SMTP_PASSWORD` in `.env`, and restart the Docker container.
+
+### Host not found / connection refused
+*   **Symptoms:** UI shows `host_unreachable` or `connection_refused`.
+*   **Causes:** `SMTP_HOST` is misspelled, or nothing accepts connections on `SMTP_PORT`.
+*   **Action:** Check the host name and port with your IT department.
 
 ### Connection timeout / TLS error
 *   **Symptoms:** UI shows `timeout` or `tls_error`.

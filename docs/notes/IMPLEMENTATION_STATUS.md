@@ -1,5 +1,7 @@
 # Sala de Juntas Ibero — Estado de Implementación
 
+> **Documento histórico.** Fue escrito en abril de 2026 y ya no es exacto (por ejemplo, ya no existen `reservacion.html` ni las solicitudes de cambio, y hay varias salas). Para el estado actual consulta el [README](../../README.md), [`docs/changes/`](../changes) y los [manuales](../manual/README.md).
+
 **Fecha:** 21 de Abril, 2026  
 **Estado General:** ✅ **PRODUCCIÓN LISTA**  
 **Versión:** 1.0.0

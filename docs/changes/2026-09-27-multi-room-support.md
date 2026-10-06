@@ -35,10 +35,10 @@ merged to `main` only after Phase 8's end-to-end verification.
 |---|---|---|
 | 1 | Database + rooms backend | `rooms` table, migration + backfill, `GET/POST/PUT` `/api/rooms` (super admin write), `room_id` threaded through every reservations endpoint and **every overlap check** |
 | 2 | Reservation modal | Required "Sala" selector; live availability re-check on room change; recurring-series generation/save carries `room_id` |
-| 3 | Room switcher | Selector on Reservar + Calendario; filters the client-side `Store` before it reaches `CalendarWeek`/`CalendarGrid`/`MiniCalendar` (no changes inside those components) |
-| 4 | Historial, Estadísticas, exports | Sala column + filter in History; Sala filter + "Sala más utilizada" in Estadísticas; Sala in export rows, filename and the PDF/Excel filter header |
+| 3 | Room switcher | Selector on Reservar + Calendario (placement revised, see *Updates*); filters the client-side `Store` before it reaches `CalendarWeek`/`CalendarGrid`/`MiniCalendar` (no changes inside those components) |
+| 4 | Historial, Estadísticas, exports | Sala column + filter in History; Sala filter in Estadísticas (there is no per-room usage ranking); Sala in export rows, filename and the PDF/Excel filter header |
 | 5 | Admin: Salas tab | New CRUD tab, super-admin only, same card pattern as Festivos/Usuarios |
-| 6 | Asistente IA | Required Sala field on the proposal card before save; AI never guesses the room |
+| 6 | Asistente IA | Required Sala field on the proposal card before save; AI never guesses the room. (The assistant is currently hidden in the UI, so this is not reachable from the menu.) |
 | 7 | Emails | Confirmation/update/cancellation templates state which room |
 | 8 | Verification + deploy notes | Live-tested per phase already; final end-to-end pass, migration/deploy instructions |
 
@@ -78,12 +78,22 @@ Final backend pass (phase 8), run against the live API with two active rooms:
 3. Sanity check: `SELECT count(*) FROM reservations WHERE room_id IS NULL;` → `0`.
 4. Log in as a super admin → **Salas**: rename "Sala Principal" to the real name and add
    the second room.
-5. Hard-refresh browsers once (assets are cache-busted at `?v=31`, so this normally
-   isn't needed).
+5. Hard-refresh browsers once if the old UI shows up (assets are cache-busted with the
+   `?v=N` string in every HTML file, so this normally isn't needed).
 
-**Rollback:** the migration is additive (new table + new column), so the previous
-release keeps working against the migrated DB; restore the backup only if data itself
-must be reverted.
+**Rollback.** The migration is additive, but the previous release is **not**
+compatible with the migrated database as-is: `reservations.room_id` is `NOT NULL`
+with no default, so the old code's `INSERT`s fail. Pick one:
+
+- *Restore the backup* taken in step 1 (loses anything created since), or
+- *Keep the data* and relax the constraint before redeploying the old commit:
+  ```sql
+  ALTER TABLE reservations ALTER COLUMN room_id DROP NOT NULL;
+  ```
+  Verified on a copy of the database: the old code then creates reservations with
+  `room_id = NULL`, and the next start of the new release re-runs `009_rooms.sql`,
+  which assigns those rows to "Sala Principal" and restores `NOT NULL`. While the old
+  code runs, all bookings share one calendar again (it has no notion of rooms).
 
 ## Known limits / follow-ups
 
@@ -93,3 +103,17 @@ must be reverted.
 - No per-room permissions or opening hours: every secretaria can book any active room.
 - Deactivating a room hides it from selectors but keeps its history and existing
   bookings.
+
+## Updates after the first delivery (2026-09-28 to 2026-10-05)
+
+- **Selector placement.** The room selector moved out of the calendar toolbar: on
+  desktop it lives in the top bar (so the calendar keeps its full height); on phones
+  it is a full-width row inside the calendar card. `RoomSwitcher.bind()` keeps both
+  selectors in sync and remembers the choice per browser.
+- **Historial.** The Sala column is also visible on phones; the filters were
+  redesigned (see `2026-09-28-sidebar-and-history-redesign.md`).
+- **Día festivo vs. Cierre.** Unrelated to rooms but shipped on the same branch: a
+  festivo is now only highlighted and stays bookable; only a cierre blocks the day
+  (`2026-09-28-holiday-bookable.md`).
+- **Known gap.** The reservation form does not pre-select the room currently shown
+  in the calendar; the secretary chooses it again in the form.

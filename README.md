@@ -7,11 +7,18 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/license-All%20rights%20reserved-lightgrey)
 
-Room-booking web application for the meeting room of Universidad Iberoamericana
+Room-booking web application for the meeting rooms of Universidad Iberoamericana
 (CDMX). Secretaries and administrators manage reservations on a calendar, with
-real-time overlap detection, recurring bookings, change requests, email
-notifications, statistics and PDF/Excel export. Academics get a read-only view of
-availability.
+real-time overlap detection per room, recurring bookings, email notifications,
+statistics and PDF/Excel export. Super administrators manage the list of rooms.
+Academics get a read-only calendar and history limited to the reservations they
+own or are responsible for.
+
+> **User manuals (Spanish):** step-by-step guides with screenshots for the
+> [secretary](docs/manual/Manual_Secretaria.pdf),
+> [academic](docs/manual/Manual_Academico.pdf) and
+> [administrator](docs/manual/Manual_Administrador.pdf). See
+> [`docs/manual/`](docs/manual/README.md).
 
 > This document covers **local development** only. Production deployment is
 > documented in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
@@ -142,11 +149,14 @@ SMTP setup details are in [`docs/SMTP_ADMIN_GUIDE.md`](docs/SMTP_ADMIN_GUIDE.md)
 ## Database
 
 **First start.** With an empty `pg_data` volume, PostgreSQL runs
-`backend/db/schema.sql` and then `backend/db/seed.sql` (the default admin).
+`backend/db/schema.sql` and then `backend/db/seed.sql` (the default admin, an
+initial room called "Sala Principal" and a few sample holidays).
 
 **Every backend start.** The backend applies the SQL files in
-`backend/db/migrations/` in order (`001` to `006`). Migrations are safe to
-re-run.
+`backend/db/migrations/` in order (currently `001` to `009`). Migrations are
+idempotent, so they are safe to re-run. `009_rooms.sql` introduces rooms: it
+creates the `rooms` table, seeds "Sala Principal" and assigns every existing
+reservation to it.
 
 Reset to a clean database (**deletes all data**):
 
@@ -210,7 +220,7 @@ left-hand side of the `ports:` mapping in the compose files.
 │   ├── css/                 # Base, layout, components and per-page styles
 │   ├── js/                  # core/ (api, router, store), modules/, components/, pages/
 │   └── nginx/               # Nginx config template (BACKEND_URL is injected at start)
-├── docs/                    # Deployment, runbook, ADRs, email docs, design notes
+├── docs/                    # Deployment, runbook, ADRs, email docs, user manuals, design notes
 ├── scripts/legacy/          # One-off patch scripts, kept for history only
 ├── docker-compose.yml       # db + backend + frontend
 ├── docker-compose.override.yml  # Local dev overrides (hot reload)
@@ -242,10 +252,11 @@ curl http://localhost:8080/api/health
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md)                | Operations, troubleshooting, rollback      |
 | [`docs/ACCESS.md`](docs/ACCESS.md)                  | Accounts and access register               |
 | [`docs/adr/`](docs/adr/README.md)                   | Architecture Decision Records              |
-| [`docs/changes/`](docs/changes)                     | Change request plans (bug fixes, features) |
+| [`docs/changes/`](docs/changes)                     | Change plans and records (bug fixes, features, multi-room) |
 | [`docs/EMAIL_SYSTEM.md`](docs/EMAIL_SYSTEM.md)      | How email notifications work               |
 | [`docs/SMTP_ADMIN_GUIDE.md`](docs/SMTP_ADMIN_GUIDE.md) | Configuring SMTP                        |
-| [`docs/notes/`](docs/notes)                         | Historical design and status notes         |
+| [`docs/manual/`](docs/manual/README.md)             | User manuals (Spanish) with screenshots    |
+| [`docs/notes/`](docs/notes)                         | Historical design and status notes (outdated) |
 
 ## Academic context and license
 

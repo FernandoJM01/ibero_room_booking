@@ -81,8 +81,12 @@ sudo journalctl -u devtunnel-reservations -n 100 --no-pager
    (Cmd/Ctrl + Shift + R) because static assets are cached for a year.
 
 Deploys replace only the web and API containers (`start-first` rolling update).
-The database service is untouched and its data volume persists. Migrations
-`001` to `006` run automatically when the API starts.
+The database service is untouched and its data volume persists. Every file in
+`backend/db/migrations/` runs automatically when the API starts (the repository
+currently has `001` to `009`; the live server was last verified at `001` to `006`,
+so the next deploy also applies `007` to `009`, including the multi-room
+migration; see [the change record](changes/2026-09-27-multi-room-support.md) and
+take a backup first).
 
 ### Restart a service without redeploying
 
@@ -332,7 +336,9 @@ same `:latest` tag, so it is **not** a substitute for the steps above
 
 Migrations are not reversible. Restore a backup taken before the change (see
 [Restore a backup](#restore-a-backup)). Always back up before a deploy that
-adds a migration.
+adds a migration. For migration `009_rooms.sql` there is also a data-preserving
+path (relax `reservations.room_id` before redeploying the old commit), described
+in the [multi-room change record](changes/2026-09-27-multi-room-support.md#deploy-checklist-dokploy).
 
 ### Restore the tunnel
 
