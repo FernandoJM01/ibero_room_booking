@@ -123,6 +123,8 @@ For a local copy, replace the `ssh`/`sudo docker exec` part with
 
 ### Option A: clean database
 
+**Chosen for production (2026-10-06).** The ordered procedure, including setting a private administrator password before anyone can use the public default one, is in [PLAN_AVAILABILITY_AND_SECURITY §6](PLAN_AVAILABILITY_AND_SECURITY.md#6-the-database-reset-you-chose-option-a-in-this-order); the tool is [`admin_password_sql.js`](../scripts/import-sessions/admin_password_sql.js).
+
 Follow [DEPLOYMENT §4](DEPLOYMENT.md#4-database-initialization) exactly: drop the schema inside the API
 container, reload `schema.sql` and `seed.sql`, then **restart or redeploy the API** so the migrations run.
 (Rehearsed: after the restart the log shows `Applied 009_rooms.sql`, the seed login works and the database

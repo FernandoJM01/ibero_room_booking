@@ -151,7 +151,7 @@ sec "8. Dev Tunnel y servicios de systemd"
 shx "Unidad devtunnel-reservations" 'systemctl cat devtunnel-reservations 2>&1; echo; systemctl is-enabled devtunnel-reservations 2>&1; systemctl is-active devtunnel-reservations 2>&1'
 shx "Estado del servicio (sin bitácora larga)" 'systemctl show devtunnel-reservations -p ActiveState -p SubState -p ActiveEnterTimestamp -p Restart -p User -p NRestarts 2>&1'
 shx "Últimas líneas de la bitácora del túnel" 'journalctl -u devtunnel-reservations -n 15 --no-pager 2>&1'
-DT="$(systemctl cat devtunnel-reservations 2>/dev/null | grep -oE '/[^ ]*devtunnel' | head -1)"
+DT="$(systemctl show devtunnel-reservations -p ExecStart --value 2>/dev/null | grep -oE 'path=[^ ;]+' | head -1 | cut -d= -f2)"
 DTUSER="$(systemctl show devtunnel-reservations -p User --value 2>/dev/null)"
 if [ -n "$DT" ] && [ -n "$DTUSER" ]; then
   shx "Túnel registrado (como $DTUSER)" "runuser -u $DTUSER -- $DT show ibero-reservas.usw3 2>&1 | head -n 30; echo; runuser -u $DTUSER -- $DT user show 2>&1 | head -n 6"
@@ -184,19 +184,21 @@ fi
 
 # ───────────── 10. aplicación y exposición pública ─────────────
 sec "10. Salud de la aplicación y exposición pública"
-tunnel_host() {
-  # host actual del túnel: el que reporta `devtunnel show`; si no, el primero de las rutas de Traefik
-  local h=""
-  if [ -n "${DT:-}" ] && [ -n "${DTUSER:-}" ]; then
-    h="$(runuser -u "$DTUSER" -- "$DT" show ibero-reservas.usw3 2>/dev/null | grep -oE 'https://[^/ ]+devtunnels\.ms' | head -1 | sed 's#https://##')"
-  fi
-  [ -n "$h" ] || h="$(grep -rhoP 'Host\(\x60\K[^\x60]+devtunnels\.ms(?=\x60\))' /etc/dokploy/traefik/dynamic/ 2>/dev/null | head -1)"
-  echo "$h"
+tunnel_hosts() {
+  # hosts de túnel conocidos: el que reporta `devtunnel show` y todos los de las rutas de Traefik
+  # (puede haber rutas de un túnel retirado: por eso se prueban todos, no solo el primero)
+  {
+    if [ -n "${DT:-}" ] && [ -n "${DTUSER:-}" ] && [ -x "$DT" ]; then
+      runuser -u "$DTUSER" -- "$DT" show ibero-reservas.usw3 2>/dev/null | grep -oE 'https://[^/ ]+devtunnels\.ms' | sed 's#https://##'
+    fi
+    grep -rhoP 'Host\(\x60\K[^\x60]+devtunnels\.ms(?=\x60\))' /etc/dokploy/traefik/dynamic/ 2>/dev/null
+  } | sort -u
 }
-TH="$(tunnel_host)"
-sub "Salud vía Traefik (host del túnel)"
-echo "host: ${TH:-no encontrado}"
-[ -n "$TH" ] && { timeout 10 curl -s -m 8 -H "Host: $TH" http://127.0.0.1/api/health | redact; echo; }
+sub "Salud vía Traefik (por cada host de túnel configurado)"
+for TH in $(tunnel_hosts); do
+  printf '%s -> ' "$TH"
+  timeout 10 curl -s -m 8 -o /dev/null -w '%{http_code}\n' -H "Host: $TH" http://127.0.0.1/api/health
+done
 end
 shx "Sitio público" 'curl -sI -m 10 https://deii-salas.uk/ | grep -iE "^(HTTP|server|cf-ray|content-type|strict-transport|x-frame|x-content)"; echo; curl -s -m 10 https://deii-salas.uk/api/health'
 shx "Salida a internet (443) hacia Cloudflare" 'curl -s -m 8 https://api.cloudflare.com/cdn-cgi/trace | grep -E "^(fl|h|loc|http|tls)="'
