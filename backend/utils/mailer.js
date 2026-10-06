@@ -136,6 +136,90 @@ function reservationCancelledEmail(reservation) {
   };
 }
 
+const _PATTERN_LABEL = {
+  daily: 'Diaria', weekly: 'Semanal', biweekly: 'Cada dos semanas', monthly: 'Mensual',
+};
+
+// Dates of several reservations as one table row per date (used by the one-email-per-series summaries).
+function _datesTable(reservations) {
+  const rows = reservations.map(r => `
+      <tr>
+        <td style="padding:4px 12px 4px 0;">${_formatDate(r.start_time)}</td>
+        <td style="padding:4px 0;white-space:nowrap;">${_formatTime(r.start_time)} – ${_formatTime(r.end_time)}</td>
+      </tr>`).join('');
+  return `<table style="border-collapse:collapse;font-size:14px;margin:8px 0;">${rows}</table>`;
+}
+
+// ONE e-mail for a whole recurring series (instead of one per date).
+// `reservations` = the series' active reservations, ordered by start_time, with names joined.
+function recurringSeriesCreatedEmail(reservations, pattern) {
+  const first = reservations[0];
+  const label = _PATTERN_LABEL[pattern];
+  return {
+    subject: `Reservaciones recurrentes confirmadas (${reservations.length}) — Sala de Juntas Ibero`,
+    html: _layout('#ef3e42', 'Reservaciones recurrentes confirmadas',
+      `<p>Se registró una serie de <strong>${reservations.length}</strong> reservaciones de la Sala de Juntas${label ? ` (${_esc(label.toLowerCase())})` : ''}:</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px;">
+         <tr><td style="padding:6px 0;color:#555;">Responsable</td><td style="padding:6px 0;font-weight:600;">${_esc(first.responsible_name)}</td></tr>
+         <tr><td style="padding:6px 0;color:#555;">Nombre de la junta</td><td style="padding:6px 0;">${_esc(first.area)}</td></tr>
+         ${first.room_name ? `<tr><td style="padding:6px 0;color:#555;">Sala</td><td style="padding:6px 0;font-weight:600;">${_esc(first.room_name)}</td></tr>` : ''}
+         ${first.observations ? `<tr><td style="padding:6px 0;color:#555;">Observaciones</td><td style="padding:6px 0;">${_esc(first.observations)}</td></tr>` : ''}
+       </table>
+       <p style="margin-bottom:0;color:#555;">Fechas y horarios:</p>
+       ${_datesTable(reservations)}`),
+  };
+}
+
+// ONE e-mail when several reservations of the same person are cancelled together (a series, a bulk cancel).
+function reservationsCancelledSummaryEmail(reservations) {
+  const first = reservations[0];
+  return {
+    subject: `Reservaciones canceladas (${reservations.length}) — Sala de Juntas Ibero`,
+    html: _layout('#dc3545', 'Reservaciones canceladas',
+      `<p>Se cancelaron <strong>${reservations.length}</strong> reservaciones de <strong>${_esc(first.responsible_name)}</strong>${first.area ? ` (${_esc(first.area)})` : ''}:</p>
+       ${_datesTable(reservations)}`),
+  };
+}
+
+// One-off invitation for accounts created by a data migration (no welcome e-mail was sent at creation): says the
+// account exists, gives a link to CREATE the password (a reset token with a longer validity, so no password travels by
+// e-mail) and lists the reservations loaded for the person.
+// `series` = [{ area, room_name, dates: [{start_time, end_time}] }], `singles` = [{ area, room_name, start_time, end_time }].
+function accountInvitationEmail({ user, loginUrl, inviteLink, ttlHours, series = [], singles = [] }) {
+  const days = ttlHours % 24 === 0 ? `${ttlHours / 24} día${ttlHours === 24 ? '' : 's'}` : `${ttlHours} horas`;
+  const weekday = (v) => new Date(v).toLocaleDateString('es-MX', { weekday: 'long', timeZone: TZ });
+  const seriesHtml = series.map(g => {
+    const first = g.dates[0], last = g.dates[g.dates.length - 1];
+    return `
+      <p style="margin:14px 0 2px;"><strong>${_esc(g.area)}</strong>${g.room_name ? ` · ${_esc(g.room_name)}` : ''}<br>
+        <span style="color:#555;">Cada ${_esc(weekday(first.start_time))}, ${_formatTime(first.start_time)} – ${_formatTime(first.end_time)} · ${g.dates.length} fechas</span></p>
+      ${_datesTable(g.dates)}`;
+  }).join('');
+  const singlesHtml = singles.length ? `
+      <p style="margin:14px 0 2px;"><strong>Reservaciones individuales</strong></p>
+      ${_datesTable(singles)}` : '';
+  const total = series.reduce((n, g) => n + g.dates.length, 0) + singles.length;
+  return {
+    subject: `Tu cuenta y tus reservaciones — Sala de Juntas Ibero`,
+    html: _layout('#ef3e42', 'Tu cuenta está lista',
+      `<p>Hola <strong>${_esc(user.name)}</strong>,</p>
+       <p>Se creó una cuenta para ti en el sistema de Reservación de Sala de Juntas de la Universidad Iberoamericana y ya están registradas tus <strong>${total}</strong> reservaciones.</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px;">
+         <tr><td style="padding:6px 0;color:#555;">Usuario (correo)</td><td style="padding:6px 0;font-weight:600;">${_esc(user.email)}</td></tr>
+         <tr><td style="padding:6px 0;color:#555;">Rol</td><td style="padding:6px 0;">Académico</td></tr>
+       </table>
+       <p style="margin-top:16px;">Para entrar, crea tu contraseña con este botón (el enlace sirve una sola vez y vence en ${days}):</p>
+       <a href="${_esc(inviteLink)}" style="display:inline-block;margin:8px 0 16px;padding:12px 24px;background:#ef3e42;color:white;text-decoration:none;border-radius:6px;font-weight:600;">
+         Crear mi contraseña
+       </a>
+       <p style="font-size:13px;color:#555;">Si el enlace venció, entra a <a href="${_esc(loginUrl)}">${_esc(loginUrl)}</a> y usa <strong>«¿Olvidaste tu contraseña?»</strong> con este mismo correo para recibir uno nuevo.
+         Tu contraseña debe tener al menos 8 caracteres, con mayúscula, minúscula, número y símbolo. Nadie te pedirá tu contraseña por correo.</p>
+       <p style="margin-bottom:0;"><strong>Tus reservaciones</strong> (hora de la Ciudad de México):</p>
+       ${seriesHtml}${singlesHtml}
+       <p style="font-size:13px;color:#555;margin-top:18px;">En el sistema podrás ver tu calendario y tu historial; las demás reservaciones de la sala aparecen como «Ocupado». Para cambiar o cancelar una reservación, contacta a la secretaría.</p>`),
+  };
+}
+
 function passwordResetEmail(resetLink) {
   return {
     subject: `Restablecer contraseña — Sala de Juntas Ibero`,
@@ -321,6 +405,9 @@ module.exports = {
   reservationCreatedEmail,
   reservationUpdatedEmail,
   reservationCancelledEmail,
+  recurringSeriesCreatedEmail,
+  reservationsCancelledSummaryEmail,
+  accountInvitationEmail,
   reservationAdminModifiedEmail,
   reservationAdminCancelledEmail,
   modificationRequestReceivedEmail,

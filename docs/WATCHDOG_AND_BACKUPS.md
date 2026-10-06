@@ -19,7 +19,7 @@ Files: `/usr/local/sbin/{devtunnel-watchdog,devtunnel-notify,db-backup}.sh`,
 `/etc/systemd/system/{devtunnel-watchdog,ibero-db-backup}.{service,timer}`, `/etc/default/ibero-alerts`.
 Short-term memory of the watchdog (counters, last restart, last alert): `/run/devtunnel-watchdog.*`.
 Not covered (still needs a person): an expired Microsoft login, a dead server, network, Cloudflare Worker or domain.
-That is what the **external monitor** is for.
+That is what the **external monitor** is for ([setup guide](EXTERNAL_MONITOR.md)).
 
 ## 2. Settings
 
@@ -30,7 +30,7 @@ sudo nano /etc/default/ibero-alerts
 ```
 
 ```
-ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx      # comma separated, no spaces, no quotes
+ALERT_TO=p18731@correo.uia.mx,a231592a@correo.uia.mx      # comma separated, no spaces, no quotes
 #HEARTBEAT_URL=https://hc-ping.com/<uuid>                       # optional dead-man's-switch ping
 ```
 
@@ -161,3 +161,13 @@ shred -u import.sql cleanup_keep_calendar.sql                # afterwards: they 
 
 `KEEP_EMAILS=a@x,b@y` keeps more than one administrator (default: `julieta.esquinca@ibero.mx`). The script refuses to
 run without both SQL files and aborts if the backup fails.
+
+### 7.1 Inviting the imported people
+
+```bash
+API=$(sudo docker ps -qf "name=reservationsapi")
+sudo docker exec $API node scripts/send_migration_welcome.js          # dry run: who gets what
+sudo docker exec $API node scripts/send_migration_welcome.js --send   # one e-mail each: account + create-password link + reservations
+```
+
+Details and reasoning: [DATA_MIGRATION §4b](DATA_MIGRATION.md#4b-inviting-the-imported-people-one-e-mail-each). Needs the API image with the script deployed.

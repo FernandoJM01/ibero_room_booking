@@ -7,7 +7,7 @@
 set -u
 SUBJECT="${1:-[IberoReservas] alert}"
 BODY="${2:-}"
-TO="${ALERT_TO:-antonio.cardena@ibero.mx,a231592a@correo.uia.mx}"
+TO="${ALERT_TO:-p18731@correo.uia.mx,a231592a@correo.uia.mx}"
 FILTER="${API_NAME_FILTER:-reservationsapi}"
 
 log() { logger -t devtunnel-watchdog -- "$*" 2>/dev/null; echo "$*"; }

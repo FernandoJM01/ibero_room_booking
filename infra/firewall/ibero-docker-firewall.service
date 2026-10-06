@@ -1,0 +1,14 @@
+[Unit]
+Description=Keep Docker-published admin ports off the network (DOCKER-USER rules)
+After=docker.service network-online.target
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=-/etc/default/ibero-firewall
+ExecStart=/usr/local/sbin/ibero-docker-firewall.sh
+
+[Install]
+WantedBy=multi-user.target

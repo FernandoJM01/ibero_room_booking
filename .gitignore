@@ -129,3 +129,6 @@ obj/
 
 # Archivo de migración con datos personales (nunca versionar)
 /isaac_sesiones_*.xlsx
+
+# Printed handover sheet with real credentials (never commit)
+docs/entrega/private/

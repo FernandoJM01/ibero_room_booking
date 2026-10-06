@@ -10,10 +10,10 @@ the API code.
 | -------- | ----------- |
 | **The architecture does not change.** Browser, Cloudflare Worker, Microsoft Dev Tunnel, Traefik, API, PostgreSQL stay as they are | Every item below is an addition (a timer, an alert, a backup, a setting) or a hygiene fix. Nothing replaces a component |
 | `cloudflared` is **not an option**: the university blocks TCP 7844 ([ADR 0003](adr/0003-institutional-network-egress-restrictions.md)) | The structural alternatives that were discussed (Cloudflare Tunnel, a campus inbound path, other hosting) are **out of scope** |
-| Alert recipients: **antonio.cardena@ibero.mx** and **a231592a@correo.uia.mx** | The same two people receive the watchdog e-mails and the **external monitor's** alerts |
+| Alert recipients: **p18731@correo.uia.mx** (the account that owns the tunnel and Cloudflare) and **a231592a@correo.uia.mx** | The same two people receive the watchdog e-mails and the **external monitor's** alerts |
 | The 2026-10-06 deploy of `74efe0c` was **made by the project owner** | Recorded in [DEPLOYMENT](DEPLOYMENT.md#change-history); no further action |
 | **Database: not a full reset.** Keep the calendar; leave **only one administrator** (`julieta.esquinca@ibero.mx`), like the seed, then run the migration | Cleanup **Option C** ([section 7](#7-database-cleanup-and-migration-in-order)); the second super administrator is removed |
-| Accounts: the **Microsoft login of the tunnel is `antonio.cardena@ibero.mx`** (also an alert recipient); **Cloudflare has one administrator, `p18731@correo.uia.mx`**. Each has a single owner | A continuity risk handled in [section 4](#4-people-and-continuity-the-two-single-owners); recorded in [ACCESS](ACCESS.md) |
+| Accounts: the **Microsoft login of the tunnel and the Cloudflare account are both `p18731@correo.uia.mx`** (one owner for both); the **Dokploy** panel is used with the account `antonio.cardena@ibero.mx` | A continuity risk handled in [section 4](#4-people-and-continuity-the-two-single-owners); recorded in [ACCESS](ACCESS.md) (no passwords there) |
 
 ## 1. Why the site goes down
 
@@ -77,15 +77,16 @@ the mail path was tested with a mocked `docker`; both pass.
 
 ## 4. People and continuity: the two single owners
 
-Cloudflare (the Worker and `deii-salas.uk`) and the Microsoft account behind the tunnel each have **one administrator, and
-**there is no second person available for either** (decision of 2026-10-06). That is an **accepted risk**: if that person is
-unavailable, nobody can fix the Worker, renew the tunnel login or change the tunnel. What reduces it without changing the
-architecture:
+Cloudflare (the Worker and `deii-salas.uk`) and the Microsoft account behind the tunnel are **the same account,
+`p18731@correo.uia.mx`, with one administrator, and there is no second person available** (decision of 2026-10-06). That is an
+**accepted risk**: if that person or account is unavailable, nobody can fix the Worker, renew the tunnel login or change the tunnel.
+It also means one lost account takes out both. What reduces it without changing the architecture:
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| **Cloudflare:** `p18731@correo.uia.mx` is the only administrator. It is rarely needed (the Worker only changes when the tunnel URL changes) | Two-step verification **with the recovery codes stored in the team password manager** (not on one phone); the Worker source is in [DEPLOYMENT §5](DEPLOYMENT.md) so it can be recreated; note the domain **registrar** and renewal date (not yet known) so the domain cannot lapse unnoticed |
-| **Microsoft account for the tunnel:** `antonio.cardena@ibero.mx`; a tunnel can only be used by its creator, no ownership transfer ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) | He is also an alert recipient, so the `ACTION NEEDED` mail reaches the one person who can approve the device-code login. Keep a **recovery e-mail/phone** on the account; keep the credentials in the handover sheet ([ACCESS](ACCESS.md)), delivered through the sealed/offline channel; if the account is lost, the documented "new tunnel under another account" procedure applies |
+| **One account for Cloudflare and the tunnel** (`p18731@correo.uia.mx`) | Two-step verification **with the recovery codes stored in the team password manager** (not on one phone); a recovery e-mail/phone on the account; the credentials in the handover sheet ([ACCESS](ACCESS.md)), delivered through the sealed/offline channel; the Worker source is in [DEPLOYMENT §5](DEPLOYMENT.md) so it can be recreated; note the domain **registrar** and renewal date (not yet known) |
+| **Tunnel login expiring** | That account is also an alert recipient, so the `ACTION NEEDED` e-mail reaches the person who can approve the device-code login. If that person is unreachable, `a231592a@correo.uia.mx` cannot act alone: rehearse once the documented "new tunnel under another account" procedure ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) so it is known to work |
+| **Dokploy panel** is used with the account `antonio.cardena@ibero.mx` | One named person; its password is temporary and must be changed at first use; never recorded in the repository |
 | Server access by **named people**: `admlocal` has no owner | Assign or lock it; one account per person |
 
 If either account's holder leaves the university, that is a **hand-over event**: do the change-of-owner steps in the
@@ -101,7 +102,7 @@ server administrator's password, typed by that person.
 | # | Action | Done when |
 | - | ------ | --------- |
 | P0-1 | **Record the tunnel's expiry.** As `acardena`: `/home/acardena/bin/devtunnel show ibero-reservas.usw3`, read *Expiration*. Per Microsoft's documentation it is a **sliding inactivity window** (renewed by activity), so a tunnel that is hosted and used should not expire; an earlier draft of this plan feared a hard expiry on 2026-10-21, and that is **not** supported by the documentation. Write the value in the RUNBOOK and extend it if it is short ([RUNBOOK](RUNBOOK.md#check-and-extend-the-tunnel-expiry)) | Value recorded |
-| P0-2 | **Create the external monitor** (layer A). Recommended: **UptimeRobot** (free, 5-minute checks, keyword check, e-mail alerts; its free plan is for non-commercial use, otherwise use Better Stack's free tier) on `https://deii-salas.uk/api/health`, keyword `"ok":true`, alert contacts `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx`. Optional, for a server/network outage: **Healthchecks.io** (free, 20 checks), give its ping URL to the watchdog as `HEARTBEAT_URL`. The accounts are created and the terms accepted by whoever will administer them | A test alert arrives at both |
+| P0-2 | **Done 2026-10-06** (UptimeRobot, signs in with `p18731@correo.uia.mx`, which is its only alert contact; see [EXTERNAL_MONITOR](EXTERNAL_MONITOR.md)). Original step: **Create the external monitor** (layer A; step by step: [EXTERNAL_MONITOR](EXTERNAL_MONITOR.md)). Recommended: **UptimeRobot** (free, 5-minute checks, keyword check, e-mail alerts; its free plan is for non-commercial use, otherwise use Better Stack's free tier) on `https://deii-salas.uk/api/health`, keyword `"ok":true`, alert contacts `p18731@correo.uia.mx` and `a231592a@correo.uia.mx`. Optional, for a server/network outage: **Healthchecks.io** (free, 20 checks), give its ping URL to the watchdog as `HEARTBEAT_URL`. The accounts are created and the terms accepted by whoever will administer them | A test alert arrives at both |
 | P0-3 | **Test the app's SMTP** (*Notificaciones › Enviar correo de prueba*) to both addresses | Both receive it; if not, fix SMTP first ([SMTP guide](SMTP_ADMIN_GUIDE.md)) |
 | P0-4 | **Run the login rate-limit test** with a phone on mobile data ([RUNBOOK](RUNBOOK.md#verify-the-login-rate-limit-shared-by-everyone-or-per-client)) | Result written down (decides P2-2) |
 | P0-5 | Cloudflare administrator: enable two-step verification and store the recovery codes in the team password manager; Microsoft account owner: add a recovery contact (section 4) | Both done |
@@ -116,7 +117,7 @@ server administrator's password, typed by that person.
 | P1-4 | [**Installed 2026-10-06** (timer 02:00 UTC; first run created a verified 9.7 KB file). Off-server copy still open.] **Nightly backups**: a systemd timer (02:00) running the documented dump, kept 14 days in `/var/backups/ibero/` (mode 600), newest copy pushed off the server; alert if the last one is older than 26 h | A scratch-database restore of last night's file works | Disable the timer |
 | P1-5 | **Updates and a reboot** (38 packages, a restart is pending, up 18 days). Then confirm everything **returns unattended**: Docker, Swarm services, Traefik, `devtunnel-reservations`, the watchdog timer | Site answers within 5 min after the reboot with nobody logged in | Boot the previous kernel from GRUB |
 | P1-6 | **Docker log rotation** (`/etc/docker/daemon.json`: `json-file`, `max-size 10m`, `max-file 3`), at the same reboot | `docker info`; disk under 80% | Remove the file |
-| P1-7 | **Close the Dokploy panel (port 3000) to the network** (S2). Keep using it through the SSH tunnel you already use (`-L 3000:127.0.0.1:3000`). Docker-published ports can bypass UFW, so re-publish as `127.0.0.1:3000:3000` or add a `DOCKER-USER` rule | From another campus host, `curl -m 5 http://<server>:3000` times out; the panel still works through the SSH tunnel | `ufw allow 3000/tcp` |
+| P1-7 | **Close the Dokploy panel (port 3000) to the network** (S2; files and test in [`infra/firewall/`](../infra/firewall/README.md)). Keep using it through the SSH tunnel you already use (`-L 3000:127.0.0.1:3000`). Docker-published ports bypass UFW, and Dokploy is a Swarm service published in `host` mode, which **cannot be bound to 127.0.0.1**; so the control that works is a `DOCKER-USER` iptables rule that drops port 3000 unless the source is the server itself (made persistent across reboots), plus removing the UFW rule. Test it before closing your session | From another campus host, `curl -m 5 http://<server>:3000` times out; the panel still works through the SSH tunnel | `ufw allow 3000/tcp` |
 | P1-8 | **SSH hardening** (S1), **after** keys exist for each administrator, with your current session left open: `PasswordAuthentication no`, `PermitRootLogin no`, `X11Forwarding no`, `MaxAuthTries 3` in a `/etc/ssh/sshd_config.d/` drop-in; `sshd -t`; reload; test a **new** login before closing the first | Key login works, password login refused | Edit the drop-in back from the open session |
 
 ### Phase 2: next weeks (no downtime, done through Dokploy / code)
@@ -202,7 +203,7 @@ calendar dates, 43 history entries and 31 email-log rows. Do it in one window ou
 ## 8. Open items that need a person
 
 1. Create the external monitor (and optionally the Healthchecks.io heartbeat) and send a test alert (P0-2).
-2. Confirm that the TEST e-mail arrived at `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx` (also spam).
+2. Confirm that the TEST e-mail arrived at `p18731@correo.uia.mx` and `a231592a@correo.uia.mx` (also spam).
 3. Go-ahead for the tunnel failure drill (P1-3) and, separately, for the database cleanup (section 7).
 4. Which registrar holds `deii-salas.uk` and when does it renew?
 5. Where do off-server copies of the backups go (today they stay on the server's disk)?

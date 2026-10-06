@@ -102,8 +102,35 @@ Do it outside working hours and tell the secretaries not to book meanwhile.
    shred -u ~/import.sql
    ```
    It prints `reservaciones_cargadas = 45` and `COMMIT`. Any error means nothing was applied.
-7. **Verify** ([section 6](#6-verification)) and tell the 4 people how to get access (they can use
-   *¿Olvidaste tu contraseña?* once the email service works; see [SMTP guide](SMTP_ADMIN_GUIDE.md)).
+7. **Verify** ([section 6](#6-verification)), then **invite the 4 people** ([section 4b](#4b-inviting-the-imported-people-one-e-mail-each)).
+
+### 4b. Inviting the imported people (one e-mail each)
+
+The migration sends no e-mail, and the accounts have a random, unusable password, so nobody can log in yet. The script
+[`backend/scripts/send_migration_welcome.js`](../backend/scripts/send_migration_welcome.js) sends **one e-mail per person**: the account,
+a **"Crear mi contraseña" button**, and the list of their reservations (each series as one block, single bookings below).
+
+**Why a link and not a temporary password.** A password in an e-mail stays in the mailbox, the application does not force a change at
+first login, and the person would have to be told twice. The button is a normal password-reset token with a longer validity (7 days,
+single use, only its hash is stored), so no password ever travels by e-mail. If it expires, the person uses *¿Olvidaste tu contraseña?*
+with the same address (the e-mail says so). Use a temporary password (*Usuarios › Editar*, delivered by another channel) only for a
+person who has no mailbox.
+
+Run it **inside the API container** (it has the SMTP settings) after the new API image is deployed and the e-mail service is verified
+(*Notificaciones › Enviar correo de prueba*):
+
+```bash
+API=$(sudo docker ps -qf "name=reservationsapi")
+sudo docker exec $API node scripts/send_migration_welcome.js                       # DRY RUN (default): who would get what, writes nothing
+sudo docker exec $API node scripts/send_migration_welcome.js --preview-dir /tmp/p  # also writes each e-mail as HTML to review
+sudo docker exec $API node scripts/send_migration_welcome.js --send                # sends (1.5 s apart)
+# options: --emails a@x,b@y (only these) · --ttl-hours 168 · --force (re-send to someone already invited)
+```
+
+By default it picks active non-admin accounts that **never logged in** and have upcoming active reservations, skips anyone already
+invited (recorded in the change history as `migration_invite_sent`), and revokes the link if the e-mail could not be sent (see
+*Notificaciones*). It aborts if `APP_URL` is not set in the container. Tested against a local mail sink: preview, send, second run
+skipped, `--force` re-sent, the link validated by `/api/auth/reset-password/validate`, and the failure path revoked the token.
 
 **Shortcut used for production (2026-10-06):** [`infra/db-migration/migrate.sh`](../infra/db-migration/migrate.sh) wraps steps 2, 3 and 6
 (with Option C) and checks each one. Put `migrate.sh`, `cleanup_keep_calendar.sql` and `import.sql` in a private folder on the server, then:

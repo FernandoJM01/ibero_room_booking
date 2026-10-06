@@ -26,7 +26,7 @@ GET https://npbkpmwc-80.usw3.devtunnels.ms/api/health        (the public tunnel 
 | `[IberoReservas] ACTION NEEDED` | Automatic restarts did not help (usually the Microsoft login expired) | `devtunnel user login -d` as `acardena`, restart the unit (the mail has the commands) |
 | `[IberoReservas] ALERT: the application is down` | The tunnel is fine but the API/Traefik/DB is not | Look at the Swarm services (the mail has the commands) |
 
-**Recipients:** `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx`, set in **one file on the server**, `/etc/default/ibero-alerts` (see [Where to change the e-mails](#where-to-change-the-e-mails)).
+**Recipients:** `p18731@correo.uia.mx` and `a231592a@correo.uia.mx`, set in **one file on the server**, `/etc/default/ibero-alerts` (see [Where to change the e-mails](#where-to-change-the-e-mails)).
 
 **How the e-mail is sent.** `devtunnel-notify.sh` runs a small `nodemailer` call **inside the API container**, which
 already holds the SMTP settings. Nothing secret is copied to the host or stored by the watchdog, and nothing is

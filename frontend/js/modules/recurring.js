@@ -184,6 +184,11 @@ const Recurring = (() => {
     }
 
     if (savedCount > 0) {
+      // The per-date saves send no e-mail: ask for ONE summary e-mail for the whole series. A failure here
+      // must not turn a fully saved series into an error.
+      try { await API.notifyRecurringGroup(actualGroupId); }
+      catch (err) { console.warn('Series confirmation e-mail not sent:', err); }
+
       // NOTE: this used to call Notifications.onReservationCreated(...), a
       // method that no longer exists on the Notifications module (it now
       // only exposes getLog()). That call threw *after* every instance was
