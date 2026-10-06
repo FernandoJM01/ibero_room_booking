@@ -136,6 +136,51 @@ function reservationCancelledEmail(reservation) {
   };
 }
 
+const _PATTERN_LABEL = {
+  daily: 'Diaria', weekly: 'Semanal', biweekly: 'Cada dos semanas', monthly: 'Mensual',
+};
+
+// Dates of several reservations as one table row per date (used by the one-email-per-series summaries).
+function _datesTable(reservations) {
+  const rows = reservations.map(r => `
+      <tr>
+        <td style="padding:4px 12px 4px 0;">${_formatDate(r.start_time)}</td>
+        <td style="padding:4px 0;white-space:nowrap;">${_formatTime(r.start_time)} – ${_formatTime(r.end_time)}</td>
+      </tr>`).join('');
+  return `<table style="border-collapse:collapse;font-size:14px;margin:8px 0;">${rows}</table>`;
+}
+
+// ONE e-mail for a whole recurring series (instead of one per date).
+// `reservations` = the series' active reservations, ordered by start_time, with names joined.
+function recurringSeriesCreatedEmail(reservations, pattern) {
+  const first = reservations[0];
+  const label = _PATTERN_LABEL[pattern];
+  return {
+    subject: `Reservaciones recurrentes confirmadas (${reservations.length}) — Sala de Juntas Ibero`,
+    html: _layout('#ef3e42', 'Reservaciones recurrentes confirmadas',
+      `<p>Se registró una serie de <strong>${reservations.length}</strong> reservaciones de la Sala de Juntas${label ? ` (${_esc(label.toLowerCase())})` : ''}:</p>
+       <table style="width:100%;border-collapse:collapse;font-size:14px;">
+         <tr><td style="padding:6px 0;color:#555;">Responsable</td><td style="padding:6px 0;font-weight:600;">${_esc(first.responsible_name)}</td></tr>
+         <tr><td style="padding:6px 0;color:#555;">Nombre de la junta</td><td style="padding:6px 0;">${_esc(first.area)}</td></tr>
+         ${first.room_name ? `<tr><td style="padding:6px 0;color:#555;">Sala</td><td style="padding:6px 0;font-weight:600;">${_esc(first.room_name)}</td></tr>` : ''}
+         ${first.observations ? `<tr><td style="padding:6px 0;color:#555;">Observaciones</td><td style="padding:6px 0;">${_esc(first.observations)}</td></tr>` : ''}
+       </table>
+       <p style="margin-bottom:0;color:#555;">Fechas y horarios:</p>
+       ${_datesTable(reservations)}`),
+  };
+}
+
+// ONE e-mail when several reservations of the same person are cancelled together (a series, a bulk cancel).
+function reservationsCancelledSummaryEmail(reservations) {
+  const first = reservations[0];
+  return {
+    subject: `Reservaciones canceladas (${reservations.length}) — Sala de Juntas Ibero`,
+    html: _layout('#dc3545', 'Reservaciones canceladas',
+      `<p>Se cancelaron <strong>${reservations.length}</strong> reservaciones de <strong>${_esc(first.responsible_name)}</strong>${first.area ? ` (${_esc(first.area)})` : ''}:</p>
+       ${_datesTable(reservations)}`),
+  };
+}
+
 function passwordResetEmail(resetLink) {
   return {
     subject: `Restablecer contraseña — Sala de Juntas Ibero`,
@@ -321,6 +366,8 @@ module.exports = {
   reservationCreatedEmail,
   reservationUpdatedEmail,
   reservationCancelledEmail,
+  recurringSeriesCreatedEmail,
+  reservationsCancelledSummaryEmail,
   reservationAdminModifiedEmail,
   reservationAdminCancelledEmail,
   modificationRequestReceivedEmail,

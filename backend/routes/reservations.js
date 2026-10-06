@@ -7,6 +7,8 @@ const {
   reservationCreatedEmail,
   reservationUpdatedEmail,
   reservationCancelledEmail,
+  recurringSeriesCreatedEmail,
+  reservationsCancelledSummaryEmail,
   reservationAdminModifiedEmail,
   reservationAdminCancelledEmail,
 } = require('../utils/mailer');
@@ -81,6 +83,45 @@ router.post('/recurring-group', requireRole('secretaria'), async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Error creating recurring group:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/reservations/recurring-group/:id/notify - ONE confirmation e-mail for a whole series.
+// Creating a series saves one reservation per date; POST / deliberately sends no e-mail for those (a 9-week series
+// used to mean 9 e-mails in a burst). The client calls this once, after it has saved the dates. To stop it being
+// used to re-mail old series, it only covers active reservations of that group that THIS user created in the last
+// 15 minutes.
+router.post('/recurring-group/:id/notify', requireRole('secretaria'), async (req, res) => {
+  const { id } = req.params;
+  if (!UUID_RE.test(id)) return res.status(400).json({ error: 'Invalid group id' });
+
+  try {
+    const rows = (await pool.query(
+      `${RESERVATION_WITH_NAMES}
+       WHERE r.recurring_group = $1 AND r.status = 'active'
+         AND r.created_by = $2 AND r.created_at > NOW() - INTERVAL '15 minutes'
+       ORDER BY r.start_time`,
+      [id, req.user.id]
+    )).rows;
+    if (rows.length === 0) return res.json({ sent: false, count: 0 });
+
+    let email = null;
+    if (rows[0].responsible_id) {
+      email = (await pool.query('SELECT email FROM users WHERE id = $1', [rows[0].responsible_id])).rows[0]?.email;
+    } else if (rows[0].external_responsible_id) {
+      email = rows[0].external_email;
+    }
+    if (!email) return res.json({ sent: false, count: rows.length });
+
+    const pattern = (await pool.query('SELECT pattern FROM recurring_groups WHERE id = $1', [id])).rows[0]?.pattern;
+    const { subject, html } = rows.length === 1
+      ? reservationCreatedEmail(rows[0])
+      : recurringSeriesCreatedEmail(rows, pattern);
+    sendEmail(email, subject, html);   // non-blocking, like every other notification
+    res.json({ sent: true, count: rows.length });
+  } catch (err) {
+    console.error('Error notifying recurring group:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -507,9 +548,12 @@ router.post('/', requireRole('secretaria'), async (req, res) => {
       details: buildCreateDetails(await fetchWithNames(pool, result.rows[0].id)),
     });
 
-    // Send confirmation email to responsible person (non-blocking)
-    const { subject, html } = reservationCreatedEmail(await fetchWithNames(pool, result.rows[0].id));
-    sendEmail(responsible.email, subject, html);
+    // Send confirmation email to responsible person (non-blocking). Dates of a recurring series get ONE
+    // summary e-mail instead (POST /recurring-group/:id/notify, called once by the client after saving them all).
+    if (!recurring_group) {
+      const { subject, html } = reservationCreatedEmail(await fetchWithNames(pool, result.rows[0].id));
+      sendEmail(responsible.email, subject, html);
+    }
 
     res.status(201).json(await fetchWithNames(pool, result.rows[0].id));
   } catch (err) {
@@ -713,7 +757,7 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
       });
     }
 
-    // Send a cancellation email per affected reservation (non-blocking)
+    // Cancellation e-mails (non-blocking), one per recipient
     const responsibleIds = [...new Set(result.rows.map(r => r.responsible_id).filter(Boolean))];
     const externalIds = [...new Set(result.rows.map(r => r.external_responsible_id).filter(Boolean))];
     
@@ -736,15 +780,24 @@ router.delete('/bulk', requireRole('secretaria'), async (req, res) => {
       extQ.rows.forEach(ec => emailByExtId.set(ec.id, ec.email));
     }
 
+    // One e-mail per recipient: a single cancellation keeps the usual message, several (a whole series, a bulk
+    // cancel) are summarised in one e-mail instead of one per date.
+    const byEmail = new Map();
     for (const reservation of result.rows) {
-      const email = reservation.responsible_id 
+      const email = reservation.responsible_id
         ? emailById.get(reservation.responsible_id)
         : emailByExtId.get(reservation.external_responsible_id);
-        
-      if (email) {
-        const { subject, html } = reservationCancelledEmail(await fetchWithNames(pool, reservation.id));
-        sendEmail(email, subject, html);
-      }
+      if (!email) continue;
+      if (!byEmail.has(email)) byEmail.set(email, []);
+      byEmail.get(email).push(reservation);
+    }
+    for (const [email, list] of byEmail) {
+      const named = await Promise.all(list.map(r => fetchWithNames(pool, r.id)));
+      named.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+      const { subject, html } = named.length === 1
+        ? reservationCancelledEmail(named[0])
+        : reservationsCancelledSummaryEmail(named);
+      sendEmail(email, subject, html);
     }
 
     const withNames = await Promise.all(result.rows.map(r => fetchWithNames(pool, r.id)));

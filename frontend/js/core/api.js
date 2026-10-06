@@ -225,6 +225,10 @@ const API = (() => {
   const createRecurringGroup = (data) =>
     _request('POST', '/reservations/recurring-group', data);
 
+  // ONE confirmation e-mail for the whole series (the per-date saves send none)
+  const notifyRecurringGroup = (groupId) =>
+    _request('POST', `/reservations/recurring-group/${groupId}/notify`);
+
   // AI assistant
   const aiStatus = () =>
     _request('GET', '/ai/status');
@@ -293,6 +297,7 @@ const API = (() => {
     updateExternalContact,
     getDashboardStats,
     createRecurringGroup,
+    notifyRecurringGroup,
     aiStatus,
     aiParse,
     submitModificationRequest,
