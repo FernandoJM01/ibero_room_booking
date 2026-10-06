@@ -450,6 +450,21 @@
   }
   .hist-footer { flex-wrap: wrap; }
   .hist-table-card { min-height: 360px; }
+
+  /* Tabla más compacta para que la Sala se vea completa junto a las acciones fijas */
+  .hist-table-card .data-table td,
+  .hist-table-card .data-table thead th { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .hist-table-card .data-table .col-actions { min-width: 0; }
+  .hist-table-card .row-actions { gap: 4px; }
+  .hist-table-card .row-actions .row-action-btn { width: 28px; height: 28px; }
+  .room-chip {
+    max-width: 84px;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: center;
+    border-radius: var(--radius-md);
+    padding: 2px 6px;
+  }
 }
 
 @keyframes histSheetUp { from { transform: translateY(100%); } to { transform: none; } }
