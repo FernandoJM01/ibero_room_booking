@@ -254,6 +254,7 @@ curl http://localhost:8080/api/health
 | [`docs/ACCESS.md`](docs/ACCESS.md)                  | Accounts and access register               |
 | [`docs/DATA_MIGRATION.md`](docs/DATA_MIGRATION.md) | Preloading the existing reservations from the Excel file; clearing old data (A/B), verification, rollback |
 | [`docs/SERVER_CONFIGURATION.md`](docs/SERVER_CONFIGURATION.md) | Where every configuration lives (repo, server, Dokploy, Traefik, Cloudflare, tunnel) and how to check it |
+| [`docs/WATCHDOG_AND_BACKUPS.md`](docs/WATCHDOG_AND_BACKUPS.md) | Server administrator guide: tunnel watchdog, e-mail alerts and where to change recipients, nightly backups, everyday commands, one-time migration commands |
 | [`docs/PLAN_AVAILABILITY_AND_SECURITY.md`](docs/PLAN_AVAILABILITY_AND_SECURITY.md) | Plan (architecture unchanged) to detect tunnel failures, self-heal and alert by e-mail, and to harden server and app; includes the database cleanup order |
 | [`docs/adr/`](docs/adr/README.md)                   | Architecture Decision Records              |
 | [`docs/changes/`](docs/changes)                     | Change plans and records (bug fixes, features, multi-room) |

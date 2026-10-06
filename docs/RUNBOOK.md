@@ -130,7 +130,7 @@ If it fails again right away with *Not authorized*, the cached Microsoft login h
 `/home/acardena/bin/devtunnel user login -d`, finish the device-code login with the owning account, and restart again.
 
 **Prevention.** The [`infra/tunnel-watchdog/`](../infra/tunnel-watchdog/README.md) timer restarts the unit when the tunnel
-health check fails twice and e-mails the two people on call; an **external uptime monitor** on
+health check fails twice and e-mails the two people on call (installed and tested 2026-10-06; administrator guide: [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md)); an **external uptime monitor** on
 `https://deii-salas.uk/api/health` is the second, independent channel. Plan and status:
 [PLAN_AVAILABILITY_AND_SECURITY](PLAN_AVAILABILITY_AND_SECURITY.md). If you get the *ACTION NEEDED* e-mail, the
 automatic restarts did not help: do the login step above.
@@ -283,6 +283,8 @@ teammate accounts with a suitable role, and record the domain's registrar
 contact.
 
 ### Backup the database
+
+A **nightly backup** already runs (`/var/backups/ibero/`, 14 days kept; see [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md#4-everyday-commands)). Take one by hand before any risky change with `sudo /usr/local/sbin/db-backup.sh`. The equivalent manual command:
 
 ```bash
 sudo docker exec $(sudo docker ps -qf "name=iberoreservationsdb") \

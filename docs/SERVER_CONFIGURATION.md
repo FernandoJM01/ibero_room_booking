@@ -87,7 +87,7 @@ Browser ─HTTPS─► Cloudflare (DNS + Worker "plain-glitter-53dd", domain dei
 | **Tunnel login** | `/home/acardena/DevTunnels/devtunnels-tokens` and `devtunnels-tokens-microsoft` (mode 600) | The Microsoft account is an institutional `correo.uia.mx` account. `/home/acardena/.net/devtunnel` is only the unpacked program, not credentials | Verified |
 | Tunnel registration | Microsoft: `ibero-reservas.usw3`, port 80, anonymous *connect* allowed, 20 MB/s limit | Expiry 26.4 days, a sliding window renewed by activity | Verified |
 | `cloudflared` | Installed, service **disabled** and inactive | Leftovers: `~/.cloudflared` (mode 700) and `~/cloudflared-config.yml` in `acardena`'s home | Verified |
-| **Backups** | Only one database dump exists on the server: `/home/acardena/backup-20260924.sql` (26 KB). There are **no cron jobs or timers** that back anything up | Dokploy has a `volume-backups` folder, empty of configuration here | Verified |
+| **Backups** | **Nightly dump installed 2026-10-06**: `ibero-db-backup.timer` (02:00 UTC) runs `/usr/local/sbin/db-backup.sh`, files in `/var/backups/ibero/` (root-only, 14 days). They are on the **same disk**; no copy off the server yet. Older file: `/home/acardena/backup-20260924.sql` (26 KB). Dokploy's own database is still not backed up | See [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md) |
 | Scheduled jobs | Standard Ubuntu timers (apt, logrotate, sysstat, fstrim). No user crontabs | | Verified |
 | Home-folder leftovers | `acardena`'s home holds a 44 KB `.bash_history`, root-owned `node_modules`, `package.json` and `package-lock.json`, `devtunnel.log` and a service backup `devtunnel-reservations.service.bak` | `.bash_history` can contain secrets: not read | Verified |
 
@@ -162,7 +162,7 @@ renewal date; and that every variable name above exists in Dokploy with its valu
 
 1. **Monitor the tunnel and restart it automatically.** It was down for ~4 days (2026-10-02 to 2026-10-06) and
    for ~29 h on 2026-09-29 without anyone noticing; see [RUNBOOK](RUNBOOK.md#tunnel-process-running-but-site-down).
-2. **Automate backups off the server** (database and Dokploy's own database). Today there is one 26 KB manual dump.
+2. **Copy the nightly backups off the server** (database) and back up Dokploy's own database. The nightly dump exists since 2026-10-06 but stays on the same disk.
 3. **Record the registrar and renewal date** of `deii-salas.uk` and give a second person access to Cloudflare,
    the Microsoft tunnel account and Dokploy ([ACCESS](ACCESS.md)).
 4. **Keep the Worker script in the repository** (for example `infra/cloudflare-worker.js`).

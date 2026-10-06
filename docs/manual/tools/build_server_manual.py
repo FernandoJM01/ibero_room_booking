@@ -340,11 +340,49 @@ def build():
             "curl -s https://deii-salas.uk/api/health"])
     m.p("Si vuelve a fallar enseguida con «Not authorized», la sesión de Microsoft caducó: como <b>acardena</b> ejecuta "
         "<b>devtunnel user login -d</b>, completa el inicio de sesión con el código en un navegador usando la cuenta propietaria y reinicia el servicio.")
-    m.h3("Cómo evitarlo")
-    m.bullets(["<b>Perro guardián (watchdog):</b> un temporizador que revisa el túnel cada 2 minutos y reinicia el servicio tras dos fallas seguidas "
-               "(archivos listos en <b>infra/tunnel-watchdog/</b>; <b>no está instalado</b>). Su lógica se probó con simulaciones.",
-               "<b>Monitor externo:</b> un servicio de disponibilidad que consulte https://deii-salas.uk/api/health cada pocos minutos y envíe correo al equipo.",
-               "A mediano plazo, pedir a TI de la universidad una publicación estable (proxy inverso con dirección pública) para no depender de una cuenta individual."])
+    m.h3("Cómo se evita ahora")
+    m.p("Desde el <b>6-oct-2026</b> hay vigilancia automática (sección 6.1). Quedan pendientes el <b>monitor externo</b> (un servicio gratuito que consulte "
+        "https://deii-salas.uk/api/health y avise por correo a las dos personas) y, a mediano plazo, pedir a TI una publicación estable sin depender de una cuenta individual.")
+
+    m.h2("6.1 Vigilancia automática: watchdog, correos y respaldos (instalado el 6-oct-2026)")
+    m.p("No modifica la aplicación, Docker, Dokploy, Traefik, la unidad del túnel, el Worker ni Cloudflare: solo agrega temporizadores en el servidor. "
+        "Guía completa: <b>docs/WATCHDOG_AND_BACKUPS.md</b>.")
+    m.table(["Pieza", "Qué hace", "Cuándo"], [
+        ["<b>Watchdog</b> (devtunnel-watchdog.timer)", "Consulta /api/health por el túnel. Tras 2 fallas seguidas, si la aplicación responde en local, reinicia solo devtunnel-reservations (máximo cada 10 min)", "Cada 2 minutos"],
+        ["<b>Avisos por correo</b> (devtunnel-notify.sh)", "Envía correo con la cuenta SMTP que ya tiene la aplicación (no guarda contraseñas en el servidor)", "Cuando hay recuperación, falla persistente, app caída o respaldo fallido"],
+        ["<b>Respaldo nocturno</b> (ibero-db-backup.timer)", "pg_dump comprimido en /var/backups/ibero/, verificado, 14 días de retención", "02:00 UTC (20:00 CDMX)"],
+        ["<b>Archivo de ajustes</b>", "/etc/default/ibero-alerts: destinatarios (ALERT_TO) y URL opcional de latido", "Se lee en cada ejecución"],
+    ], [1.9, 4.2, 1.4])
+    m.h3("Dónde cambiar los correos")
+    m.code(["sudo nano /etc/default/ibero-alerts",
+            "# cambia la línea ALERT_TO (direcciones separadas por coma, sin espacios):",
+            "#   ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx",
+            "# no hay que reiniciar nada; para probar:",
+            "sudo /usr/local/sbin/devtunnel-notify.sh \"[IberoReservas] TEST\" \"Prueba\""], "Destinatarios (watchdog y respaldo)")
+    m.p("El monitor externo, cuando exista, tiene su propia lista de destinatarios en su panel: cámbiala también.")
+    m.h3("Qué significa cada correo")
+    m.table(["Asunto", "Significado", "Qué hacer"], [
+        ["RECOVERED", "El sitio volvió; indica cuánto estuvo caído", "Nada. Si se repite cada pocos días, avisar al responsable del proyecto"],
+        ["ACTION NEEDED", "Dos reinicios automáticos no bastaron; casi siempre caducó la sesión de Microsoft", "Como acardena: devtunnel user login -d (la cuenta propietaria aprueba el código) y sudo systemctl restart devtunnel-reservations"],
+        ["ALERT: the application is down", "El túnel está bien pero la API/Traefik/BD no; no se reinicia el túnel", "Revisar servicios Swarm y bitácoras (sección 14)"],
+        ["ALERT: nightly database backup FAILED", "No se completó el respaldo de la noche", "journalctl -t ibero-db-backup; ejecutar sudo /usr/local/sbin/db-backup.sh"],
+    ], [1.9, 2.9, 2.7])
+    m.h3("Comandos de uso diario")
+    m.code(["# ¿están activos los temporizadores?",
+            "systemctl list-timers devtunnel-watchdog.timer ibero-db-backup.timer --no-pager",
+            "# decisiones del watchdog del último día",
+            "sudo journalctl -t devtunnel-watchdog --since '1 day ago' --no-pager",
+            "# revisar ahora (sin salida = sano)",
+            "sudo /usr/local/sbin/devtunnel-watchdog.sh",
+            "# pausar y volver a activar (¡no olvidar activarlo!)",
+            "sudo systemctl stop devtunnel-watchdog.timer",
+            "sudo systemctl start devtunnel-watchdog.timer",
+            "# respaldos disponibles y respaldo inmediato",
+            "sudo ls -lh /var/backups/ibero/",
+            "sudo /usr/local/sbin/db-backup.sh"], "Estado y operación")
+    m.p("<b>Prueba de falla realizada el 6-oct-2026:</b> se congeló el proceso del túnel a las 06:36:52 UTC; el sitio estuvo caído hasta las 06:40:17 (unos 3,5 minutos), "
+        "el watchdog lo reinició solo y llegó el correo RECOVERED a las dos personas. Límite: no puede renovar una sesión de Microsoft caducada ni detectar la caída "
+        "del servidor completo (para eso sirve el monitor externo).")
 
     # ── 7
     m.h1("7. Cloudflare y el dominio")
@@ -372,8 +410,8 @@ def build():
         ["Retención", "La API borra a diario registros de más de 18 meses (reservaciones, historial, registro de correos, fechas marcadas)"],
     ], [1.8, 5.7])
     m.h2("Respaldos")
-    m.warn("Hoy <b>no hay respaldos automáticos</b>. Lo único que existe en el servidor es <b>/home/acardena/backup-20260924.sql</b> (26 KB, 24-sep-2026). "
-           "Dokploy tampoco está respaldado: si se pierde su base, las aplicaciones y dominios hay que recrearlos.")
+    m.warn("Desde el 6-oct-2026 hay un <b>respaldo nocturno automático</b> en /var/backups/ibero/ (14 días; ver sección 6.1), pero está en <b>el mismo disco</b> que la base: "
+           "falta decidir dónde copiarlo fuera del servidor. Dokploy tampoco está respaldado: si se pierde su base, las aplicaciones y dominios hay que recrearlos.")
     m.code(["# Respaldo manual de la base de la aplicacion (en el servidor)",
             "sudo docker exec $(sudo docker ps -qf \"name=iberoreservationsdb\") \\",
             "  sh -c 'pg_dump --clean --if-exists -U \"$POSTGRES_USER\" \"$POSTGRES_DB\"' \\",
@@ -412,8 +450,8 @@ def build():
     m.h1("10. Seguridad: hallazgos y acciones")
     m.p("Ordenados por prioridad. Ninguno se ha corregido todavía: son decisiones del equipo.")
     m.table(["Prioridad", "Hallazgo (verificado)", "Riesgo", "Acción recomendada"], [
-        ["<b>Alta</b>", "Nadie vigila el túnel; dos caídas (29 h y 91 h)", "Sitio caído sin aviso", "Instalar el watchdog (infra/tunnel-watchdog) y un monitor externo"],
-        ["<b>Alta</b>", "Un solo respaldo manual (26 KB); Dokploy sin respaldo", "Pérdida de datos y de configuración", "Respaldos programados fuera del servidor; probar la restauración"],
+        ["Mitigado", "Túnel sin vigilancia (caídas de 29 h y 91 h)", "Sitio caído sin aviso", "Watchdog instalado y probado el 6-oct-2026; <b>falta el monitor externo</b>"],
+        ["<b>Alta</b>", "Respaldo nocturno instalado, pero en el mismo disco; Dokploy sin respaldo", "Pérdida de datos y de configuración", "Copiar los respaldos fuera del servidor; probar la restauración"],
         ["<b>Alta</b>", "SSH con contraseña, sin llaves, X11 activo; root por llave permitido", "Adivinar contraseñas desde la red institucional", "Instalar llaves, PasswordAuthentication no, PermitRootLogin no, X11Forwarding no (probar en una segunda sesión)"],
         ["<b>Alta</b>", "Puerto 3000 (panel de Dokploy) permitido a cualquier origen", "Panel de administración expuesto", "Restringirlo y seguir usando el túnel SSH; Docker también publica puertos por iptables"],
         ["Media", "Cuenta sudo <b>admlocal</b> sin propietario registrado", "Cuenta administrativa desconocida", "Registrar al responsable o deshabilitarla"],
@@ -429,7 +467,7 @@ def build():
     m.h2("Rutinas")
     m.table(["Cuándo", "Qué hacer"], [
         ["Cada día (o con monitor)", "Comprobar https://deii-salas.uk/api/health; si no responde, ver la sección 6 y la 14"],
-        ["Cada semana", "Descargar un respaldo y copiarlo fuera del servidor; revisar docker service ls; revisar espacio en disco (df -h)"],
+        ["Cada semana", "Copiar el respaldo más reciente fuera del servidor; revisar docker service ls y df -h; leer los correos del watchdog si los hubo"],
         ["Cada mes", "Instalar actualizaciones y reiniciar en una ventana acordada; revisar usuarios con sudo y llaves; revisar la caducidad del túnel"],
         ["Cada semestre", "Revisar ACCESS.md y la hoja de traspaso; probar una restauración de respaldo; rotar credenciales compartidas por canales inseguros"],
         ["Antes de entregas o evaluaciones", "Comprobar túnel, salud pública, respaldo reciente y que haya al menos dos personas con acceso"],

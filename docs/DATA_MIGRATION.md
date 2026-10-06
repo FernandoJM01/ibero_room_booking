@@ -105,6 +105,19 @@ Do it outside working hours and tell the secretaries not to book meanwhile.
 7. **Verify** ([section 6](#6-verification)) and tell the 4 people how to get access (they can use
    *¿Olvidaste tu contraseña?* once the email service works; see [SMTP guide](SMTP_ADMIN_GUIDE.md)).
 
+**Shortcut used for production (2026-10-06):** [`infra/db-migration/migrate.sh`](../infra/db-migration/migrate.sh) wraps steps 2, 3 and 6
+(with Option C) and checks each one. Put `migrate.sh`, `cleanup_keep_calendar.sql` and `import.sql` in a private folder on the server, then:
+
+```bash
+sudo bash migrate.sh preview   # read-only: rooms, calendar, users; shows what the clean-up would delete, rolled back
+sudo bash migrate.sh apply     # backup -> clean-up -> import -> verification; stops on any error
+sudo bash migrate.sh verify    # verification queries only
+shred -u import.sql cleanup_keep_calendar.sql
+```
+
+Rehearsed end to end (preview, apply, apply again) on a copy of a populated database: 45 reservations, 42 recurring, 5 series,
+45 history entries, 0 without a room, room renamed, 5 users; the second apply changed nothing.
+
 For a local copy, replace the `ssh`/`sudo docker exec` part with
 `docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < import.sql`.
 
