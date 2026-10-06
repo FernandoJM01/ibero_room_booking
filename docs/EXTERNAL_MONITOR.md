@@ -4,7 +4,7 @@ Why: the watchdog on the server only sees the tunnel. A dead server, network, po
 is invisible to it. An **external** monitor checks the public site from outside and e-mails the people on call. It needs no
 change on the server, the firewall or the architecture.
 
-Recipients (same as the watchdog): `p18731@correo.uia.mx` and `a231592a@correo.uia.mx`.
+**Status: configured on 2026-10-06 by the project owner.** The UptimeRobot account signs in with the Microsoft account `p18731@correo.uia.mx`, and that address is the **only alert contact** of the monitor. (The watchdog's server e-mails go to `p18731@correo.uia.mx` and `a231592a@correo.uia.mx`; see [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md#21-who-receives-the-e-mails-the-one-you-will-change-most).)
 
 ## 1. The site check (UptimeRobot)
 
@@ -19,7 +19,7 @@ Menu names change between versions of the site; look for the words in bold.
    plan allows, add the second person as a team member.
 
 **B. Alert contacts** (menu **Integrations**, or **My settings › Alert contacts**)
-3. **Add** an *E-mail* contact for `p18731@correo.uia.mx` and another for `a231592a@correo.uia.mx`. Each person opens the confirmation
+3. **Add** an *E-mail* contact for `p18731@correo.uia.mx` (the contact in use today). To add a second person later, add their address the same way; each person opens the confirmation
    e-mail UptimeRobot sends and clicks the link (the contact stays "not confirmed" until then). Check the spam folder.
 
 **C. Monitor 1: the API answers and says "ok"** (button **+ New monitor**)
@@ -28,10 +28,10 @@ Menu names change between versions of the site; look for the words in bold.
 6. URL: `https://deii-salas.uk/api/health`
 7. Keyword: `"ok":true` (with the quotes), and choose **Alert when the keyword does NOT exist**.
 8. Monitoring interval: **5 minutes** (the free minimum). If there is a *timeout* field leave the default (30 s).
-9. Alert contacts to notify: tick **both** contacts. Create.
+9. Alert contacts to notify: tick the contact(s). Create.
 
 **D. Monitor 2: the web page loads**
-10. **+ New monitor**, type **HTTP(s)**, name `IberoReservas web`, URL `https://deii-salas.uk/`, interval 5 minutes, both contacts. (It catches
+10. **+ New monitor**, type **HTTP(s)**, name `IberoReservas web`, URL `https://deii-salas.uk/`, interval 5 minutes, the contact(s). (It catches
     the web container or the Worker failing while the API is still fine.)
 
 **E. Optional**
@@ -40,7 +40,7 @@ Menu names change between versions of the site; look for the words in bold.
 12. Optional status page: not needed.
 
 **F. Test the alerts without causing an outage**
-13. Edit monitor 1 and change the keyword to `"ok":false`. Within 5-10 minutes a **Down** e-mail must arrive at **both** people.
+13. Edit monitor 1 and change the keyword to `"ok":false`. Within 5-10 minutes a **Down** e-mail must arrive.
 14. Change it back to `"ok":true`. An **Up** e-mail must follow. Do not leave the wrong keyword in place.
 
 **G. Record what was configured**
@@ -48,14 +48,13 @@ Menu names change between versions of the site; look for the words in bold.
 
 | Item | Value | Done on / by |
 | ---- | ----- | ------------ |
-| UptimeRobot account (e-mail only) | _fill in_ | _date, name_ |
-| Two-step verification + recovery codes stored | yes / no | |
-| Alert contact `p18731@correo.uia.mx` confirmed | yes / no | |
-| Alert contact `a231592a@correo.uia.mx` confirmed | yes / no | |
-| Monitor 1 `IberoReservas API health` (keyword) | yes / no | |
-| Monitor 2 `IberoReservas web` (HTTP) | yes / no | |
-| Down and Up e-mails received by both (test F) | yes / no | |
-| Heartbeat (section 2) | yes / no | |
+| UptimeRobot account | sign-in with the Microsoft account `p18731@correo.uia.mx` (no separate password) | 2026-10-06, project owner |
+| Two-step verification | depends on that Microsoft account's own MFA | to confirm |
+| Alert contact `p18731@correo.uia.mx` | yes (the **only** contact) | 2026-10-06 |
+| Alert contact `a231592a@correo.uia.mx` | **not added** (decision of the owner) | |
+| Monitors | configured by the owner; the exact list (keyword on `/api/health`, HTTP on `/`) is to be copied here | 2026-10-06 |
+| Down and Up e-mails received (test F) | not recorded yet | |
+| Heartbeat (section 2) | no | |
 
 What each alert means: [WATCHDOG_AND_BACKUPS §3](WATCHDOG_AND_BACKUPS.md#3-the-e-mails-and-what-to-do) and the RUNBOOK
 ([site down](RUNBOOK.md#tunnel-process-running-but-site-down)). If the monitor says **Down** and no watchdog e-mail follows within

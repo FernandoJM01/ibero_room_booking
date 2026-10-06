@@ -341,8 +341,7 @@ def build():
     m.p("Si vuelve a fallar enseguida con «Not authorized», la sesión de Microsoft caducó: como <b>acardena</b> ejecuta "
         "<b>devtunnel user login -d</b>, completa el inicio de sesión con el código en un navegador usando la cuenta propietaria y reinicia el servicio.")
     m.h3("Cómo se evita ahora")
-    m.p("Desde el <b>6-oct-2026</b> hay vigilancia automática (sección 6.1). Quedan pendientes el <b>monitor externo</b> (un servicio gratuito que consulte "
-        "https://deii-salas.uk/api/health y avise por correo a las dos personas; guía paso a paso en <b>docs/EXTERNAL_MONITOR.md</b>) y, a mediano plazo, pedir a TI una publicación estable sin depender de una cuenta individual.")
+    m.p("Desde el <b>6-oct-2026</b> hay vigilancia automática (sección 6.1). El <b>monitor externo</b> (UptimeRobot, inicio de sesión con la cuenta Microsoft p18731@correo.uia.mx) ya está configurado y su único contacto de alerta es p18731@correo.uia.mx; guía en <b>docs/EXTERNAL_MONITOR.md</b>. A mediano plazo, pedir a TI una publicación estable sin depender de una cuenta individual.")
 
     m.h2("6.1 Vigilancia automática: watchdog, correos y respaldos (instalado el 6-oct-2026)")
     m.p("No modifica la aplicación, Docker, Dokploy, Traefik, la unidad del túnel, el Worker ni Cloudflare: solo agrega temporizadores en el servidor. "
@@ -450,7 +449,7 @@ def build():
     m.h1("10. Seguridad: hallazgos y acciones")
     m.p("Ordenados por prioridad. Ninguno se ha corregido todavía: son decisiones del equipo.")
     m.table(["Prioridad", "Hallazgo (verificado)", "Riesgo", "Acción recomendada"], [
-        ["Mitigado", "Túnel sin vigilancia (caídas de 29 h y 91 h)", "Sitio caído sin aviso", "Watchdog instalado y probado el 6-oct-2026; <b>falta el monitor externo</b>"],
+        ["Mitigado", "Túnel sin vigilancia (caídas de 29 h y 91 h)", "Sitio caído sin aviso", "Watchdog instalado y probado el 6-oct-2026; monitor externo (UptimeRobot) configurado el 6-oct-2026"],
         ["<b>Alta</b>", "Respaldo nocturno instalado, pero en el mismo disco; Dokploy sin respaldo", "Pérdida de datos y de configuración", "Copiar los respaldos fuera del servidor; probar la restauración"],
         ["<b>Alta</b>", "SSH con contraseña, sin llaves, X11 activo; root por llave permitido", "Adivinar contraseñas desde la red institucional", "Instalar llaves, PasswordAuthentication no, PermitRootLogin no, X11Forwarding no (probar en una segunda sesión)"],
         ["<b>Alta</b>", "Puerto 3000 (panel de Dokploy) permitido a cualquier origen", "Panel de administración expuesto", "Restringirlo y seguir usando el túnel SSH; Docker también publica puertos por iptables"],

@@ -300,6 +300,7 @@ def hoja_servidor():
         ["Cuenta del Dev Tunnel", "login.microsoft.com (cuenta institucional)", "p18731@correo.uia.mx", "", "Gestor + MFA", "", ""],
         ["Cuenta del sistema que ejecuta el túnel", "reservadeii", "acardena", "", "No tiene contraseña de uso diario; ver RUNBOOK", "", ""],
         ["Cloudflare (Worker y DNS)", "dash.cloudflare.com", "p18731@correo.uia.mx", "", "Gestor + MFA", "", ""],
+        ["Monitor externo (UptimeRobot)", "uptimerobot.com", "Cuenta Microsoft p18731@correo.uia.mx", "", "Inicio con la cuenta Microsoft (sin contraseña propia)", "", ""],
         ["Registrador del dominio", "<b>&lt;proveedor&gt;</b> · deii-salas.uk", "<b>&lt;cuenta&gt;</b>", "", "Gestor + MFA", "", ""],
         ["GitHub (repositorio)", "github.com/FernandoJM01/ibero_room_booking", "<b>&lt;cuenta&gt;</b>", "", "Gestor + MFA", "", ""],
         ["Correo (SMTP)", "<b>&lt;servidor SMTP&gt;</b>", "<b>&lt;buzón&gt;</b>", "", "Variables de Dokploy + gestor", "", ""],
