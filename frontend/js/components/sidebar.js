@@ -349,6 +349,7 @@ const Sidebar = (() => {
   /* ── PJAX SPA ROUTER ── */
   let _pjaxInitialized = false;
   const _prefetchCache = {};
+  let _lastPath = location.pathname + location.search;   // to tell a #hash-only popstate from a real page change
 
   const _initPJAX = (sidebarId) => {
     if (_pjaxInitialized) return;
@@ -391,7 +392,7 @@ const Sidebar = (() => {
         e.preventDefault();
         const hash = href.split('#')[1];
         const tabIdMap = {
-          'usuarios': 'tab-users', 'solicitudes': 'tab-requests',
+          'usuarios': 'tab-users', 'salas': 'tab-rooms', 'solicitudes': 'tab-requests',
           'calendario': 'tab-calendar', 'notificaciones': 'tab-notif', 'respaldos': 'tab-backup'
         };
         const tabBtn = document.getElementById(tabIdMap[hash]);
@@ -454,6 +455,7 @@ const Sidebar = (() => {
           }
 
           history.pushState(null, '', url);
+          _lastPath = url.pathname + url.search;
 
           document.title = doc.querySelector('title')?.innerText || '';
           const topbarTitle = doc.querySelector('.topbar__title');
@@ -543,8 +545,14 @@ const Sidebar = (() => {
       }
     });
 
+    // Back/forward between different pages reloads (the PJAX swap does not restore state). A change of
+    // the #hash alone (admin tabs) also fires popstate: that must NOT reload; admin-page.js handles it
+    // through its own hashchange listener.
     window.addEventListener('popstate', () => {
-      window.location.reload();
+      const path = location.pathname + location.search;
+      const samePage = path === _lastPath;
+      _lastPath = path;
+      if (!samePage) window.location.reload();
     });
   };
 
