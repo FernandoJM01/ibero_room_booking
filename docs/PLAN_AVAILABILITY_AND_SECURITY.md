@@ -77,15 +77,19 @@ the mail path was tested with a mocked `docker`; both pass.
 
 ## 4. People and continuity: the two single owners
 
-Cloudflare (the Worker and `deii-salas.uk`) and the Microsoft account behind the tunnel each have **one administrator**.
-If that person is unavailable, nobody can fix the Worker, renew the tunnel login or change the tunnel. Within the current
+Cloudflare (the Worker and `deii-salas.uk`) and the Microsoft account behind the tunnel each have **one administrator, and
+**there is no second person available for either** (decision of 2026-10-06). That is an **accepted risk**: if that person is
+unavailable, nobody can fix the Worker, renew the tunnel login or change the tunnel. What reduces it without changing the
 architecture:
 
-| Risk | Mitigation (no architecture change) |
-| ---- | ----------------------------------- |
-| **Cloudflare:** one administrator, `p18731@correo.uia.mx`; nobody else can fix the Worker or the domain | That person invites a second member, ideally one of the two alert recipients (**Manage Account › Members**, [RUNBOOK](RUNBOOK.md#add-team-members-to-the-cloudflare-account)); enable two-step verification and set a recovery contact; note the domain **registrar** and renewal date (not yet known) |
-| **Microsoft account for the tunnel:** `antonio.cardena@ibero.mx`. A tunnel can only be used by its creator, no ownership transfer ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) | He is also an alert recipient, so the `ACTION NEEDED` mail reaches the person who can approve the device-code login. Remaining risk: if he is unreachable, `a231592a@correo.uia.mx` cannot act alone. Mitigate by (1) a recovery e-mail/phone on the account that the second person controls, (2) the handover sheet ([ACCESS](ACCESS.md)), (3) rehearsing once the documented "new tunnel under another account" procedure so it is known to work |
+| Risk | Mitigation |
+| ---- | ---------- |
+| **Cloudflare:** `p18731@correo.uia.mx` is the only administrator. It is rarely needed (the Worker only changes when the tunnel URL changes) | Two-step verification **with the recovery codes stored in the team password manager** (not on one phone); the Worker source is in [DEPLOYMENT §5](DEPLOYMENT.md) so it can be recreated; note the domain **registrar** and renewal date (not yet known) so the domain cannot lapse unnoticed |
+| **Microsoft account for the tunnel:** `antonio.cardena@ibero.mx`; a tunnel can only be used by its creator, no ownership transfer ([RUNBOOK](RUNBOOK.md#change-the-account-that-owns-the-dev-tunnel)) | He is also an alert recipient, so the `ACTION NEEDED` mail reaches the one person who can approve the device-code login. Keep a **recovery e-mail/phone** on the account; keep the credentials in the handover sheet ([ACCESS](ACCESS.md)), delivered through the sealed/offline channel; if the account is lost, the documented "new tunnel under another account" procedure applies |
 | Server access by **named people**: `admlocal` has no owner | Assign or lock it; one account per person |
+
+If either account's holder leaves the university, that is a **hand-over event**: do the change-of-owner steps in the
+RUNBOOK *before* the account is disabled.
 
 ## 5. Phased implementation plan
 
@@ -97,19 +101,19 @@ server administrator's password, typed by that person.
 | # | Action | Done when |
 | - | ------ | --------- |
 | P0-1 | **Record the tunnel's expiry.** As `acardena`: `/home/acardena/bin/devtunnel show ibero-reservas.usw3`, read *Expiration*. Per Microsoft's documentation it is a **sliding inactivity window** (renewed by activity), so a tunnel that is hosted and used should not expire; an earlier draft of this plan feared a hard expiry on 2026-10-21, and that is **not** supported by the documentation. Write the value in the RUNBOOK and extend it if it is short ([RUNBOOK](RUNBOOK.md#check-and-extend-the-tunnel-expiry)) | Value recorded |
-| P0-2 | **Create the external monitor** (layer A) with the two e-mails | A test alert arrives at both |
+| P0-2 | **Create the external monitor** (layer A). Recommended: **UptimeRobot** (free, 5-minute checks, keyword check, e-mail alerts; its free plan is for non-commercial use, otherwise use Better Stack's free tier) on `https://deii-salas.uk/api/health`, keyword `"ok":true`, alert contacts `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx`. Optional, for a server/network outage: **Healthchecks.io** (free, 20 checks), give its ping URL to the watchdog as `HEARTBEAT_URL`. The accounts are created and the terms accepted by whoever will administer them | A test alert arrives at both |
 | P0-3 | **Test the app's SMTP** (*Notificaciones › Enviar correo de prueba*) to both addresses | Both receive it; if not, fix SMTP first ([SMTP guide](SMTP_ADMIN_GUIDE.md)) |
 | P0-4 | **Run the login rate-limit test** with a phone on mobile data ([RUNBOOK](RUNBOOK.md#verify-the-login-rate-limit-shared-by-everyone-or-per-client)) | Result written down (decides P2-2) |
-| P0-5 | Ask the Cloudflare administrator (`p18731@correo.uia.mx`) to invite a second member and enable two-step verification (section 4); ask the Microsoft account owner to add a recovery contact | Second member can log in |
+| P0-5 | Cloudflare administrator: enable two-step verification and store the recovery codes in the team password manager; Microsoft account owner: add a recovery contact (section 4) | Both done |
 
 ### Phase 1: this week, maintenance window (**[sudo]**, about half a day)
 
 | # | Action | Test | Back out |
 | - | ------ | ---- | -------- |
-| P1-1 | **Backup now, by hand** (before anything else): *Administración › Respaldos* and the `pg_dump` in the [RUNBOOK](RUNBOOK.md#backup-the-database); copy it off the server | File is not empty (`ls -l`); can be read | n/a |
-| P1-2 | **Install the watchdog** exactly as in the [README](../infra/tunnel-watchdog/README.md): confirm the tunnel host, install four files, send the TEST mail, run once by hand, enable the timer | Both people receive the TEST mail; `systemctl list-timers` shows the timer | `systemctl disable --now devtunnel-watchdog.timer` |
-| P1-3 | **Acceptance test of the chain** (README section): `systemctl kill -s STOP devtunnel-reservations`, watch the journal | Restart in about 6 min; `RECOVERED` mail to both; external monitor alert too | `kill -s CONT` |
-| P1-4 | **Nightly backups**: a systemd timer (02:00) running the documented dump, kept 14 days in `/var/backups/ibero/` (mode 600), newest copy pushed off the server; alert if the last one is older than 26 h | A scratch-database restore of last night's file works | Disable the timer |
+| P1-1 | [**Done 2026-10-06** (`/var/backups/ibero`, plus the earlier file from 2026-09-24).] **Backup now, by hand** (before anything else): *Administración › Respaldos* and the `pg_dump` in the [RUNBOOK](RUNBOOK.md#backup-the-database); copy it off the server | File is not empty (`ls -l`); can be read | n/a |
+| P1-2 | [**Installed 2026-10-06** by `infra/install-on-server.sh`; TEST e-mail accepted by SMTP for both recipients (confirm they arrived).] **Install the watchdog** exactly as in the [README](../infra/tunnel-watchdog/README.md): confirm the tunnel host, install four files, send the TEST mail, run once by hand, enable the timer | Both people receive the TEST mail; `systemctl list-timers` shows the timer | `systemctl disable --now devtunnel-watchdog.timer` |
+| P1-3 | [**Pending: not run yet** (it freezes the live tunnel for about 6 minutes, so it needs a go-ahead; commands in the watchdog README).] **Acceptance test of the chain** (README section): `systemctl kill -s STOP devtunnel-reservations`, watch the journal | Restart in about 6 min; `RECOVERED` mail to both; external monitor alert too | `kill -s CONT` |
+| P1-4 | [**Installed 2026-10-06** (timer 02:00 UTC; first run created a verified 9.7 KB file). Off-server copy still open.] **Nightly backups**: a systemd timer (02:00) running the documented dump, kept 14 days in `/var/backups/ibero/` (mode 600), newest copy pushed off the server; alert if the last one is older than 26 h | A scratch-database restore of last night's file works | Disable the timer |
 | P1-5 | **Updates and a reboot** (38 packages, a restart is pending, up 18 days). Then confirm everything **returns unattended**: Docker, Swarm services, Traefik, `devtunnel-reservations`, the watchdog timer | Site answers within 5 min after the reboot with nobody logged in | Boot the previous kernel from GRUB |
 | P1-6 | **Docker log rotation** (`/etc/docker/daemon.json`: `json-file`, `max-size 10m`, `max-file 3`), at the same reboot | `docker info`; disk under 80% | Remove the file |
 | P1-7 | **Close the Dokploy panel (port 3000) to the network** (S2). Keep using it through the SSH tunnel you already use (`-L 3000:127.0.0.1:3000`). Docker-published ports can bypass UFW, so re-publish as `127.0.0.1:3000:3000` or add a `DOCKER-USER` rule | From another campus host, `curl -m 5 http://<server>:3000` times out; the panel still works through the SSH tunnel | `ufw allow 3000/tcp` |
@@ -197,7 +201,8 @@ calendar dates, 43 history entries and 31 email-log rows. Do it in one window ou
 
 ## 8. Open items that need a person
 
-1. Who becomes the second Cloudflare member (suggested: one of the two alert recipients) and which registrar holds `deii-salas.uk` (renewal date)?
-2. Does the Microsoft account have a recovery contact that a second person controls?
-3. Where do off-server backups go?
-4. Which external monitor service to use (any free one with e-mail alerts to the two recipients works).
+1. Create the external monitor (and optionally the Healthchecks.io heartbeat) and send a test alert (P0-2).
+2. Confirm that the TEST e-mail arrived at `antonio.cardena@ibero.mx` and `a231592a@correo.uia.mx` (also spam).
+3. Go-ahead for the tunnel failure drill (P1-3) and, separately, for the database cleanup (section 7).
+4. Which registrar holds `deii-salas.uk` and when does it renew?
+5. Where do off-server copies of the backups go (today they stay on the server's disk)?

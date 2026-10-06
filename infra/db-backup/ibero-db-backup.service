@@ -1,0 +1,7 @@
+[Unit]
+Description=Nightly backup of the IberoReservations database
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/db-backup.sh
