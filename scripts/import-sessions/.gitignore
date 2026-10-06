@@ -1,0 +1,8 @@
+# Contienen datos personales (nombres y correos): NUNCA se versionan
+private/
+*.xlsx
+*.xls
+people*.csv
+!people.example.csv
+import.sql
+rollback.sql

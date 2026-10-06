@@ -126,3 +126,6 @@ obj/
 *.seed
 *.bak
 *.tmp
+
+# Archivo de migración con datos personales (nunca versionar)
+/isaac_sesiones_*.xlsx

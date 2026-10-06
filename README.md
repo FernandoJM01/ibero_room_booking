@@ -252,6 +252,7 @@ curl http://localhost:8080/api/health
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)          | Production architecture and setup          |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md)                | Operations, troubleshooting, rollback      |
 | [`docs/ACCESS.md`](docs/ACCESS.md)                  | Accounts and access register               |
+| [`docs/DATA_MIGRATION.md`](docs/DATA_MIGRATION.md) | Preloading the existing reservations from the Excel file; clearing old data (A/B), verification, rollback |
 | [`docs/SERVER_CONFIGURATION.md`](docs/SERVER_CONFIGURATION.md) | Where every configuration lives (repo, server, Dokploy, Traefik, Cloudflare, tunnel) and how to check it |
 | [`docs/adr/`](docs/adr/README.md)                   | Architecture Decision Records              |
 | [`docs/changes/`](docs/changes)                     | Change plans and records (bug fixes, features, multi-room) |
