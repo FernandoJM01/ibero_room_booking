@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly database backup (02:00 UTC = 20:00 Mexico City)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 UTC
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target

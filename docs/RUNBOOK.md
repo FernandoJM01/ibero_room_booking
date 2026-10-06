@@ -98,6 +98,43 @@ Replace the name to restart the web or DB service. The API and web use
 `start-first`, so the new task starts before the old one stops. Avoid forcing
 the DB service during grading; it drops connections.
 
+### Tunnel process running but site down
+
+**Symptom.** The public site and the tunnel URL time out (no HTTP answer at all), yet
+`systemctl status devtunnel-reservations` says `active (running)` and the application answers locally.
+Happened on **2026-09-29** (about 29 h) and **2026-10-02 to 2026-10-06** (about 91 h) before anybody noticed.
+
+**Check (as `acardena`, no `sudo` needed).**
+
+```bash
+/home/acardena/bin/devtunnel show ibero-reservas.usw3      # "Host connections : 0" means the tunnel is NOT connected (1 = fine)
+journalctl -u devtunnel-reservations -n 20 --no-pager      # look for "Not authorized ... Refreshed tunnel access token is not valid"
+curl -s -H 'Host: npbkpmwc-80.usw3.devtunnels.ms' http://127.0.0.1/api/health   # {"ok":true,...}: the app itself is healthy
+```
+
+**Cause (observed).** After a brief loss of connection the `devtunnel host` process tries to refresh its
+access token, Microsoft answers *Unauthorized*, and the process stays alive without reconnecting. Because it
+never exits, systemd's `Restart=always` never starts a new one.
+
+**Fix.** Restart that one process. As `acardena` (no `sudo`):
+
+```bash
+pid=$(systemctl show devtunnel-reservations -p MainPID --value); kill -TERM "$pid"     # systemd starts a new one in ~5 s
+# or, with sudo:  sudo systemctl restart devtunnel-reservations
+sleep 15; /home/acardena/bin/devtunnel show ibero-reservas.usw3 | grep -E 'Host connections'   # must say 1
+curl -s https://deii-salas.uk/api/health                                                         # {"ok":true,...}
+```
+
+Verified on 2026-10-06: after the restart the tunnel reported 1 host connection and the public site answered 200.
+If it fails again right away with *Not authorized*, the cached Microsoft login has expired: as `acardena` run
+`/home/acardena/bin/devtunnel user login -d`, finish the device-code login with the owning account, and restart again.
+
+**Prevention.** The [`infra/tunnel-watchdog/`](../infra/tunnel-watchdog/README.md) timer restarts the unit when the tunnel
+health check fails twice and e-mails the two people on call (installed and tested 2026-10-06; administrator guide: [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md)); an **external uptime monitor** on
+`https://deii-salas.uk/api/health` is the second, independent channel. Plan and status:
+[PLAN_AVAILABILITY_AND_SECURITY](PLAN_AVAILABILITY_AND_SECURITY.md). If you get the *ACTION NEEDED* e-mail, the
+automatic restarts did not help: do the login step above.
+
 ### Restart the tunnel
 
 ```bash
@@ -247,6 +284,8 @@ contact.
 
 ### Backup the database
 
+A **nightly backup** already runs (`/var/backups/ibero/`, 14 days kept; see [WATCHDOG_AND_BACKUPS](WATCHDOG_AND_BACKUPS.md#4-everyday-commands)). Take one by hand before any risky change with `sudo /usr/local/sbin/db-backup.sh`. The equivalent manual command:
+
 ```bash
 sudo docker exec $(sudo docker ps -qf "name=iberoreservationsdb") \
   sh -c 'pg_dump --clean --if-exists -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup_$(date +%F).sql
@@ -375,8 +414,9 @@ Because both application images are local `:latest` builds with no registry
 back means **rebuilding an earlier version of the code**, not pulling an old
 image.
 
-**Currently deployed:** commit `f383663` on `main` (recorded 2026-09-21). Note
-this value before every deploy so there is a known good target.
+**Currently deployed:** commit `74efe0c` (multi-room release; verified on the server on 2026-10-06; earlier
+record: `f383663` on 2026-09-21). Read it with `sudo git -c safe.directory='*' -C /etc/dokploy/applications/<service>/code log -1 --oneline`
+and note it before every deploy so there is a known good target.
 
 ### Roll back a bad code deploy (recommended)
 

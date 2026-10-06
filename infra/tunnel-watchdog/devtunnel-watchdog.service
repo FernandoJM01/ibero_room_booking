@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart the Dev Tunnel when it is silently disconnected (and e-mail the people on call)
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/ibero-alerts
+ExecStart=/usr/local/sbin/devtunnel-watchdog.sh
+# Defaults live in the script. Override here only if needed (see README):
+# Environment=WATCHDOG_URL=https://<tunnel-host>/api/health
+# Environment=TUNNEL_HOST=<tunnel-host>
+# ALERT_TO and HEARTBEAT_URL live in /etc/default/ibero-alerts (one place for the watchdog and the backup)

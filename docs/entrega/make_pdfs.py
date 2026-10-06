@@ -276,7 +276,62 @@ def plantilla():
     doc.build(s, onFirstPage=lambda c, d: None, onLaterPages=lambda c, d: None)
 
 
+def hoja_servidor():
+    """Hoja de traspaso de accesos de la infraestructura. Las contraseñas SIEMPRE quedan en blanco."""
+    from reportlab.lib.pagesizes import landscape
+    pg = landscape(letter)
+    doc = SimpleDocTemplate(OUT + "PLANTILLA_Hoja_traspaso_accesos_servidor.pdf", pagesize=pg,
+                            leftMargin=0.6 * inch, rightMargin=0.6 * inch,
+                            topMargin=0.6 * inch, bottomMargin=0.6 * inch,
+                            title="Hoja de traspaso de accesos del servidor (plantilla en blanco)")
+    W = pg[0] - 1.2 * inch
+    s = []
+    s.append(P("Hoja de traspaso de accesos del servidor", h1))
+    s.append(P("IberoReservations · servidor <b>reservadeii</b> · Dokploy · Traefik · Dev Tunnel · Cloudflare", sub))
+    s.append(P("<b>CONFIDENCIAL.</b> Esta hoja NO contiene contraseñas: la columna «Contraseña» se deja en blanco a propósito. "
+               "Las contraseñas se entregan por un canal distinto al del usuario y se guardan en el gestor de contraseñas del equipo. "
+               "No subir esta hoja llena al repositorio, ni enviarla por chat o correo.", small))
+    s.append(Spacer(1, 8))
+    hdr = ["Sistema", "Dirección o host", "Usuario / cuenta", "Contraseña", "Se guarda en", "Responsable / suplente", "Última rotación"]
+    rows = [
+        ["Servidor (SSH)", "reservadeii · <b>&lt;IP del servidor&gt;</b>", "<b>&lt;usuario personal&gt;</b>", "", "Llave SSH preferida; contraseña en el gestor", "", ""],
+        ["Servidor intermedio (salto SSH)", "antares.dci.uia.mx", "<b>&lt;usuario institucional&gt;</b>", "", "Gestor de contraseñas", "", ""],
+        ["Dokploy (panel)", "http://localhost:3000 (por túnel SSH -L 3000)", "<b>&lt;administrador de Dokploy&gt;</b>", "", "Gestor de contraseñas", "", ""],
+        ["Cuenta del Dev Tunnel", "login.microsoft.com (cuenta institucional)", "antonio.cardena@ibero.mx", "", "Gestor + MFA", "", ""],
+        ["Cuenta del sistema que ejecuta el túnel", "reservadeii", "acardena", "", "No tiene contraseña de uso diario; ver RUNBOOK", "", ""],
+        ["Cloudflare (Worker y DNS)", "dash.cloudflare.com", "p18731@correo.uia.mx", "", "Gestor + MFA", "", ""],
+        ["Registrador del dominio", "<b>&lt;proveedor&gt;</b> · deii-salas.uk", "<b>&lt;cuenta&gt;</b>", "", "Gestor + MFA", "", ""],
+        ["GitHub (repositorio)", "github.com/FernandoJM01/ibero_room_booking", "<b>&lt;cuenta&gt;</b>", "", "Gestor + MFA", "", ""],
+        ["Correo (SMTP)", "<b>&lt;servidor SMTP&gt;</b>", "<b>&lt;buzón&gt;</b>", "", "Variables de Dokploy + gestor", "", ""],
+        ["Base de datos (servicio)", "iberoreservations-iberoreservationsdb (interno)", "POSTGRES_USER", "", "Variables de Dokploy + gestor", "", ""],
+        ["Secreto de sesiones (JWT_SECRET)", "API (interno)", "n/a", "", "Variables de Dokploy + gestor", "", ""],
+        ["Super administrador de la aplicación", "https://deii-salas.uk", "<b>&lt;correo&gt;</b>", "", "Gestor de contraseñas", "", ""],
+    ]
+    data = [[P("<b>%s</b>" % h, cell) for h in hdr]] + [[P(c, cell) for c in r] for r in rows]
+    cw = [1.75, 2.0, 1.4, 1.3, 1.5, 1.2, 0.85]
+    tw = sum(cw); cw = [w / tw * W for w in cw]
+    t = Table(data, colWidths=cw, repeatRows=1, rowHeights=[22] + [30] * len(rows))
+    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), LIGHT), ("GRID", (0, 0), (-1, -1), 0.5, LINE),
+                           ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                           ("BACKGROUND", (3, 1), (3, -1), colors.HexColor("#fff5f5"))]))
+    s.append(t)
+    s.append(P("Cómo manejar estas credenciales", h2))
+    s += bullets([
+        "<b>Una sola fuente de verdad:</b> un gestor de contraseñas compartido con <b>al menos dos personas</b> con acceso. Nunca en el repositorio, chats, correos ni capturas de pantalla.",
+        "<b>Contraseña temporal:</b> se entrega por un canal distinto al del usuario, caduca y se <b>cambia en el primer acceso</b>. Registrar aquí solo la fecha de entrega, no el valor.",
+        "<b>Preferir llaves y MFA</b> a contraseñas: llaves SSH en lugar de contraseña y verificación en dos pasos en Microsoft, Cloudflare, GitHub y el registrador.",
+        "<b>Rotar</b> cualquier credencial que se haya compartido por un canal inseguro, al salir una persona del equipo y al menos una vez al año.",
+        "Revisar esta hoja al inicio de cada semestre y antes de cualquier entrega o evaluación. Procedimiento de salida en <b>docs/ACCESS.md</b>.",
+    ])
+    s.append(Spacer(1, 6))
+    firma = Table([[P("Entrega: __________________  Fecha: ___________", cell), P("Recibe: __________________  Fecha: ___________", cell)]],
+                  colWidths=[W / 2, W / 2])
+    s.append(firma)
+    doc.build(s, onFirstPage=lambda c, d: None, onLaterPages=lambda c, d: None)
+
+
 if __name__ == "__main__":
     resumen()
     plantilla()
+    hoja_servidor()
     print("ok")

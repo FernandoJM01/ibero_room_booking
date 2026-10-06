@@ -1,0 +1,9 @@
+# /etc/default/ibero-alerts - settings shared by the tunnel watchdog and the nightly database backup.
+# One line per setting, no spaces around "=", no quotes. After editing nothing needs restarting: the next timer run
+# (at most 2 minutes for the watchdog) reads it.
+#
+# WHO RECEIVES THE E-MAILS (comma separated, no spaces):
+ALERT_TO=antonio.cardena@ibero.mx,a231592a@correo.uia.mx
+#
+# OPTIONAL dead-man's-switch ping (e.g. a Healthchecks.io URL), called after every healthy check:
+#HEARTBEAT_URL=https://hc-ping.com/your-uuid-here
